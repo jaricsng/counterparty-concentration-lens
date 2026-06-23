@@ -35,10 +35,12 @@ Import the relevant FIBO modules (BE, LOAN, FBC/Debt, FND, Guaranty) into Apache
 ### M1 — Synthetic data + ingestion  (`m1-ingestion/`)
 A generator that emits synthetic source-style tables (loans.csv, entities.csv, guarantees.csv, collateral.csv, limits.csv) as if from separate systems, plus a loader (dbt/DuckDB optional; plain Python fine) that maps rows → FIBO instances → triples in Fuseki, with simple lineage notes.
 **Verify:** regenerate + reload is idempotent; triple counts match row counts; the M0 concentration query still works on generated data.
+**Bring-your-own test data (see `docs/data-import.md`):** publish `templates/` CSVs + column docs; loader `--source <folder>` to load user CSVs and `--mapping <yaml>` (Tier 2) to translate differently-shaped CSVs; load as a named dataset (don't overwrite calm/stressed). **Test/synthetic data only — real data is out of scope** (contained PoC instead).
 
 ### M2 — Validation & actions  (`m2-actions/`)
 SHACL shapes for business rules (e.g. exposure must not exceed limit; a guarantee must reference two distinct existing entities). FastAPI endpoints for guarded actions: `record-exposure`, `flag-limit-breach` — validate (SHACL) → write (SPARQL Update) → audit log.
 **Scenario-sandbox actions (support M5 §8, see `docs/concentration-metrics.md`):** guarded create/update/deactivate endpoints for entity, loan, guarantee, collateral, limit — each validated by SHACL and audit-logged; soft-delete = status change (no hard delete); referential-integrity checks on deactivate. These back the interactive app; the UI must write ONLY through these, never direct to Fuseki.
+**Imported test data also goes through this guarded path (see `docs/data-import.md`):** validate each record via SHACL + referential integrity before write; produce a per-row accepted/rejected import report; audit the import. No raw load that bypasses validation.
 **Verify:** valid action writes + logs; invalid (over-limit, dangling guarantee) is rejected pre-write; audit trail shows who/what/when; deactivate excludes from metrics but preserves history; writes respect the M3 role.
 
 ### M3 — Dynamic security  (`m3-security/`)
@@ -62,7 +64,7 @@ Dockerfiles (API, agent, app; Fuseki official image), k8s manifests, k3d cluster
 **Verify:** components run as pods; Argo CD Synced/Healthy; a Git commit triggers reconcile; Gatekeeper constraints reject a deliberately non-compliant manifest (e.g. a privileged pod) and `gator test` passes in CI; trivy scan + SBOM produced.
 
 ### Capstone — scale & reflect
-Swap M1's loader for an equivalent Spark job (same output, scaled); write the required **"what this is NOT"** statement. That statement must include the **deliberately out-of-scope** counterparty-risk areas listed in `docs/concentration-metrics.md` §10 (PFE/time-series, stress-test shock engine, credit-migration/PD-LGD-EAD/IFRS 9, systemic-contagion metrics, netting/CSA/haircuts) — framed as conscious scoping, not inability. Core framing: the Lens demonstrates **connected, relationship-aware concentration** and consciously excludes time-series, simulation, and full credit-modelling.
+Swap M1's loader for an equivalent Spark job (same output, scaled); write the required **"what this is NOT"** statement. That statement must include the **deliberately out-of-scope** counterparty-risk areas listed in `docs/concentration-metrics.md` §10 (PFE/time-series, stress-test shock engine, credit-migration/PD-LGD-EAD/IFRS 9, systemic-contagion metrics, netting/CSA/haircuts) **and the data-import out-of-scope items in `docs/data-import.md` §5 (live/API integration; real/production data; auto schema discovery; streaming/CDC)** — framed as conscious scoping, not inability. Core framing: the Lens demonstrates **connected, relationship-aware concentration** and consciously excludes time-series, simulation, full credit-modelling, and live data integration.
 
 ### Repo skeleton files (do early, in M0 or a `chore:` commit)
 - `LICENSE` (MIT), `.gitignore` (`.venv/`, `__pycache__/`, `*.db`, `.env`, dbt `target/`, `vendor/fibo/` large files if desired).

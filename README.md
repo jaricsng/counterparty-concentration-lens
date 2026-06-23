@@ -27,33 +27,42 @@ A semantic layer sits **over** existing systems — connecting them into one gov
 
 ```mermaid
 flowchart TB
-    subgraph SOURCES["Source systems (synthetic, in this prototype)"]
+    subgraph INPUTS["Inputs (synthetic / test data only)"]
         direction LR
-        S1["Loan / lending"]
-        S2["Counterparty / KYC"]
-        S3["Collateral & guarantees"]
-        S4["Limits & ratings"]
+        S1["Bundled datasets<br/>calm · stressed"]
+        S2["Bring-your-own<br/>test CSVs (+ mapping)"]
     end
 
     subgraph LENS["Counterparty Concentration Lens"]
         direction TB
-        O["FIBO semantic model<br/>BE · LOAN · FBC/Debt · FND · Guaranty"]
-        Q["Connected, multi-hop exposure view"]
-        A["Grounded query + lineage + audit"]
-        O --- Q --- A
+        O["FIBO semantic model<br/>BE · LOAN · FBC/Debt · FND · Guaranty · SEC"]
+        Q["Connected, multi-hop exposure<br/>(guarantees · shared collateral · group · UBO)"]
+        M["Concentration analytics<br/>single-name · CR₁₀ · HHI · sector · WWR · watchlist"]
+        G["Guarded actions + grounded AI query<br/>SHACL validation · lineage · audit"]
+        O --- Q --- M --- G
     end
 
-    SOURCES -->|"map to FIBO"| LENS
-    LENS -->|"answers: true total exposure, now"| OUT["Single counterparty view"]
+    subgraph APP["Interactive app"]
+        direction LR
+        D["Dashboard + filters"]
+        SB["Scenario sandbox<br/>add/edit/deactivate"]
+    end
+
+    INPUTS -->|"validated load → FIBO"| LENS
+    LENS --> APP
+    APP -->|"answers: true total exposure, now"| OUT["Single counterparty / UBO view"]
 
     classDef src fill:#eef4ff,stroke:#7aa2e3,color:#1c2b45;
     classDef lens fill:#fff4e6,stroke:#f0b67f,color:#5a3a14;
+    classDef app fill:#f3eefb,stroke:#b39ddb,color:#3a2a52;
     classDef out fill:#eafaf1,stroke:#74c69d,color:#1b3a2b;
-    class S1,S2,S3,S4 src;
-    class O,Q,A lens;
+    class S1,S2 src;
+    class O,Q,M,G lens;
+    class D,SB app;
     class OUT out;
-    style SOURCES fill:#f7faff,stroke:#7aa2e3,color:#1c2b45;
+    style INPUTS fill:#f7faff,stroke:#7aa2e3,color:#1c2b45;
     style LENS fill:#fffaf2,stroke:#f0b67f,color:#5a3a14;
+    style APP fill:#faf7fe,stroke:#b39ddb,color:#3a2a52;
 ```
 
 ---
@@ -79,8 +88,11 @@ A key modelling point worth understanding: in FIBO, **"counterparty" is a role, 
 ## What the prototype demonstrates
 
 - A **single connected exposure view** across entities and products, from a FIBO-based model.
-- **Multi-hop concentration** that no single source system sees (shared collateral, guarantee chains, group structures).
+- **Multi-hop concentration** that no single source system sees (shared collateral, guarantee chains, group structures, ultimate-beneficial-owner roll-up).
+- **Concentration metrics** computed direct-vs-connected — single-name limit utilisation, CR₁₀, HHI, sector concentration — plus a limit early-warning watchlist and a structural wrong-way-risk flag.
 - A **grounded query layer** — natural-language questions answered by generated queries over the governed model, not by a black-box guess.
+- An **interactive scenario sandbox** — filter, explore, and (on synthetic data) add/edit/deactivate through the validated action layer, watching the metrics move live.
+- **Bring your own test data** — load your own synthetic/sample CSVs (with optional column mapping), validated on the way in. *Test data only — see the boundary below.*
 - **Lineage and audit** on every figure — the traceability that BCBS 239 calls for.
 
 All on **synthetic data**, runnable on a laptop.
@@ -123,17 +135,20 @@ This prototype is built to **production-shaped** standards — it demonstrates D
 │   ├── lab-handbook.md         ← step-by-step build, module by module
 │   ├── architecture.md         ← diagrams (light-theme Mermaid)
 │   ├── oss-stack-mapping.md    ← platform layers → open-source equivalents
-│   ├── engineering-practices.md← DevSecOps & SDLC practices applied
+│   ├── engineering-practices.md← DevSecOps & SDLC practices (incl. policy-as-code)
+│   ├── concentration-metrics.md← metric defs, sandbox, calm/stressed design
+│   ├── data-import.md          ← bring-your-own test-data guide + scope boundary
 │   └── fibo-notes.md           ← which FIBO modules, and why
 ├── vendor/
 │   └── fibo/                   ← FIBO ontology files (attributed)
+├── templates/                  ← CSV templates for bring-your-own test data
 ├── m0-ontology/                ← FIBO model + Fuseki + concentration SPARQL
-├── m1-ingestion/               ← synthetic data + dbt/DuckDB → triples
-├── m2-actions/                 ← SHACL + FastAPI guarded actions
+├── m1-ingestion/               ← synthetic data (calm/stressed) + import loader
+├── m2-actions/                 ← SHACL + FastAPI guarded actions (+ import validation)
 ├── m3-security/                ← OPA policy scoping (authz as code)
 ├── m4-ai/                      ← grounded NL→SPARQL agent (query-safe)
-├── m5-app/                     ← Streamlit exposure view (the demo)
-└── m6-infra/                   ← k3d + Argo CD + image scan + SBOM
+├── m5-app/                     ← Streamlit interactive app + scenario sandbox (the demo)
+└── m6-infra/                   ← k3d + Argo CD + Gatekeeper + image scan + SBOM
 ```
 
 ---
@@ -158,6 +173,17 @@ The Lens ships with **two synthetic datasets**, both entirely fictional:
 
 > The stressed numbers are **illustrative and intentionally engineered** — they are *not* realistic portfolio statistics. The app always shows a banner stating which dataset is loaded. Switching is one command (see below); it never requires editing code.
 
+### Bring your own test data
+
+You can also try the Lens on **your own data** instead of the bundled sets — useful for exploring your own scenarios:
+
+- **Template CSVs** — copy the documented templates (`templates/`), fill them with your data in the same shape, and load with `--source <folder>`.
+- **Mapping config** — if your CSVs have different column names, supply a small YAML mapping file (`--mapping <map.yaml>`) that translates your columns/values to the Lens schema.
+
+Imported data is **validated on the way in** (through the same SHACL guard as every other write) and loaded as its own named dataset, so it never overwrites the bundled `calm`/`stressed` sets — and "reset to calm/stressed" always brings you back. You get a per-row report of what was accepted or rejected and why. See [`docs/data-import.md`](docs/data-import.md) for the full guide.
+
+> **⛔ Test/synthetic data only.** This import path is for synthetic, sanitised, or sample **test** data — **not** real, production, customer, or regulated counterparty data. The Lens is a learning prototype (not production-hardened; see [`SECURITY.md`](SECURITY.md)) with no security suitable for real exposure data. The correct path for real data is a contained proof of concept in your own environment, with your security team — not this prototype. Live integration to source systems (databases, APIs) is deliberately out of scope.
+
 ## Getting started
 
 Everything is free and open-source; no cloud account or API key is required. A fresh clone loads the **calm** dataset by default.
@@ -171,6 +197,8 @@ Quickstart (high level — see [`docs/lab-handbook.md`](docs/lab-handbook.md) an
 5. To see the concentration metrics breach, switch to the **stressed** dataset (one documented command/flag) and reload — the dashboard moves from green to red.
 
 Build it yourself module by module starting at `m0-ontology/`, or just run the finished stack. See [`docs/concentration-metrics.md`](docs/concentration-metrics.md) for the metric definitions and the calm/stressed design.
+
+To try it on your own scenarios instead of the bundled data, see **[Bring your own test data](#bring-your-own-test-data)** above (synthetic/sample test data only).
 
 ---
 
