@@ -1,0 +1,102 @@
+# M0 — FIBO model + Fuseki + concentration query
+
+The foundation of the Counterparty Concentration Lens: a FIBO-grounded
+application ontology, synthetic instance data with group / guarantee /
+shared-collateral structure, and the **money-shot** SPARQL query that surfaces
+the *true connected exposure* to a counterparty group — far larger than any
+single direct-loan view, and here a credit-limit breach that the naive view
+hides.
+
+> Learning prototype on **synthetic data**. Production-shaped, not
+> production-hardened. FIBO is a trademark of EDM Council, Inc.
+> (see `../vendor/fibo/README.md`).
+
+## What's here
+
+```
+m0-ontology/
+├── ontology/lens.ttl          # thin application ontology (imports FIBO; adds Exposure/Limit + role shortcuts)
+├── data/instances.ttl         # ~17 synthetic legal entities, loans, guaranties, collateral, a limit
+├── queries/
+│   ├── direct_vs_connected.rq # headline: single-source vs group vs connected exposure + limit breach
+│   └── concentration_breakdown.rq # every contributing multi-hop path
+├── lens_m0/                   # typed Python package (config, query loader, rdflib + Fuseki backends)
+├── scripts/                   # start_fuseki.sh, load_data.py, run_money_shot.py
+└── tests/                     # unit (rdflib oracle) + integration (live Fuseki, auto-skips)
+```
+
+### How the multi-hop concentration is modelled
+
+A legal entity plays many **roles** (FIBO/OMG-Commons machinery): borrower on
+one loan, guarantor on another, pledgor of collateral on a third. Because the
+same entities are shared across contracts, a query can connect exposures that
+live in separate source systems:
+
+1. **Group ownership** — `lens:isSubsidiaryOf*` (transitive) rolls subsidiaries
+   into the group head.
+2. **Guaranties** — a group entity guaranteeing an *outside* party's loan pulls
+   that contingent amount in.
+3. **Shared collateral** — one collateral item securing both a group loan and an
+   outside loan links the two counterparties.
+
+## Prerequisites
+
+- Python 3.11+ and the repo dev tooling: `pip install -r ../requirements-dev.txt`
+- Module deps: `pip install -r requirements.txt` (rdflib, requests)
+- Java 17+ (for Fuseki) and the Fuseki distribution unpacked under `.fuseki/`:
+  ```bash
+  mkdir -p .fuseki && curl -fSLo .fuseki/fuseki.tgz \
+    https://dlcdn.apache.org/jena/binaries/apache-jena-fuseki-6.1.0.tar.gz
+  tar -C .fuseki -xzf .fuseki/fuseki.tgz
+  ```
+- FIBO fetched once: `../vendor/fibo/fetch_fibo.sh`
+
+## Run the demo (the money shot)
+
+```bash
+# 1. Start Fuseki (in-memory dataset /lens on :3030)
+./scripts/start_fuseki.sh &
+
+# 2. Load FIBO + application ontology + synthetic instances (idempotent)
+python -m scripts.load_data            # or: --no-fibo to skip the ~8 MB FIBO load
+
+# 3. Run the concentration query for the Acme group
+python -m scripts.run_money_shot
+```
+
+Expected headline (Acme group, `https://lens.example/id/LE-0001`):
+
+| View | Amount (SGD) |
+|---|---|
+| Single-source (loans to the named entity only) | 2,000,000 |
+| Direct loans across the ownership group | 10,000,000 |
+| **True connected exposure (multi-hop)** | **15,500,000** |
+| Group credit limit | 12,000,000 → **BREACH** |
+
+Contributing paths: Acme Trading / Logistics / Holdings direct loans, a
+**guaranty** over Globex's loan (+4,000,000), and an outside Initech loan linked
+by **shared collateral** (+1,500,000) — none of which a single loan table shows.
+
+You can also open the Fuseki UI at <http://localhost:3030/#/dataset/lens/query>
+and paste either `.rq` file.
+
+## Test
+
+```bash
+pytest m0-ontology -q                 # unit tests (rdflib in-memory oracle)
+pytest -m integration -q              # also hits a running Fuseki (auto-skips if down)
+```
+
+The unit tests need neither Fuseki nor FIBO loaded — they run the *same* query
+files against an in-memory rdflib graph, which is the oracle the integration
+test compares Fuseki against.
+
+## Verify (M0 gates)
+
+- **Functional (money shot):** `connected_total (15.5M) > direct_group (10M) >
+  direct_head_only (2M)`, and `connected_total > group_limit (12M)` → limit
+  breach. Asserted in `tests/test_concentration.py`; reproduced live by
+  `scripts/run_money_shot.py`.
+- **Engineering gates:** `ruff check .`, `black --check .`, `mypy .`, `pytest`,
+  `bandit -r m0-ontology -c ../pyproject.toml` all clean; `pre-commit
+  run --all-files` green.

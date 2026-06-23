@@ -1,0 +1,58 @@
+# MONEY SHOT (detail) — every path that contributes to the institution's
+# connected exposure to a counterparty group, with the link that creates it.
+#
+# Parameterised by the group head via `VALUES ?head { ... }` (the runner can
+# swap the IRI; runs as-is in the Fuseki UI for the Acme group).
+#
+# Three contribution types, each a UNION arm:
+#   1. Direct loan      — a loan to any entity in the ownership group
+#   2. Guaranty         — a group entity guarantees an OUTSIDE party's loan
+#   3. Shared collateral— an outside loan shares collateral with a group loan
+#
+# "Group" = the transitive closure of lens:isSubsidiaryOf from the head
+# (lens:isSubsidiaryOf* — the * includes the head itself).
+
+PREFIX lens:   <https://lens.example/ontology/>
+PREFIX lensid: <https://lens.example/id/>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?contributionType ?counterparty ?counterpartyName ?amount ?via ?viaDetail
+WHERE {
+  VALUES ?head { lensid:LE-0001 }
+
+  {
+    # 1. Direct loans to any member of the group
+    ?via lens:borrower ?cp ; lens:principalAmount ?amount .
+    ?cp lens:isSubsidiaryOf* ?head .
+    BIND("1. Direct loan" AS ?contributionType)
+    BIND(?cp AS ?counterparty)
+  }
+  UNION
+  {
+    # 2. Guaranties GIVEN BY a group member over an outside party's loan
+    ?via lens:guarantor ?gm ;
+         lens:guaranteedLoan ?gloan ;
+         lens:guaranteedAmount ?amount .
+    ?gm lens:isSubsidiaryOf* ?head .
+    ?gloan lens:borrower ?cp .
+    BIND("2. Guaranty (contingent)" AS ?contributionType)
+    BIND(?cp AS ?counterparty)
+  }
+  UNION
+  {
+    # 3. Outside loans sharing collateral with a group loan
+    ?via lens:securesLoan ?memberLoan , ?extLoan .
+    ?memberLoan lens:borrower ?gm .
+    ?gm lens:isSubsidiaryOf* ?head .
+    FILTER(?memberLoan != ?extLoan)
+    ?extLoan lens:borrower ?cp .
+    FILTER NOT EXISTS { ?cp lens:isSubsidiaryOf* ?head }   # outside the group only
+    ?extLoan lens:principalAmount ?amount .
+    BIND("3. Shared collateral" AS ?contributionType)
+    BIND(?cp AS ?counterparty)
+  }
+
+  OPTIONAL { ?counterparty rdfs:label ?counterpartyName }
+  OPTIONAL { ?via          rdfs:label ?viaDetail }
+}
+ORDER BY ?contributionType DESC(?amount)

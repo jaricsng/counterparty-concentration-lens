@@ -1,0 +1,137 @@
+# Counterparty Concentration Lens — SYNTHETIC instance data (M0)
+#
+# Obviously-fake entities and IDs. No real institutions. Single currency (SGD).
+#
+# The data is shaped to tell the money-shot story for the ACME GROUP:
+#
+#   What a single source system shows (direct loan to the named entity
+#   "Acme Holdings Pte Ltd", LE-0001):                          SGD  2,000,000
+#
+#   What the connected view shows (the WHOLE group plus the indirect
+#   guarantee + shared-collateral links no single system sees):  SGD 15,500,000
+#
+#   Group credit limit:                                          SGD 12,000,000
+#     -> the naive view looks fine; the connected view BREACHES the limit.
+#
+# Contributions to the connected number:
+#   Direct loans across the Acme ownership group (LE-0001..0004):   10,000,000
+#   + Guaranty given by Acme Holdings over Globex's loan (contingent):4,000,000
+#   + Initech loan sharing collateral with an Acme loan:             1,500,000
+#                                                              = 15,500,000
+
+@prefix lens:       <https://lens.example/ontology/> .
+@prefix lensid:     <https://lens.example/id/> .
+@prefix rdf:        <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:       <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:        <http://www.w3.org/2001/XMLSchema#> .
+@prefix cmns-org:   <https://www.omg.org/spec/Commons/Organizations/> .
+@prefix fibo-loan:  <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/> .
+@prefix fibo-dbt:   <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+@prefix fibo-gty:   <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Guaranty/> .
+
+#################################################################
+#  Legal entities (cmns-org:LegalEntity)  — ~17 synthetic entities
+#################################################################
+
+# --- The Acme group (ultimate parent LE-0001) ---
+lensid:LE-0001 a cmns-org:LegalEntity ; rdfs:label "Acme Holdings Pte Ltd" .
+lensid:LE-0002 a cmns-org:LegalEntity ; rdfs:label "Acme Trading Pte Ltd" ;
+    lens:isSubsidiaryOf lensid:LE-0001 .
+lensid:LE-0003 a cmns-org:LegalEntity ; rdfs:label "Acme Capital SPV Ltd" ;
+    lens:isSubsidiaryOf lensid:LE-0001 .
+lensid:LE-0004 a cmns-org:LegalEntity ; rdfs:label "Acme Logistics Sdn Bhd" ;
+    lens:isSubsidiaryOf lensid:LE-0002 .   # 2nd-tier: owned via Acme Trading
+
+# --- Counterparties linked to Acme only INDIRECTLY (the hidden exposure) ---
+lensid:LE-0010 a cmns-org:LegalEntity ; rdfs:label "Globex Industries Ltd" .
+lensid:LE-0011 a cmns-org:LegalEntity ; rdfs:label "Initech Systems Pte Ltd" .
+
+# --- Unrelated entities (book noise so the group view is selective) ---
+lensid:LE-0020 a cmns-org:LegalEntity ; rdfs:label "Wayne Enterprises Pte Ltd" .
+lensid:LE-0021 a cmns-org:LegalEntity ; rdfs:label "Stark Industrial Ltd" .
+lensid:LE-0022 a cmns-org:LegalEntity ; rdfs:label "Soylent Foods Pte Ltd" .
+lensid:LE-0023 a cmns-org:LegalEntity ; rdfs:label "Hooli Data Pte Ltd" .
+lensid:LE-0024 a cmns-org:LegalEntity ; rdfs:label "Pied Piper Pte Ltd" .
+lensid:LE-0025 a cmns-org:LegalEntity ; rdfs:label "Vandelay Imports Ltd" .
+lensid:LE-0026 a cmns-org:LegalEntity ; rdfs:label "Cyberdyne Robotics Pte Ltd" .
+lensid:LE-0027 a cmns-org:LegalEntity ; rdfs:label "Tyrell Bio Ltd" .
+lensid:LE-0028 a cmns-org:LegalEntity ; rdfs:label "Gekko Capital Ltd" .
+lensid:LE-0099 a cmns-org:LegalEntity ; rdfs:label "Lender Bank Pte Ltd (our institution)" .
+
+#################################################################
+#  Loans (fibo-loan-ln-ln:Loan)  — lender is always our institution
+#################################################################
+
+# Direct loans to the Acme ownership group (sum = 10,000,000)
+lensid:LN-1001 a fibo-loan:Loan ; rdfs:label "Loan LN-1001" ;
+    lens:lender lensid:LE-0099 ; lens:borrower lensid:LE-0002 ;   # Acme Trading
+    lens:principalAmount "5000000"^^xsd:decimal ; lens:currency "SGD" .
+lensid:LN-1002 a fibo-loan:Loan ; rdfs:label "Loan LN-1002" ;
+    lens:lender lensid:LE-0099 ; lens:borrower lensid:LE-0004 ;   # Acme Logistics
+    lens:principalAmount "3000000"^^xsd:decimal ; lens:currency "SGD" .
+lensid:LN-1003 a fibo-loan:Loan ; rdfs:label "Loan LN-1003" ;
+    lens:lender lensid:LE-0099 ; lens:borrower lensid:LE-0001 ;   # Acme Holdings (the ONLY one a single source ties to "Acme Holdings")
+    lens:principalAmount "2000000"^^xsd:decimal ; lens:currency "SGD" .
+
+# Globex's own loan — Acme is exposed to it via a GUARANTY, not as borrower
+lensid:LN-1010 a fibo-loan:Loan ; rdfs:label "Loan LN-1010" ;
+    lens:lender lensid:LE-0099 ; lens:borrower lensid:LE-0010 ;   # Globex
+    lens:principalAmount "4000000"^^xsd:decimal ; lens:currency "SGD" .
+
+# Initech's own loan — linked to Acme only by SHARED COLLATERAL
+lensid:LN-1020 a fibo-loan:Loan ; rdfs:label "Loan LN-1020" ;
+    lens:lender lensid:LE-0099 ; lens:borrower lensid:LE-0011 ;   # Initech
+    lens:principalAmount "1500000"^^xsd:decimal ; lens:currency "SGD" .
+
+# Unrelated loans (book noise; never connected to Acme)
+lensid:LN-1030 a fibo-loan:Loan ; rdfs:label "Loan LN-1030" ;
+    lens:lender lensid:LE-0099 ; lens:borrower lensid:LE-0020 ;
+    lens:principalAmount "7000000"^^xsd:decimal ; lens:currency "SGD" .
+lensid:LN-1031 a fibo-loan:Loan ; rdfs:label "Loan LN-1031" ;
+    lens:lender lensid:LE-0099 ; lens:borrower lensid:LE-0021 ;
+    lens:principalAmount "2500000"^^xsd:decimal ; lens:currency "SGD" .
+lensid:LN-1032 a fibo-loan:Loan ; rdfs:label "Loan LN-1032" ;
+    lens:lender lensid:LE-0099 ; lens:borrower lensid:LE-0022 ;
+    lens:principalAmount "900000"^^xsd:decimal ; lens:currency "SGD" .
+
+#################################################################
+#  Guaranties (fibo-fbc-dae-gty:Guaranty)
+#################################################################
+
+# Acme Holdings guarantees Globex's LN-1010 -> Acme group carries that
+# contingent exposure even though Globex is not part of the Acme group.
+lensid:GTY-2001 a fibo-gty:Guaranty ; rdfs:label "Guaranty GTY-2001" ;
+    lens:guarantor lensid:LE-0001 ;            # Acme Holdings
+    lens:guaranteedLoan lensid:LN-1010 ;       # Globex's loan
+    lens:guaranteedAmount "4000000"^^xsd:decimal ; lens:currency "SGD" .
+
+# An unrelated guaranty (noise): Gekko guarantees a non-Acme loan.
+lensid:GTY-2002 a fibo-gty:Guaranty ; rdfs:label "Guaranty GTY-2002" ;
+    lens:guarantor lensid:LE-0028 ;
+    lens:guaranteedLoan lensid:LN-1031 ;
+    lens:guaranteedAmount "2500000"^^xsd:decimal ; lens:currency "SGD" .
+
+#################################################################
+#  Collateral (fibo-fbc-dae-dbt:Collateral) — incl. SHARED collateral
+#################################################################
+
+# COL-3001 is pledged once but secures BOTH an Acme loan (LN-1001) AND
+# Initech's loan (LN-1020). That cross-pledge is the hidden link that pulls
+# Initech's exposure into the Acme picture — invisible to any single system.
+lensid:COL-3001 a fibo-dbt:Collateral ; rdfs:label "Collateral COL-3001 (Marina warehouse)" ;
+    lens:pledgedBy lensid:LE-0002 ;                     # pledged by Acme Trading
+    lens:securesLoan lensid:LN-1001, lensid:LN-1020 .  # SHARED across counterparties
+
+# Plain (non-shared) collateral, for realism.
+lensid:COL-3002 a fibo-dbt:Collateral ; rdfs:label "Collateral COL-3002 (plant & equipment)" ;
+    lens:pledgedBy lensid:LE-0004 ;
+    lens:securesLoan lensid:LN-1002 .
+
+#################################################################
+#  Limits (lens:Limit)
+#################################################################
+
+# Group-level limit set on the Acme group head.
+lensid:LE-0001 lens:hasLimit lensid:LIM-0001 .
+lensid:LIM-0001 a lens:Limit ; rdfs:label "Acme group limit" ;
+    lens:limitAmount "12000000"^^xsd:decimal ; lens:currency "SGD" .

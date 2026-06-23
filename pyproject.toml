@@ -31,6 +31,11 @@ python_version = "3.11"
 ignore_missing_imports = true
 warn_unused_ignores = true
 warn_redundant_casts = true
+# Let `mypy .` resolve each module's package (lens_m0, scripts) by directory.
+explicit_package_bases = true
+mypy_path = "m0-ontology"
+# Don't type-check the virtualenv, vendored ontology, or server runtime dirs.
+exclude = '(^|/)(\.venv|vendor|run)/|\.fuseki/'
 # Tighten over time, e.g. disallow_untyped_defs = true per module.
 
 [tool.bandit]
@@ -43,3 +48,11 @@ skips = ["B101"]
 addopts = "-q"
 testpaths = ["m0-ontology", "m1-ingestion", "m2-actions", "m3-security", "m4-ai", "m5-app"]
 python_files = ["test_*.py", "*_test.py"]
+markers = [
+    "integration: tests that need a live Fuseki server (skipped if unreachable)",
+]
+# Silence third-party (pyparsing via rdflib) deprecation noise; keep our own.
+filterwarnings = [
+    "ignore::DeprecationWarning:pyparsing.*",
+    "ignore::DeprecationWarning:rdflib.*",
+]

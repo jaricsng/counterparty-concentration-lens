@@ -27,7 +27,14 @@ fuseki-data/
 .idea/
 .vscode/
 
-# Large vendored FIBO files (optional — keep if you prefer linking to source
-# instead of committing the ontology. Remove this line to commit FIBO locally.)
-# vendor/fibo/
+# Large vendored FIBO ontology blob — regenerable via vendor/fibo/fetch_fibo.sh.
+# We commit the fetch script + checksum + attribution README, not the ~8 MB file
+# (it exceeds the 2 MB pre-commit large-file gate). See vendor/fibo/README.md.
+vendor/fibo/*.ttl
 fibo-reasoner-venv/
+
+# Apache Jena Fuseki server distribution (downloaded locally for the demo)
+m0-ontology/.fuseki/
+apache-jena-fuseki-*/
+# Fuseki runtime working dir (shiro.ini, system store) created on first start
+m0-ontology/run/

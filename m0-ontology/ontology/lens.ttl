@@ -1,0 +1,140 @@
+# Counterparty Concentration Lens — thin application ontology
+#
+# This ontology imports FIBO and adds ONLY what the demo needs that FIBO does
+# not give us out of the box: a couple of convenience "view" terms (Exposure,
+# Limit) and a small set of shortcut properties that denormalise FIBO's
+# party/role machinery so the money-shot SPARQL stays readable.
+#
+# It is deliberately thin. We do NOT redefine anything FIBO already models
+# (legal entities, loans, guaranties, collateral, monetary amounts). Where we
+# add a shortcut property, its rdfs:comment records the underlying FIBO role
+# pattern it stands in for, so the role machinery is preserved in intent and
+# can be expanded to full reification in a later module.
+#
+# FIBO is a trademark of EDM Council, Inc. See vendor/fibo/README.md.
+
+@prefix lens:        <https://lens.example/ontology/> .
+@prefix owl:         <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:         <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:        <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:         <http://www.w3.org/2001/XMLSchema#> .
+@prefix dct:         <http://purl.org/dc/terms/> .
+
+# --- FIBO / OMG Commons namespaces this ontology grounds itself in ---
+@prefix cmns-org:    <https://www.omg.org/spec/Commons/Organizations/> .
+@prefix cmns-pts:    <https://www.omg.org/spec/Commons/PartiesAndSituations/> .
+@prefix cmns-rlcmp:  <https://www.omg.org/spec/Commons/RolesAndCompositions/> .
+@prefix fibo-loan:   <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/> .
+@prefix fibo-dbt:    <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+@prefix fibo-gty:    <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Guaranty/> .
+@prefix fibo-cur:    <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/> .
+
+<https://lens.example/ontology>
+    a owl:Ontology ;
+    dct:title "Counterparty Concentration Lens — application ontology" ;
+    rdfs:comment """Thin layer over FIBO for a learning prototype on SYNTHETIC
+        data. Adds Exposure/Limit convenience views and shortcut properties over
+        FIBO's party/role machinery. Production-shaped, not production-hardened.""" ;
+    owl:imports <https://spec.edmcouncil.org/fibo/ontology/master/latest/QuickFIBOProd/> .
+
+#################################################################
+#  Convenience classes (the "view" FIBO doesn't package for us)
+#################################################################
+
+lens:Exposure a owl:Class ;
+    rdfs:label "Exposure" ;
+    rdfs:comment """A convenience view of credit exposure the institution carries
+        to a legal entity through a contract (a loan it lent, or a guaranty it
+        relies on). FIBO models the underlying contracts and parties; Exposure is
+        our roll-up lens over them, not a new financial concept.""" .
+
+lens:Limit a owl:Class ;
+    rdfs:label "Counterparty Limit" ;
+    rdfs:comment "A per-entity or per-group credit limit. Breached when connected exposure exceeds limitAmount." .
+
+#################################################################
+#  Ownership / group structure (BE — Business Entities)
+#################################################################
+
+lens:isSubsidiaryOf a owl:ObjectProperty ;
+    rdfs:label "is subsidiary of" ;
+    rdfs:domain cmns-org:LegalEntity ;
+    rdfs:range  cmns-org:LegalEntity ;
+    rdfs:comment """Direct ownership/control edge: subject is controlled by object.
+        Shortcut over FIBO BE OwnershipAndControl. The transitive closure of this
+        property defines a counterparty GROUP — the structure that creates
+        indirect, multi-hop concentration.""" .
+
+#################################################################
+#  Role shortcuts over FIBO party/role machinery
+#  (cmns-pts:PartyRole played by cmns-org:LegalEntity, per cmns-rlcmp:isPlayedBy)
+#################################################################
+
+lens:lender a owl:ObjectProperty ;
+    rdfs:label "lender" ;
+    rdfs:domain fibo-loan:Loan ;
+    rdfs:range  cmns-org:LegalEntity ;
+    rdfs:comment "Shortcut: the legal entity playing the fibo-fbc-dae-dbt:Lender role on the loan (our institution)." .
+
+lens:borrower a owl:ObjectProperty ;
+    rdfs:label "borrower" ;
+    rdfs:domain fibo-loan:Loan ;
+    rdfs:range  cmns-org:LegalEntity ;
+    rdfs:comment "Shortcut: the legal entity playing the fibo-fbc-dae-dbt:Borrower role on the loan." .
+
+lens:guarantor a owl:ObjectProperty ;
+    rdfs:label "guarantor" ;
+    rdfs:domain fibo-gty:Guaranty ;
+    rdfs:range  cmns-org:LegalEntity ;
+    rdfs:comment "Shortcut: the legal entity playing the fibo-fbc-dae-gty:Guarantor role on the guaranty." .
+
+lens:guaranteedLoan a owl:ObjectProperty ;
+    rdfs:label "guaranteed loan" ;
+    rdfs:domain fibo-gty:Guaranty ;
+    rdfs:range  fibo-loan:Loan ;
+    rdfs:comment "The loan whose repayment this guaranty backs. Links a guarantor's risk to another party's borrowing." .
+
+lens:pledgedBy a owl:ObjectProperty ;
+    rdfs:label "pledged by" ;
+    rdfs:domain fibo-dbt:Collateral ;
+    rdfs:range  cmns-org:LegalEntity ;
+    rdfs:comment "The legal entity that pledged this collateral." .
+
+lens:securesLoan a owl:ObjectProperty ;
+    rdfs:label "secures loan" ;
+    rdfs:domain fibo-dbt:Collateral ;
+    rdfs:range  fibo-loan:Loan ;
+    rdfs:comment """The loan(s) this collateral secures. When one collateral item
+        secures MORE THAN ONE loan it is shared/cross-pledged — a hidden link that
+        connects otherwise-separate counterparties' exposures.""" .
+
+lens:hasLimit a owl:ObjectProperty ;
+    rdfs:label "has limit" ;
+    rdfs:domain cmns-org:LegalEntity ;
+    rdfs:range  lens:Limit .
+
+#################################################################
+#  Datatype properties (amounts; convenience over fibo MonetaryAmount)
+#################################################################
+
+lens:principalAmount a owl:DatatypeProperty ;
+    rdfs:label "principal amount" ;
+    rdfs:domain fibo-loan:Loan ;
+    rdfs:range  xsd:decimal ;
+    rdfs:comment "Outstanding principal. Convenience denormalisation of a fibo-fnd-acc-cur:MonetaryAmount (single currency in this demo)." .
+
+lens:guaranteedAmount a owl:DatatypeProperty ;
+    rdfs:label "guaranteed amount" ;
+    rdfs:domain fibo-gty:Guaranty ;
+    rdfs:range  xsd:decimal ;
+    rdfs:comment "Maximum contingent amount the guarantor is on the hook for." .
+
+lens:limitAmount a owl:DatatypeProperty ;
+    rdfs:label "limit amount" ;
+    rdfs:domain lens:Limit ;
+    rdfs:range  xsd:decimal .
+
+lens:currency a owl:DatatypeProperty ;
+    rdfs:label "currency" ;
+    rdfs:range  xsd:string ;
+    rdfs:comment "ISO 4217 code. Single-currency (SGD) in this synthetic demo to keep the maths legible." .

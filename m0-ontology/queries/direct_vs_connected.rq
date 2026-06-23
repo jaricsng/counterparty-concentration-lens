@@ -1,0 +1,72 @@
+# MONEY SHOT (headline) — proves the point of the whole prototype:
+# the CONNECTED exposure to a counterparty group is far larger than what any
+# single direct-loan view shows, and here it BREACHES the group limit.
+#
+# Returns one row:
+#   ?directHeadOnly  — loans booked directly to the named head entity only
+#                      (what a single source system tied to "Acme Holdings" sees)
+#   ?directGroup     — direct loans across the whole ownership group
+#   ?connectedTotal  — direct group loans + contingent guaranties + outside
+#                      loans linked by shared collateral (the true picture)
+#   ?groupLimit      — the credit limit set on the group
+#   ?limitBreached   — connectedTotal > groupLimit ?
+#
+# Each sub-aggregate is an independent subquery that binds ?head itself, so the
+# four numbers are computed over the same group and cross-joined into one row.
+
+PREFIX lens:   <https://lens.example/ontology/>
+PREFIX lensid: <https://lens.example/id/>
+
+SELECT ?directHeadOnly ?directGroup ?connectedTotal ?groupLimit
+       (?connectedTotal > ?groupLimit AS ?limitBreached)
+WHERE {
+  # (a) Direct loans booked to the head entity ONLY
+  {
+    SELECT (COALESCE(SUM(?amt), 0) AS ?directHeadOnly) WHERE {
+      VALUES ?head { lensid:LE-0001 }
+      ?loan lens:borrower ?head ; lens:principalAmount ?amt .
+    }
+  }
+  # (b) Direct loans across the whole ownership group
+  {
+    SELECT (COALESCE(SUM(?amt), 0) AS ?directGroup) WHERE {
+      VALUES ?head { lensid:LE-0001 }
+      ?m lens:isSubsidiaryOf* ?head .
+      ?loan lens:borrower ?m ; lens:principalAmount ?amt .
+    }
+  }
+  # (c) Full connected exposure (distinct source per contribution, no double count)
+  {
+    SELECT (COALESCE(SUM(?amt), 0) AS ?connectedTotal) WHERE {
+      SELECT DISTINCT ?src ?amt WHERE {
+        VALUES ?head { lensid:LE-0001 }
+        {
+          ?src lens:borrower ?m ; lens:principalAmount ?amt .
+          ?m lens:isSubsidiaryOf* ?head .
+        }
+        UNION
+        {
+          ?src lens:guarantor ?m ; lens:guaranteedAmount ?amt .
+          ?m lens:isSubsidiaryOf* ?head .
+        }
+        UNION
+        {
+          ?col lens:securesLoan ?memberLoan , ?src .
+          ?memberLoan lens:borrower ?gm .
+          ?gm lens:isSubsidiaryOf* ?head .
+          FILTER(?memberLoan != ?src)
+          ?src lens:borrower ?extB .
+          FILTER NOT EXISTS { ?extB lens:isSubsidiaryOf* ?head }
+          ?src lens:principalAmount ?amt .
+        }
+      }
+    }
+  }
+  # (d) The group credit limit
+  {
+    SELECT (COALESCE(SUM(?lim), 0) AS ?groupLimit) WHERE {
+      VALUES ?head { lensid:LE-0001 }
+      ?head lens:hasLimit/lens:limitAmount ?lim .
+    }
+  }
+}
