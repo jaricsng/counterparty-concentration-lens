@@ -46,6 +46,21 @@ Local equivalents run via **pre-commit hooks** (`.pre-commit-config.yaml`): ruff
 - **OPA/Rego policies (M3):** authorization expressed as code; tested with policy unit tests (allow/deny cases).
 - **LLM query safety (M4):** generated SPARQL is validated against the known schema and constrained to read-only before execution — never run unverified generated queries.
 
+## Policy as Code
+
+This repo treats **policy as code (PaC)** as a first-class engineering practice — policies are written in a declarative language, version-controlled, peer-reviewed, unit-tested, and deployed through the same pipeline as application code. It appears at **two layers**, deliberately using the **same engine (OPA/Rego)** for consistency:
+
+| Layer | Where | What it governs | Tool |
+|---|---|---|---|
+| Application authorization | **M3** | Who can see which exposures (role/desk/portfolio scoping) | OPA + Rego |
+| Kubernetes admission control | **M6** | What workloads may run (no privileged containers, require resource limits, only scanned/approved images) | OPA **Gatekeeper** |
+
+**Why OPA at both layers (honest scoping):** OPA is a general-purpose policy engine — the *same* Rego skill secures application authorization, Kubernetes admission, CI/CD, and infrastructure. Using OPA in M3 and OPA Gatekeeper in M6 makes "policy as code" a single coherent story across the stack rather than a one-off. This prototype demonstrates **two** of those layers; it does not claim org-wide, multi-environment policy governance — that is the broader pattern this points toward.
+
+**Alternative (named for honesty):** Kyverno is the Kubernetes-native alternative for the M6 admission layer — policies are YAML (no Rego to learn) and it adds mutation/generation. The trade-off is Gatekeeper/Rego gives consistency with the OPA already used in M3 and more expressive logic, while Kyverno is simpler for Kubernetes-only teams. This build chooses **Gatekeeper** for engine consistency; Kyverno is a reasonable swap if you prefer YAML.
+
+**Policy lifecycle (applies to both layers):** policies live in Git, are reviewed in PRs, tested in CI (OPA unit tests for M3; `gator test` against pass/fail fixtures for Gatekeeper constraints in M6), and deployed via GitOps (Argo CD). Use **audit mode** when rolling out new admission policies, then switch to **enforce** once existing violations are cleared.
+
 ## Branch & merge guidance
 
 - Protect `main`: require CI to pass before merge.

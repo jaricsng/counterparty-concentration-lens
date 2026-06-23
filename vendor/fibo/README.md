@@ -24,13 +24,21 @@ obtain it. It is git-ignored via the root `.gitignore`.
 
 ## Why the quickstart bundle (and not per-module files)
 
-CLAUDE.md calls for the **BE, LOAN, FBC/Debt, FND, and Guaranty** modules. FIBO
-ontologies cross-import heavily across domains, so loading individual module
+CLAUDE.md calls for the **BE, LOAN, FBC/Debt, FND, Guaranty and SEC** modules.
+FIBO ontologies cross-import heavily across domains, so loading individual module
 files correctly means resolving a large import closure by hand — fragile and
 error-prone. The EDM Council publishes the **quickstart** precisely to avoid
 this: it is the canonical, self-resolving distribution of all Production-maturity
 modules. It contains every module we need (verified below), so we vendor it as
 the single source of FIBO truth and model against the specific terms we use.
+
+> **On adding SEC (the concentration enhancement):** because we vendor the full
+> Production quickstart, **SEC was already present and its import closure already
+> resolved** — no extra download was needed. We verified the SEC securities +
+> issuance vocabulary loads (595 SEC OWL classes; `fibo-fnd-rel-rel:isIssuedBy`
+> resolvable) and now reference it explicitly. If you prefer per-module SEC
+> files instead of the bundle, that is the only case where the hand-resolved
+> import closure becomes necessary.
 
 ## Modules / namespaces this prototype models against
 
@@ -41,8 +49,9 @@ Confirmed present in the vendored distribution:
 | **Business Entities (BE)** | `BE/LegalEntities/LegalPersons`, `BE/OwnershipAndControl/*`, OMG `Commons/Organizations` | `cmns-org:LegalEntity`, corporate ownership/control |
 | **Foundations (FND)** + OMG Commons | `FND/Parties/Parties`, `FND/Relations/Relations`, `FND/Accounting/CurrencyAmount`, `Commons/PartiesAndSituations`, `Commons/RolesAndCompositions` | `cmns-pts:Party` / `cmns-pts:PartyRole`, `cmns-rlcmp:Role` / `playsRole` / `isPlayedBy`, `fibo-fnd-acc-cur:MonetaryAmount` |
 | **Loan (LOAN)** | `LOAN/LoansGeneral/Loans`, `LOAN/LoansSpecific/*` | `fibo-loan-ln-ln:Loan` |
-| **FBC / Debt & Equities** | `FBC/DebtAndEquities/Debt`, `FBC/FinancialInstruments/FinancialInstruments` | `fibo-fbc-dae-dbt:Borrower` / `Lender` / `Collateral`, `fibo-fbc-fi-fi:DebtInstrument` |
+| **FBC / Debt & Equities** | `FBC/DebtAndEquities/Debt`, `FBC/FinancialInstruments/FinancialInstruments` | `fibo-fbc-dae-dbt:Borrower` / `Lender` / `Collateral`, `fibo-fbc-fi-fi:DebtInstrument` / `Security` / `Issuer` |
 | **Guaranty** (under FBC) | `FBC/DebtAndEquities/Guaranty` | `fibo-fbc-dae-gty:Guaranty`, `fibo-fbc-dae-gty:Guarantor` |
+| **Securities (SEC)** | `SEC/Securities/*` (incl. `SecuritiesIssuance`), with `FND/Relations/Relations` | `fibo-sec-sec-iss:*`, the issuance relation `fibo-fnd-rel-rel:isIssuedBy` — so collateral that is a security has a proper **issuer** (structural wrong-way risk). 595 SEC OWL classes load. |
 
 > Note: in current FIBO the **party/role machinery** (what lets one legal entity
 > play borrower, guarantor, beneficial-owner roles at once) lives in **OMG

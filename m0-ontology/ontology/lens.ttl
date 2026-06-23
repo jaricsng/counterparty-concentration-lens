@@ -28,6 +28,10 @@
 @prefix fibo-dbt:    <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
 @prefix fibo-gty:    <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Guaranty/> .
 @prefix fibo-cur:    <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/> .
+# SEC (Securities) + the FIBO issuance relation — used so collateral that is a
+# security has a proper issuer (see lens:collateralIssuer below).
+@prefix fibo-fi:     <https://spec.edmcouncil.org/fibo/ontology/FBC/FinancialInstruments/FinancialInstruments/> .
+@prefix fibo-rel:    <https://spec.edmcouncil.org/fibo/ontology/FND/Relations/Relations/> .
 
 <https://lens.example/ontology>
     a owl:Ontology ;
@@ -138,3 +142,62 @@ lens:currency a owl:DatatypeProperty ;
     rdfs:label "currency" ;
     rdfs:range  xsd:string ;
     rdfs:comment "ISO 4217 code. Single-currency (SGD) in this synthetic demo to keep the maths legible." .
+
+#################################################################
+#  Concentration-metric extensions (see docs/concentration-metrics.md §2)
+#
+#  These feed the connected-exposure concentration metrics: single-name limit
+#  utilisation (capital/revenue basis), sector & counterparty-type
+#  concentration, and structural wrong-way risk (same-issuer collateral).
+#  Still thin and application-layer: amounts denormalise fibo MonetaryAmount;
+#  the collateral-issuer link is grounded in the FIBO issuance relation.
+#################################################################
+
+# --- Limit basis: capital (lending institution) and revenue (corporate) ---
+
+lens:eligibleCapital a owl:DatatypeProperty ;
+    rdfs:label "eligible capital" ;
+    rdfs:domain cmns-org:LegalEntity ;
+    rdfs:range  xsd:decimal ;
+    rdfs:comment """Regulatory eligible capital of the lending institution. Basis
+        for the single-name limit as a % of capital (e.g. breach > 25%).
+        Convenience denormalisation of a fibo-fnd-acc-cur:MonetaryAmount.""" .
+
+lens:annualRevenue a owl:DatatypeProperty ;
+    rdfs:label "annual revenue" ;
+    rdfs:domain cmns-org:LegalEntity ;
+    rdfs:range  xsd:decimal ;
+    rdfs:comment """Annual revenue of a corporate counterparty. Alternative
+        single-name limit basis as a % of revenue (e.g. breach > 10%).""" .
+
+# --- Classification tags for sector / type concentration ---
+
+lens:sector a owl:DatatypeProperty ;
+    rdfs:label "sector" ;
+    rdfs:domain cmns-org:LegalEntity ;
+    rdfs:range  xsd:string ;
+    rdfs:comment """Industry sector tag (free string in this prototype, e.g.
+        'commercial real estate', 'technology', 'energy'). Used for sector
+        concentration shares.""" .
+
+lens:counterpartyType a owl:DatatypeProperty ;
+    rdfs:label "counterparty type" ;
+    rdfs:domain cmns-org:LegalEntity ;
+    rdfs:range  xsd:string ;
+    rdfs:comment """Counterparty classification. Allowed values (enum): 'bank',
+        'corporate', 'nbfi', 'government'. Drives type concentration and the
+        NBFI-cascade view.""" .
+
+# --- Collateral issuer (for structural wrong-way risk) ---
+
+lens:collateralIssuer a owl:ObjectProperty ;
+    rdfs:label "collateral issuer" ;
+    rdfs:domain fibo-dbt:Collateral ;
+    rdfs:range  cmns-org:LegalEntity ;
+    rdfs:seeAlso fibo-rel:isIssuedBy ;
+    rdfs:comment """The legal entity that issued this collateral (relevant when
+        the collateral is a security, fibo-fbc-fi-fi:Security). Application-layer
+        convenience aligned with the FIBO issuance relation
+        fibo-fnd-rel-rel:isIssuedBy. Structural wrong-way risk arises when the
+        collateral issuer is the same entity/group as the borrower — the
+        collateral evaporates exactly when the name fails.""" .

@@ -30,6 +30,7 @@ Counterparty / lending exposure, modelled on **FIBO** (EDM Council / OMG, OWL 2 
 ### M0 — FIBO model + store + concentration query  (`m0-ontology/`)
 Import the relevant FIBO modules (BE, LOAN, FBC/Debt, FND, Guaranty) into Apache Jena Fuseki. Author a thin **application ontology** that imports FIBO and adds only what's missing for the demo (e.g. an `Exposure` convenience view, a `Limit`). Load synthetic instances: ~15–25 legal entities, some in group/ownership structures; loans; guarantees linking entities; shared collateral; per-counterparty limits.
 **Verify (the money shot):** a SPARQL query that, given a counterparty group, returns **total connected exposure including indirect paths** (guarantees + shared collateral + group ownership) — and show that the number is larger than any single direct-loan view. Show the result rows.
+**Tier-1 additions (see `docs/concentration-metrics.md` §9):** (a) **UBO aggregation** — resolve the ownership/control chain to the ultimate parent and aggregate connected exposure to the UBO (test against a hand-worked chain; guard against ownership loops/double-counting); (b) **limit early-warning bands** — green/amber/red utilisation watchlist on connected exposure (amber/red flag computed in M2 or on read).
 
 ### M1 — Synthetic data + ingestion  (`m1-ingestion/`)
 A generator that emits synthetic source-style tables (loans.csv, entities.csv, guarantees.csv, collateral.csv, limits.csv) as if from separate systems, plus a loader (dbt/DuckDB optional; plain Python fine) that maps rows → FIBO instances → triples in Fuseki, with simple lineage notes.
@@ -37,7 +38,8 @@ A generator that emits synthetic source-style tables (loans.csv, entities.csv, g
 
 ### M2 — Validation & actions  (`m2-actions/`)
 SHACL shapes for business rules (e.g. exposure must not exceed limit; a guarantee must reference two distinct existing entities). FastAPI endpoints for guarded actions: `record-exposure`, `flag-limit-breach` — validate (SHACL) → write (SPARQL Update) → audit log.
-**Verify:** valid action writes + logs; invalid (over-limit, dangling guarantee) is rejected pre-write; audit trail shows who/what/when.
+**Scenario-sandbox actions (support M5 §8, see `docs/concentration-metrics.md`):** guarded create/update/deactivate endpoints for entity, loan, guarantee, collateral, limit — each validated by SHACL and audit-logged; soft-delete = status change (no hard delete); referential-integrity checks on deactivate. These back the interactive app; the UI must write ONLY through these, never direct to Fuseki.
+**Verify:** valid action writes + logs; invalid (over-limit, dangling guarantee) is rejected pre-write; audit trail shows who/what/when; deactivate excludes from metrics but preserves history; writes respect the M3 role.
 
 ### M3 — Dynamic security  (`m3-security/`)
 OPA/Rego policy: roles like `relationship_manager` (own portfolio only) vs `group_risk` (all). API consults OPA and filters the exposure query by portfolio/desk.
@@ -48,12 +50,19 @@ Ollama (e.g. llama3.2) + LangChain: NL question → generated SPARQL over the FI
 **Verify:** ≥3 distinct questions (e.g. "total exposure to the Acme group?", "which counterparties are within 10% of their limit?", "show guarantee chains touching entity X") produce valid SPARQL and correct answers; security respected.
 
 ### M5 — Exposure app (the demo UI)  (`m5-app/`)
-Streamlit: a counterparty search → a **single exposure view** showing direct + indirect exposure, the concentration number, the contributing paths (guarantees/collateral/group), role-scoped (M3), with an action button (flag breach, M2). Optionally embed the M4 query box.
-**Verify:** selecting a counterparty group shows the connected exposure live; the multi-hop contribution is visible; actions work; role scoping visible. **This is the demo screen.**
+Streamlit, interactive (not a static dashboard) — see `docs/concentration-metrics.md` §8 for the full spec.
+- **Dashboard:** single-counterparty exposure view (direct vs connected), contributing paths, and the concentration metrics (single-name, CR₁₀, HHI direct-vs-connected, sector, WWR, NBFI cascade), role-scoped (M3), calm/stressed banner.
+- **Read/explore:** composable **filters** (sector, counterpartyType, exposure band, group, utilisation band, WWR-only); drill-down; sortable top-10; clickable cascade chain; embedded **M4 NL query box** (shows generated SPARQL, read-only, role-filtered).
+- **Scenario Sandbox (guarded CRUD):** add/edit/soft-delete entity, loan, guarantee, collateral, limit — **only via M2 actions** (validate+audit); metrics **recompute live** after each change; audit panel; "reset to calm/stressed". Persistent "Scenario Sandbox — synthetic data" labelling. Writes respect M3 role.
+**Verify:** filters update metrics for the subset; NL question returns correct role-filtered answer; a sandbox-added loan can push connected exposure over a single-name limit with the breach + HHI/CR₁₀ moving live (validated, audited); soft-deleting a guarantee drops connected exposure with audit; reset restores base data; **all writes go through M2 (no direct-to-Fuseki writes in the app)**; role scoping visible. **This is the demo screen.**
 
 ### M6 — Infra & delivery  (`m6-infra/`)  [needs local Docker/k3d]
 Dockerfiles (API, agent, app; Fuseki official image), k8s manifests, k3d cluster, Argo CD Application pointing at the repo.
-**Verify:** components run as pods; Argo CD Synced/Healthy; a Git commit triggers reconcile.
+**Policy as code (admission control):** install **OPA Gatekeeper** (consistent with the OPA/Rego used in M3) and add ConstraintTemplates + Constraints enforcing baseline guardrails — e.g. disallow privileged containers, require resource limits, require images from an approved source / scanned images, require key labels. Store policies in Git; test with `gator test` (pass/fail fixtures) in CI; deploy via Argo CD. Roll out in **audit** mode, then **enforce**. (Kyverno is the YAML-native alternative; Gatekeeper chosen for engine consistency with M3 — see `docs/engineering-practices.md` § Policy as Code.)
+**Verify:** components run as pods; Argo CD Synced/Healthy; a Git commit triggers reconcile; Gatekeeper constraints reject a deliberately non-compliant manifest (e.g. a privileged pod) and `gator test` passes in CI; trivy scan + SBOM produced.
+
+### Capstone — scale & reflect
+Swap M1's loader for an equivalent Spark job (same output, scaled); write the required **"what this is NOT"** statement. That statement must include the **deliberately out-of-scope** counterparty-risk areas listed in `docs/concentration-metrics.md` §10 (PFE/time-series, stress-test shock engine, credit-migration/PD-LGD-EAD/IFRS 9, systemic-contagion metrics, netting/CSA/haircuts) — framed as conscious scoping, not inability. Core framing: the Lens demonstrates **connected, relationship-aware concentration** and consciously excludes time-series, simulation, and full credit-modelling.
 
 ### Repo skeleton files (do early, in M0 or a `chore:` commit)
 - `LICENSE` (MIT), `.gitignore` (`.venv/`, `__pycache__/`, `*.db`, `.env`, dbt `target/`, `vendor/fibo/` large files if desired).
@@ -92,7 +101,7 @@ This prototype is **production-shaped, not production-hardened**: it demonstrate
 **Per-module "done" now also requires:** tests pass, lint/format/type-check clean, CI green, and any new security surface (endpoints, policies, images) covered by the relevant scan/test.
 
 ## Definition of done
-Every module runs from its README and is **tested, linted, type-checked, and green in CI**; the M0→M5 chain demos end-to-end on this machine (the Lens demo screen works on synthetic data and shows multi-hop concentration); M6 deploys to k3d via Argo CD with image scanning + SBOM; the full DevSecOps pipeline (CI, pip-audit, bandit, gitleaks, trivy, SBOM, pre-commit) is wired and passing; clean per-module Conventional-Commit history; FIBO properly vendored and attributed; `SECURITY.md` and `docs/engineering-practices.md` present; README's "what this is / is not" and the "production-shaped, not production-hardened" framing honoured throughout.
+Every module runs from its README and is **tested, linted, type-checked, and green in CI**; the M0→M5 chain demos end-to-end on this machine (the Lens demo screen works on synthetic data and shows multi-hop concentration); M6 deploys to k3d via Argo CD with image scanning + SBOM and **OPA Gatekeeper admission policies (policy-as-code, gator-tested) enforcing baseline guardrails**; the full DevSecOps pipeline (CI, pip-audit, bandit, gitleaks, trivy, SBOM, pre-commit) is wired and passing; clean per-module Conventional-Commit history; FIBO properly vendored and attributed; `SECURITY.md` and `docs/engineering-practices.md` present; README's "what this is / is not" and the "production-shaped, not production-hardened" framing honoured throughout.
 
 ## Tone for any prose in the repo
 Learning-led but reusable. Archegos / BCBS 239 may appear as **public facts explaining why the pattern matters** — never as advice to or a pitch at any institution. No bank named. Nothing claims production-readiness.

@@ -149,9 +149,28 @@ Being precise here is part of the point:
 
 ---
 
+## Datasets & what the numbers mean
+
+The Lens ships with **two synthetic datasets**, both entirely fictional:
+
+- **`calm`** (the default on a fresh clone) — exposures sit within normal risk bands. This is what you see on first run.
+- **`stressed`** (opt-in) — the same entities with exposures **deliberately engineered to breach** risk thresholds (single-name limits, CR₁₀, HHI, sector concentration, an NBFI cascade, a wrong-way-risk case). It exists to demonstrate that the metrics compute correctly and that hidden, connected exposure can breach limits that direct exposure does not.
+
+> The stressed numbers are **illustrative and intentionally engineered** — they are *not* realistic portfolio statistics. The app always shows a banner stating which dataset is loaded. Switching is one command (see below); it never requires editing code.
+
 ## Getting started
 
-See [`docs/lab-handbook.md`](docs/lab-handbook.md). Everything is free and open-source; no cloud account or API key is required. Start with `m0-ontology/` and build up one module at a time.
+Everything is free and open-source; no cloud account or API key is required. A fresh clone loads the **calm** dataset by default.
+
+Quickstart (high level — see [`docs/lab-handbook.md`](docs/lab-handbook.md) and each module's README for detail):
+
+1. Create a virtualenv and `pip install -r requirements-dev.txt` (dev gates) and the module requirements.
+2. Fetch the FIBO modules into `vendor/fibo/` — **BE, LOAN, FBC/Debt, FND, Guaranty, and SEC** (SEC is needed for securities-as-collateral / wrong-way-risk).
+3. Generate and load the **calm** dataset, then stand up Fuseki (see `m1-ingestion/data/README.md` for exact commands).
+4. Launch the app (`m5-app/`) — you'll see the calm dataset and its banner.
+5. To see the concentration metrics breach, switch to the **stressed** dataset (one documented command/flag) and reload — the dashboard moves from green to red.
+
+Build it yourself module by module starting at `m0-ontology/`, or just run the finished stack. See [`docs/concentration-metrics.md`](docs/concentration-metrics.md) for the metric definitions and the calm/stressed design.
 
 ---
 

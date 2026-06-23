@@ -25,6 +25,36 @@ m0-ontology/
 └── tests/                     # unit (rdflib oracle) + integration (live Fuseki, auto-skips)
 ```
 
+### FIBO modules used
+
+This module models against six FIBO domains — **BE, LOAN, FBC/Debt, FND,
+Guaranty, and SEC** — all supplied by the single vendored Production quickstart
+(`../vendor/fibo/`, fetched via `fetch_fibo.sh`). The quickstart is self-resolving,
+so there is no import closure to assemble by hand. **SEC (Securities)** was added
+for the concentration enhancement so that collateral which is a security has a
+proper **issuer** (`fibo-fbc-fi-fi:Security` / `Issuer`, issuance relation
+`fibo-fnd-rel-rel:isIssuedBy`) — the basis for structural wrong-way-risk
+detection. See `../vendor/fibo/README.md`.
+
+### Application-ontology properties (what the model expects)
+
+If you bring your own data, the thin application layer (`ontology/lens.ttl`,
+namespace `https://lens.example/ontology/`) expects these conveniences on top of
+FIBO:
+
+| Property | On | Meaning |
+|---|---|---|
+| `lens:borrower` / `lens:lender` | Loan | role shortcuts over FIBO party/role machinery |
+| `lens:guarantor` / `lens:guaranteedLoan` / `lens:guaranteedAmount` | Guaranty | who guarantees which loan, for how much |
+| `lens:pledgedBy` / `lens:securesLoan` | Collateral | who pledged it; which loan(s) it secures (shared if >1) |
+| `lens:isSubsidiaryOf` | LegalEntity → LegalEntity | ownership/control edge (transitive closure = the group) |
+| `lens:principalAmount` / `lens:limitAmount` | Loan / Limit | amounts (single-currency SGD denormalisation) |
+| `lens:eligibleCapital` | LegalEntity (institution) | single-name limit basis (% of capital) |
+| `lens:annualRevenue` | LegalEntity (corporate) | alternative limit basis (% of revenue) |
+| `lens:sector` | LegalEntity | sector tag (sector concentration) |
+| `lens:counterpartyType` | LegalEntity | enum: `bank` / `corporate` / `nbfi` / `government` |
+| `lens:collateralIssuer` | Collateral → LegalEntity | issuer of security collateral (structural WWR); aligned with `fibo-fnd-rel-rel:isIssuedBy` |
+
 ### How the multi-hop concentration is modelled
 
 A legal entity plays many **roles** (FIBO/OMG-Commons machinery): borrower on
