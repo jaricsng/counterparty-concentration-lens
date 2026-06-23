@@ -1,0 +1,5 @@
+# M4 runtime dependencies. Pinned for reproducibility (prototype).
+# The deterministic template generator needs only rdflib (safety parsing);
+# `requests` talks to an OPTIONAL local Ollama server when present.
+rdflib==7.2.1
+requests==2.34.2
