@@ -147,3 +147,79 @@ def test_deactivating_wwr_collateral_clears_flag(
     assert wrong_way_risk(store)  # present
     service.deactivate(**_kw(subject_id="COL-3002", kind="collateral"))
     assert wrong_way_risk(store) == []
+
+
+# --- security: SPARQL injection is closed off -------------------------------- #
+
+
+def _triple_count(store: InMemoryStore) -> int:
+    return int(store.select("SELECT (COUNT(*) AS ?n) WHERE { ?s ?p ?o }")[0]["n"])
+
+
+def test_injection_subject_in_deactivate_rejected(
+    service: ActionService, store: InMemoryStore
+) -> None:
+    before = _triple_count(store)
+    malicious = "LE-0001> ?p ?o } DELETE { ?s ?p ?o } WHERE { ?s ?p ?o } #"
+    r = service.deactivate(**_kw(subject_id=malicious, kind="entity"))
+    assert not r.accepted and "invalid subject id" in r.reason
+    assert _triple_count(store) == before  # store untouched — no wildcard delete
+
+
+def test_injection_subject_in_update_rejected(service: ActionService, store: InMemoryStore) -> None:
+    before = _triple_count(store)
+    r = service.update_amount(
+        subject_id="LN-1003> ?p ?o } DELETE WHERE { ?s ?p ?o",
+        predicate="principalAmount",
+        new_amount=1,
+        actor="x",
+        role="group_risk",
+    )
+    assert not r.accepted
+    assert _triple_count(store) == before
+
+
+def test_update_unknown_predicate_rejected(service: ActionService) -> None:
+    r = service.update_amount(
+        subject_id="LN-1003", predicate="status", new_amount=1, actor="x", role="group_risk"
+    )
+    assert not r.accepted
+
+
+def test_update_negative_amount_rejected_before_write(
+    service: ActionService, store: InMemoryStore
+) -> None:
+    # The candidate graph is validated before the live store is touched.
+    rows_before = store.select(
+        "PREFIX lens: <https://lens.example/ontology/> "
+        "SELECT ?a WHERE { <https://lens.example/id/LN-1003> lens:principalAmount ?a }"
+    )
+    r = service.update_amount(
+        subject_id="LN-1003",
+        predicate="principalAmount",
+        new_amount=-99,
+        actor="x",
+        role="group_risk",
+    )
+    assert not r.accepted
+    rows_after = store.select(
+        "PREFIX lens: <https://lens.example/ontology/> "
+        "SELECT ?a WHERE { <https://lens.example/id/LN-1003> lens:principalAmount ?a }"
+    )
+    assert rows_before == rows_after  # unchanged
+
+
+def test_update_valid_amount_applied(service: ActionService, store: InMemoryStore) -> None:
+    r = service.update_amount(
+        subject_id="LN-1003",
+        predicate="principalAmount",
+        new_amount=9_000_000,
+        actor="x",
+        role="group_risk",
+    )
+    assert r.accepted
+    rows = store.select(
+        "PREFIX lens: <https://lens.example/ontology/> "
+        "SELECT ?a WHERE { <https://lens.example/id/LN-1003> lens:principalAmount ?a }"
+    )
+    assert rows[0]["a"] == "9000000"

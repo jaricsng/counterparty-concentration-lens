@@ -12,6 +12,7 @@ object. Referential-integrity is guarded on deactivate.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -24,6 +25,21 @@ from .store import InMemoryStore, Store
 from .validation import validate
 
 _PREFIX = "PREFIX lens: <https://lens.example/ontology/>\n"
+
+# Identifiers are interpolated into SPARQL, so they are constrained to a strict
+# safe charset (our ids look like LE-0001 / LN-1003 / GTY-2002 / LIM-LE-0001).
+# Predicates come from a fixed allowlist. Together these close the injection
+# surface: every interpolated piece is from a constrained domain.
+_ID_RE = re.compile(r"^[A-Za-z0-9_\-]+$")
+_AMOUNT_PREDICATES = {"principalAmount", "limitAmount", "guaranteedAmount"}
+_XSD_DECIMAL = "http://www.w3.org/2001/XMLSchema#decimal"
+
+
+def _safe_iri(subject_id: str) -> str | None:
+    """Return the full IRI for a strictly-valid bare id, else None."""
+    if not _ID_RE.match(subject_id):
+        return None
+    return str(G.iri(subject_id))
 
 
 @dataclass(frozen=True)
@@ -119,26 +135,39 @@ class ActionService:
         self, *, subject_id: str, predicate: str, new_amount: int, actor: str, role: str
     ) -> ActionResult:
         """Update a single decimal amount (e.g. a loan principal or a limit)."""
-        subject = str(G.iri(subject_id))
+        payload = {"predicate": predicate, "new_amount": new_amount}
+        subject = _safe_iri(subject_id)
+        if (
+            subject is None
+            or predicate not in _AMOUNT_PREDICATES
+            or not isinstance(new_amount, int)
+        ):
+            reason = "invalid subject id, predicate, or amount"
+            self._audit.record(
+                AuditRecord("update-amount", subject_id, actor, role, "rejected", reason, payload)
+            )
+            return ActionResult(False, "update-amount", subject_id, reason)
+
+        # subject is a validated IRI, predicate is allowlisted, amount is an int.
         update = (
             f"{_PREFIX}DELETE {{ <{subject}> lens:{predicate} ?old }} "
-            f'INSERT {{ <{subject}> lens:{predicate} "{new_amount}"^^'
-            f"<http://www.w3.org/2001/XMLSchema#decimal> }} "
+            f'INSERT {{ <{subject}> lens:{predicate} "{new_amount}"^^<{_XSD_DECIMAL}> }} '
             f"WHERE {{ <{subject}> lens:{predicate} ?old }}"
         )
-        before = self._breach_entities(limit_breaches(self._store))
-        self._store.update(update)
+        # Validate BEFORE touching the live store: apply to a snapshot copy first.
         candidate = self._store.snapshot()
+        candidate.update(update)
         result = validate(candidate, self._shapes)
-        payload = {"predicate": predicate, "new_amount": new_amount}
         if not result.conforms:
-            # Roll back is out of scope for the prototype; record the violation.
             self._audit.record(
                 AuditRecord(
                     "update-amount", subject_id, actor, role, "rejected", result.reason, payload
                 )
             )
             return ActionResult(False, "update-amount", subject_id, result.reason)
+
+        before = self._breach_entities(limit_breaches(self._store))
+        self._store.update(update)
         new_breaches = self._breach_entities(limit_breaches(self._store)) - before
         flags = [f"limit-breach:{e}" for e in sorted(new_breaches)]
         reason = "updated" if not flags else "updated; flagged " + ", ".join(flags)
@@ -152,7 +181,15 @@ class ActionService:
     # --- deactivate (soft-delete) ------------------------------------------- #
 
     def deactivate(self, *, subject_id: str, kind: str, actor: str, role: str) -> ActionResult:
-        subject = str(G.iri(subject_id))
+        subject = _safe_iri(subject_id)
+        if subject is None:
+            reason = "invalid subject id"
+            self._audit.record(
+                AuditRecord(
+                    "deactivate", subject_id, actor, role, "rejected", reason, {"kind": kind}
+                )
+            )
+            return ActionResult(False, "deactivate", subject_id, reason)
         guard = self._referential_guard(subject, kind)
         if guard:
             self._audit.record(
@@ -176,7 +213,11 @@ class ActionService:
         return ActionResult(True, "deactivate", subject_id, reason)
 
     def _referential_guard(self, subject: str, kind: str) -> str | None:
-        """Block deactivating an entity that still backs active exposure."""
+        """Block deactivating an entity that still backs active exposure.
+
+        ``subject`` is a pre-validated IRI (see :func:`_safe_iri`), so it is safe
+        to interpolate into the SELECT.
+        """
         if kind != "entity":
             return None
         q = (

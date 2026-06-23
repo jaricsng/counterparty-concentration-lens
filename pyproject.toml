@@ -59,4 +59,5 @@ markers = [
 filterwarnings = [
     "ignore::DeprecationWarning:pyparsing.*",
     "ignore::DeprecationWarning:rdflib.*",
+    "ignore::DeprecationWarning:starlette.*",
 ]
