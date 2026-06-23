@@ -1,0 +1,33 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# dbt
+target/
+dbt_packages/
+logs/
+
+# Data / DB artifacts (synthetic, regenerable)
+*.db
+*.duckdb
+*.sqlite
+
+# Triplestore local data
+fuseki-data/
+
+# Secrets / env
+.env
+*.key
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Large vendored FIBO files (optional — keep if you prefer linking to source
+# instead of committing the ontology. Remove this line to commit FIBO locally.)
+# vendor/fibo/
+fibo-reasoner-venv/

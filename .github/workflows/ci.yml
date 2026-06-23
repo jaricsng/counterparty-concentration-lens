@@ -1,0 +1,124 @@
+# CI — lint, type, test, security scans, SBOM
+# Runs on every push and pull request. Fails the build on any gate.
+#
+# This is a STARTER. As modules are added, extend the matrix/paths and add
+# per-module test/deploy jobs. The container-scan + SBOM jobs activate once
+# M6 produces Docker images.
+
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Lint, type, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dev tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff black mypy pytest pip-audit bandit
+          # Install module requirements if present (build grows over time)
+          for f in $(find . -name requirements.txt); do pip install -r "$f" || true; done
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Format check (black)
+        run: black --check .
+
+      - name: Type check (mypy)
+        run: mypy . --ignore-missing-imports
+
+      - name: Tests (pytest)
+        run: pytest -q
+
+  security:
+    name: Dependency, SAST, secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # gitleaks needs full history
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install scanners
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit bandit
+
+      - name: Dependency vulnerability scan (pip-audit)
+        run: |
+          # Audit every requirements file; don't fail the whole build on
+          # advisory noise during prototyping — review output instead.
+          for f in $(find . -name requirements.txt); do
+            echo "Auditing $f"; pip-audit -r "$f" || true
+          done
+
+      - name: SAST (bandit)
+        run: bandit -r . -c pyproject.toml || true
+
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+
+  # --- Activates once M6 Docker images exist ---
+  container-scan:
+    name: Container image scan + SBOM
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('m6-infra/docker/**/Dockerfile') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build images (example — adjust to your Dockerfiles)
+        run: |
+          echo "Build each m6-infra image here, e.g.:"
+          echo "docker build -t lens-api:ci m6-infra/docker/api"
+          # Placeholder: real build steps added with M6.
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "table"
+          exit-code: "0"        # report-only during prototyping
+          severity: "CRITICAL,HIGH"
+
+      - name: Generate SBOM (Syft / CycloneDX)
+        uses: anchore/sbom-action@v0
+        with:
+          path: "."
+          format: "cyclonedx-json"
+          output-file: "sbom.cyclonedx.json"
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.cyclonedx.json
+
+# Hardening notes (for when this graduates beyond a prototype):
+# - Flip the `|| true` and `exit-code: 0` to hard failures to truly gate.
+# - Pin action versions by SHA, not tag.
+# - Add branch protection requiring these checks before merge.

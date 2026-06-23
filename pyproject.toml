@@ -1,0 +1,45 @@
+# Project tooling configuration for the Counterparty Concentration Lens.
+# Centralises ruff, black, mypy, bandit, and pytest settings so local
+# pre-commit hooks and CI behave identically.
+
+[project]
+name = "counterparty-concentration-lens"
+version = "0.1.0"
+description = "Learning prototype: standards-based (FIBO) counterparty concentration view. Synthetic data; production-shaped, not production-hardened."
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+# Sensible default rule set; expand as the codebase grows.
+select = ["E", "F", "I", "B", "UP", "S"]  # incl. flake8-bandit (S) basics
+# S101 (assert) is fine in tests; refine per-path if needed.
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101"]   # allow asserts in tests
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+# Tighten over time, e.g. disallow_untyped_defs = true per module.
+
+[tool.bandit]
+# Bandit reads this section (via bandit[toml]).
+exclude_dirs = ["tests", ".venv", "vendor"]
+# B101 = assert_used; skipped because asserts are used in tests.
+skips = ["B101"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["m0-ontology", "m1-ingestion", "m2-actions", "m3-security", "m4-ai", "m5-app"]
+python_files = ["test_*.py", "*_test.py"]

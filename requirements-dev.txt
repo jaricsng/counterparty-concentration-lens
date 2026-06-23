@@ -1,0 +1,32 @@
+# Dev toolchain for the Counterparty Concentration Lens.
+# Install:  pip install -r requirements-dev.txt
+#
+# These are the local quality + security gates that mirror CI and pre-commit.
+# Runtime/module dependencies live in each module's own requirements.txt.
+#
+# Pins use lower bounds (>=) for a prototype so you pick up patch fixes.
+# To FULLY lock for reproducibility, generate a hashed lockfile from this:
+#   pip install pip-tools
+#   pip-compile --generate-hashes -o requirements-dev.lock requirements-dev.txt
+# (or use `uv pip compile`), then install from the .lock in CI.
+
+# --- Orchestration of hooks ---
+pre-commit>=4.0
+
+# --- Lint + format (ruff replaces flake8 + black + isort) ---
+ruff>=0.8
+
+# --- Formatter (kept explicit; CLAUDE.md references black --check.
+#     If you standardise on `ruff format`, you can drop black.) ---
+black>=24.10
+
+# --- Type checking ---
+mypy>=1.13
+
+# --- Tests ---
+pytest>=8.3
+pytest-cov>=6.0
+
+# --- Security ---
+bandit[toml]>=1.8        # SAST; reads config from pyproject.toml
+pip-audit>=2.7           # dependency vulnerability scan

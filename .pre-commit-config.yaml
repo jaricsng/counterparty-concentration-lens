@@ -1,0 +1,56 @@
+# Pre-commit hooks — local quality + security gates
+# Install:  pip install pre-commit && pre-commit install
+# Run all:  pre-commit run --all-files
+#
+# These mirror the CI pipeline so issues are caught before commit.
+# Note: keep tool versions roughly in step with .github/workflows/ci.yml.
+
+repos:
+  # --- General hygiene ---
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ["--maxkb=2048"]
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+
+  # --- Lint + format (Python) ---
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.18
+    hooks:
+      - id: ruff           # lint
+        args: ["--fix"]
+      - id: ruff-format    # format (black-compatible)
+
+  # --- Type checking ---
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.1.0
+    hooks:
+      - id: mypy
+        # add per-module deps here as the build grows, e.g.:
+        # additional_dependencies: ["types-requests"]
+        args: ["--ignore-missing-imports"]
+
+  # --- SAST (Python static security analysis) ---
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.9.4
+    hooks:
+      - id: bandit
+        args: ["-c", "pyproject.toml"]
+        additional_dependencies: ["bandit[toml]"]
+
+  # --- Secret scanning ---
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
+
+# Notes:
+# - ruff replaces black/flake8/isort; ruff-format is the formatter.
+# - bandit reads config from pyproject.toml ([tool.bandit]).
+# - If a hook version warns as outdated, run: pre-commit autoupdate
