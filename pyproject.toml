@@ -33,7 +33,7 @@ warn_unused_ignores = true
 warn_redundant_casts = true
 # Let `mypy .` resolve each module's package (lens_m0, lens_m1, scripts) by directory.
 explicit_package_bases = true
-mypy_path = "m0-ontology:m1-ingestion:m2-actions"
+mypy_path = "m0-ontology:m1-ingestion:m2-actions:m3-security:m4-ai:m5-app"
 # Don't type-check the virtualenv, vendored ontology, or server runtime dirs.
 # `scripts/` and `tests/` are excluded from the aggregate run: each module has a
 # same-named `scripts`/`tests` package (and a `conftest.py`) that mypy cannot
@@ -41,6 +41,14 @@ mypy_path = "m0-ontology:m1-ingestion:m2-actions"
 # which ARE checked; tests still run under pytest.
 exclude = '(^|/)(\.venv|vendor|run|scripts|tests)/|\.fuseki/'
 # Tighten over time, e.g. disallow_untyped_defs = true per module.
+
+# Don't analyse heavy third-party stubs (numpy ships 3.12-syntax stubs that
+# trip mypy under python_version 3.11). Their types degrade to Any, which is
+# fine for the M5 UI layer.
+[[tool.mypy.overrides]]
+module = ["numpy.*", "pandas.*", "streamlit.*", "pyarrow.*"]
+follow_imports = "skip"
+follow_imports_for_stubs = true
 
 [tool.bandit]
 # Bandit reads this section (via bandit[toml]).

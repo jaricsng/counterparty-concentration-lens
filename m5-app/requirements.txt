@@ -1,0 +1,7 @@
+# M5 runtime dependencies. Pinned for reproducibility (prototype).
+# The app wires M0-M4, so their requirements apply too.
+streamlit==1.58.0
+pandas==3.0.3
+pyarrow==24.0.0
+rdflib==7.2.1
+requests==2.34.2
