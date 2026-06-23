@@ -1,0 +1,45 @@
+# NBFI interconnectedness cascade (§3.5): starting from one entity (typically a
+# stressed NBFI), the second-order exposure that becomes the institution's if
+# the entity fails and its links cascade — direct loans PLUS the loans it
+# guarantees PLUS outside loans sharing its collateral.
+#
+# Demo point: direct exposure to the NBFI is small, but the cascade-connected
+# number is large (the Archegos shape). Parameterised by `VALUES ?nbfi { ... }`.
+# Returns one row per contributing path; sum the amounts for the cascade total.
+
+PREFIX lens:   <https://lens.example/ontology/>
+PREFIX lensid: <https://lens.example/id/>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT DISTINCT ?contributionType ?counterparty ?counterpartyName ?amount ?via
+WHERE {
+  VALUES ?nbfi { lensid:LE-0030 }
+
+  {
+    # 1. The NBFI's own direct borrowing
+    ?via lens:borrower ?nbfi ; lens:principalAmount ?amount ; lens:status "active" .
+    BIND("1. direct" AS ?contributionType)
+    BIND(?nbfi AS ?counterparty)
+  }
+  UNION
+  {
+    # 2. Loans the NBFI guarantees (its failure leaves the institution exposed)
+    ?via lens:guarantor ?nbfi ;
+         lens:guaranteedLoan ?gl ;
+         lens:guaranteedAmount ?amount .
+    ?gl lens:borrower ?counterparty .
+    BIND("2. guarantee cascade" AS ?contributionType)
+  }
+  UNION
+  {
+    # 3. Outside loans sharing collateral pledged for an NBFI loan
+    ?via lens:securesLoan ?nl , ?ext .
+    ?nl lens:borrower ?nbfi .
+    FILTER(?nl != ?ext)
+    ?ext lens:borrower ?counterparty ; lens:principalAmount ?amount ; lens:status "active" .
+    FILTER(?counterparty != ?nbfi)
+  }
+
+  OPTIONAL { ?counterparty rdfs:label ?counterpartyName }
+}
+ORDER BY ?contributionType DESC(?amount)

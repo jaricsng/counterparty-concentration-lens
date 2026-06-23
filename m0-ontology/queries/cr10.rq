@@ -1,0 +1,64 @@
+# Top-10 concentration ratio (CR10) — DIRECT vs CONNECTED.
+#
+# CR10 = sum(top 10 exposures) / sum(all exposures)  (§3.2), over the per-name
+# exposure vector (direct = per borrower; connected = per risk-owner).
+# The demo point: connected CR10 breaches 60% where direct stays acceptable.
+
+PREFIX lens: <https://lens.example/ontology/>
+
+SELECT (?directTop / ?directTotal AS ?directCR10)
+       (?connTop / ?connTotal AS ?connectedCR10)
+WHERE {
+  # --- direct: top 10 / total, per immediate borrower ---
+  {
+    SELECT (SUM(?e) AS ?directTop) WHERE {
+      SELECT ?b (SUM(?amt) AS ?e) WHERE {
+        ?loan lens:borrower ?b ; lens:principalAmount ?amt ; lens:status "active" .
+      }
+      GROUP BY ?b ORDER BY DESC(?e) LIMIT 10
+    }
+  }
+  {
+    SELECT (SUM(?e) AS ?directTotal) WHERE {
+      SELECT ?b (SUM(?amt) AS ?e) WHERE {
+        ?loan lens:borrower ?b ; lens:principalAmount ?amt ; lens:status "active" .
+      }
+      GROUP BY ?b
+    }
+  }
+  # --- connected: top 10 / total, per risk-owner ---
+  {
+    SELECT (SUM(?e) AS ?connTop) WHERE {
+      SELECT ?owner (SUM(?amt) AS ?e) WHERE {
+        ?loan lens:borrower ?b ; lens:principalAmount ?amt ; lens:status "active" .
+        ?b lens:isSubsidiaryOf* ?bubo .
+        FILTER NOT EXISTS { ?bubo lens:isSubsidiaryOf ?bAnyParent }
+        OPTIONAL {
+          ?g lens:guaranteedLoan ?loan ; lens:guarantor ?gtor .
+          ?gtor lens:isSubsidiaryOf* ?gubo .
+          FILTER NOT EXISTS { ?gubo lens:isSubsidiaryOf ?gAnyParent }
+          FILTER(?gubo != ?bubo)
+        }
+        BIND(COALESCE(?gubo, ?bubo) AS ?owner)
+      }
+      GROUP BY ?owner ORDER BY DESC(?e) LIMIT 10
+    }
+  }
+  {
+    SELECT (SUM(?e) AS ?connTotal) WHERE {
+      SELECT ?owner (SUM(?amt) AS ?e) WHERE {
+        ?loan lens:borrower ?b ; lens:principalAmount ?amt ; lens:status "active" .
+        ?b lens:isSubsidiaryOf* ?bubo .
+        FILTER NOT EXISTS { ?bubo lens:isSubsidiaryOf ?bAnyParent }
+        OPTIONAL {
+          ?g lens:guaranteedLoan ?loan ; lens:guarantor ?gtor .
+          ?gtor lens:isSubsidiaryOf* ?gubo .
+          FILTER NOT EXISTS { ?gubo lens:isSubsidiaryOf ?gAnyParent }
+          FILTER(?gubo != ?bubo)
+        }
+        BIND(COALESCE(?gubo, ?bubo) AS ?owner)
+      }
+      GROUP BY ?owner
+    }
+  }
+}

@@ -1,0 +1,26 @@
+# Structural Wrong-Way Risk (§3.6): collateral issued by the SAME GROUP as the
+# borrower it secures — collateral that evaporates exactly when the name fails.
+#
+# This is a STRUCTURAL proxy (same issuer/group), not correlation-based WWR.
+# A flag = a loan whose collateral's issuer rolls up to the same ultimate parent
+# as the loan's borrower.
+
+PREFIX lens: <https://lens.example/ontology/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?loan ?borrower ?borrowerName ?collateral ?issuer ?issuerName ?group
+WHERE {
+  ?collateral lens:collateralIssuer ?issuer ;
+              lens:securesLoan ?loan .
+  ?loan lens:borrower ?borrower ; lens:status "active" .
+
+  # Borrower's ultimate parent.
+  ?borrower lens:isSubsidiaryOf* ?group .
+  FILTER NOT EXISTS { ?group lens:isSubsidiaryOf ?bAnyParent }
+
+  # Issuer's ultimate parent must be the SAME group.
+  ?issuer lens:isSubsidiaryOf* ?group .
+
+  OPTIONAL { ?borrower rdfs:label ?borrowerName }
+  OPTIONAL { ?issuer rdfs:label ?issuerName }
+}

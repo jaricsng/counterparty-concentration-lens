@@ -1,0 +1,36 @@
+# Connected exposure per RISK-OWNER (each active loan attributed exactly once).
+#
+# Risk-owner attribution (docs/concentration-metrics.md §3): a loan's exposure
+# lands on the guarantor's ultimate parent where the loan is guaranteed by a
+# DIFFERENT group, otherwise on the borrower's ultimate parent. This avoids
+# double-counting and is the basis for the portfolio metrics (HHI / CR10 /
+# sector). The ultimate parent is the top of the lens:isSubsidiaryOf chain
+# (the ancestor with no parent of its own).
+#
+# Assumes at most one guarantee per loan (true for the synthetic data).
+
+PREFIX lens: <https://lens.example/ontology/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?owner ?ownerName (SUM(?amt) AS ?exposure)
+WHERE {
+  ?loan lens:borrower ?b ;
+        lens:principalAmount ?amt ;
+        lens:status "active" .
+
+  # Borrower's ultimate parent (UBO).
+  ?b lens:isSubsidiaryOf* ?bubo .
+  FILTER NOT EXISTS { ?bubo lens:isSubsidiaryOf ?bAnyParent }
+
+  # If guaranteed by a different group, risk lands on the guarantor's UBO.
+  OPTIONAL {
+    ?g lens:guaranteedLoan ?loan ; lens:guarantor ?gtor .
+    ?gtor lens:isSubsidiaryOf* ?gubo .
+    FILTER NOT EXISTS { ?gubo lens:isSubsidiaryOf ?gAnyParent }
+    FILTER(?gubo != ?bubo)
+  }
+  BIND(COALESCE(?gubo, ?bubo) AS ?owner)
+  OPTIONAL { ?owner rdfs:label ?ownerName }
+}
+GROUP BY ?owner ?ownerName
+ORDER BY DESC(?exposure)

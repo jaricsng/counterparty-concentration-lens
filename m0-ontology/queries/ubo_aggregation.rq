@@ -1,0 +1,60 @@
+# UBO aggregation (§9.1): resolve a counterparty to its Ultimate Beneficial
+# Owner and show connected exposure aggregated to the UBO vs each member's own
+# limit. The Archegos lesson: the UBO breaches a limit that no single
+# subsidiary does.
+#
+# Parameterised by any group member via `VALUES ?cp { ... }` (a subsidiary is
+# fine — it is resolved up to the UBO). Returns one row per member that has a
+# limit, with its connected exposure, limit, band, and an isUBO flag.
+
+PREFIX lens:   <https://lens.example/ontology/>
+PREFIX lensid: <https://lens.example/id/>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?member ?memberName ?isUBO ?connected ?limit
+       (?connected / ?limit AS ?utilisation)
+       (IF(?connected >= ?limit, "red",
+          IF(?connected >= 0.75 * ?limit, "amber", "green")) AS ?band)
+WHERE {
+  VALUES ?cp { lensid:LE-0021 }
+
+  # Resolve the input counterparty up to its ultimate parent.
+  ?cp lens:isSubsidiaryOf* ?ubo .
+  FILTER NOT EXISTS { ?ubo lens:isSubsidiaryOf ?uboParent }
+
+  # Every member of that UBO's group that carries a limit.
+  ?member lens:isSubsidiaryOf* ?ubo .
+  ?member lens:hasLimit/lens:limitAmount ?limit .
+  BIND(IF(?member = ?ubo, true, false) AS ?isUBO)
+  OPTIONAL { ?member rdfs:label ?memberName }
+
+  {
+    SELECT ?member (SUM(?contrib) AS ?connected) WHERE {
+      SELECT DISTINCT ?member ?src ?contrib WHERE {
+        ?member lens:hasLimit ?anyLimit .
+        {
+          ?m lens:isSubsidiaryOf* ?member .
+          ?src lens:borrower ?m ; lens:principalAmount ?contrib ; lens:status "active" .
+        }
+        UNION
+        {
+          ?m lens:isSubsidiaryOf* ?member .
+          ?src lens:guarantor ?m ; lens:guaranteedAmount ?contrib ; lens:guaranteedLoan ?gl .
+          ?gl lens:borrower ?gb .
+          FILTER NOT EXISTS { ?gb lens:isSubsidiaryOf* ?member }
+        }
+        UNION
+        {
+          ?col lens:securesLoan ?ml , ?src .
+          ?ml lens:borrower ?mb . ?mb lens:isSubsidiaryOf* ?member .
+          FILTER(?ml != ?src)
+          ?src lens:borrower ?eb .
+          FILTER NOT EXISTS { ?eb lens:isSubsidiaryOf* ?member }
+          ?src lens:principalAmount ?contrib .
+        }
+      }
+    }
+    GROUP BY ?member
+  }
+}
+ORDER BY DESC(?isUBO) DESC(?utilisation)

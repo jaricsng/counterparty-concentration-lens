@@ -1,0 +1,38 @@
+# Herfindahl-Hirschman Index (fractional, 0..1) — DIRECT vs CONNECTED.
+#
+# HHI = sum_i (exposure_i / total)^2  (docs/concentration-metrics.md §3.3).
+# Computed as SUM(e^2) / SUM(e)^2 over the per-name exposure vector.
+#   * direct    — exposure per immediate borrower (no roll-up, no attribution)
+#   * connected — exposure per risk-owner (see connected_exposure_by_owner.rq)
+# The demo point: connected HHI breaches 0.18 where direct stays well below.
+
+PREFIX lens: <https://lens.example/ontology/>
+
+SELECT ?directHHI ?connectedHHI
+WHERE {
+  {
+    SELECT (SUM(?e * ?e) / (SUM(?e) * SUM(?e)) AS ?directHHI) WHERE {
+      SELECT ?b (SUM(?amt) AS ?e) WHERE {
+        ?loan lens:borrower ?b ; lens:principalAmount ?amt ; lens:status "active" .
+      }
+      GROUP BY ?b
+    }
+  }
+  {
+    SELECT (SUM(?e * ?e) / (SUM(?e) * SUM(?e)) AS ?connectedHHI) WHERE {
+      SELECT ?owner (SUM(?amt) AS ?e) WHERE {
+        ?loan lens:borrower ?b ; lens:principalAmount ?amt ; lens:status "active" .
+        ?b lens:isSubsidiaryOf* ?bubo .
+        FILTER NOT EXISTS { ?bubo lens:isSubsidiaryOf ?bAnyParent }
+        OPTIONAL {
+          ?g lens:guaranteedLoan ?loan ; lens:guarantor ?gtor .
+          ?gtor lens:isSubsidiaryOf* ?gubo .
+          FILTER NOT EXISTS { ?gubo lens:isSubsidiaryOf ?gAnyParent }
+          FILTER(?gubo != ?bubo)
+        }
+        BIND(COALESCE(?gubo, ?bubo) AS ?owner)
+      }
+      GROUP BY ?owner
+    }
+  }
+}

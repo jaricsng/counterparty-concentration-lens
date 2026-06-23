@@ -1,0 +1,50 @@
+# Limit early-warning watchlist (§9.2): single-name utilisation bands on
+# CONNECTED exposure, for every entity that has a limit.
+#
+#   green  < 75% of limit   ·   amber 75-100%   ·   red >= 100% (breached)
+#
+# Connected exposure per entity = direct loans to its group members
+#   + guarantees its members GIVE over outside loans
+#   + outside loans SHARING collateral with a member loan
+# (the M0 connected-exposure definition; DISTINCT source guards double-counting).
+
+PREFIX lens: <https://lens.example/ontology/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?entity ?entityName ?connected ?limit
+       (?connected / ?limit AS ?utilisation)
+       (IF(?connected >= ?limit, "red",
+          IF(?connected >= 0.75 * ?limit, "amber", "green")) AS ?band)
+WHERE {
+  ?entity lens:hasLimit/lens:limitAmount ?limit .
+  OPTIONAL { ?entity rdfs:label ?entityName }
+  {
+    SELECT ?entity (SUM(?contrib) AS ?connected) WHERE {
+      SELECT DISTINCT ?entity ?src ?contrib WHERE {
+        ?entity lens:hasLimit ?anyLimit .
+        {
+          ?m lens:isSubsidiaryOf* ?entity .
+          ?src lens:borrower ?m ; lens:principalAmount ?contrib ; lens:status "active" .
+        }
+        UNION
+        {
+          ?m lens:isSubsidiaryOf* ?entity .
+          ?src lens:guarantor ?m ; lens:guaranteedAmount ?contrib ; lens:guaranteedLoan ?gl .
+          ?gl lens:borrower ?gb .
+          FILTER NOT EXISTS { ?gb lens:isSubsidiaryOf* ?entity }
+        }
+        UNION
+        {
+          ?col lens:securesLoan ?ml , ?src .
+          ?ml lens:borrower ?mb . ?mb lens:isSubsidiaryOf* ?entity .
+          FILTER(?ml != ?src)
+          ?src lens:borrower ?eb .
+          FILTER NOT EXISTS { ?eb lens:isSubsidiaryOf* ?entity }
+          ?src lens:principalAmount ?contrib .
+        }
+      }
+    }
+    GROUP BY ?entity
+  }
+}
+ORDER BY DESC(?utilisation)

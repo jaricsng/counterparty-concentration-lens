@@ -27,8 +27,20 @@ def set_group_head(query: str, head_iri: str) -> str:
     Raises:
         ValueError: if the query has no ``VALUES ?head { ... }`` to substitute.
     """
-    replacement = f"VALUES ?head {{ <{head_iri}> }}"
-    new_query, count = _VALUES_HEAD_RE.subn(replacement, query)
+    return set_values(query, "head", head_iri)
+
+
+def set_values(query: str, var: str, iri: str) -> str:
+    """Bind a ``VALUES ?<var> { ... }`` clause to a single IRI.
+
+    Lets the metric queries be parameterised by a counterparty / NBFI without
+    editing the query text.
+
+    Raises:
+        ValueError: if the query has no ``VALUES ?<var> { ... }`` clause.
+    """
+    pattern = re.compile(r"VALUES\s+\?" + re.escape(var) + r"\s*\{[^}]*\}")
+    new_query, count = pattern.subn(f"VALUES ?{var} {{ <{iri}> }}", query)
     if count == 0:
-        raise ValueError("query has no `VALUES ?head { ... }` clause to parameterise")
+        raise ValueError(f"query has no `VALUES ?{var} {{ ... }}` clause to parameterise")
     return new_query

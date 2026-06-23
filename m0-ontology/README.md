@@ -18,10 +18,17 @@ m0-ontology/
 ├── ontology/lens.ttl          # thin application ontology (imports FIBO; adds Exposure/Limit + role shortcuts)
 ├── data/instances.ttl         # ~17 synthetic legal entities, loans, guaranties, collateral, a limit
 ├── queries/
-│   ├── direct_vs_connected.rq # headline: single-source vs group vs connected exposure + limit breach
-│   └── concentration_breakdown.rq # every contributing multi-hop path
-├── lens_m0/                   # typed Python package (config, query loader, rdflib + Fuseki backends)
-├── scripts/                   # start_fuseki.sh, load_data.py, run_money_shot.py
+│   ├── direct_vs_connected.rq      # headline: single-source vs group vs connected + limit breach
+│   ├── concentration_breakdown.rq  # every contributing multi-hop path
+│   ├── connected_exposure_by_owner.rq  # risk-owner attributed exposure vector
+│   ├── hhi.rq · cr10.rq            # portfolio concentration, direct vs connected (§3.2/3.3)
+│   ├── sector_concentration.rq     # sector shares of connected exposure (§3.4)
+│   ├── wrong_way_risk.rq           # same-issuer-collateral structural WWR (§3.6)
+│   ├── nbfi_cascade.rq             # second-order exposure from a stressed NBFI (§3.5)
+│   ├── ubo_aggregation.rq          # resolve to UBO; breach the subs don't (§9.1)
+│   └── watchlist.rq                # single-name utilisation bands green/amber/red (§9.2)
+├── lens_m0/                   # typed Python package (config, query loaders, rdflib + Fuseki backends)
+├── scripts/                   # start_fuseki.sh, load_data.py, run_money_shot.py, show_concentration.py
 └── tests/                     # unit (rdflib oracle) + integration (live Fuseki, auto-skips)
 ```
 
@@ -109,6 +116,29 @@ by **shared collateral** (+1,500,000) — none of which a single loan table show
 
 You can also open the Fuseki UI at <http://localhost:3030/#/dataset/lens/query>
 and paste either `.rq` file.
+
+## Concentration metrics (§3 / §9)
+
+The `queries/` folder also holds the full concentration-metric suite, run on the
+richer **M1** datasets. Load a dataset (calm or stressed) via M1, then print all
+metrics:
+
+```bash
+(cd ../m1-ingestion && python -m scripts.load_data --dataset stressed)
+python -m scripts.show_concentration
+```
+
+On **stressed** this shows: HHI 0.044→**0.187** and CR₁₀ 55%→**92%**
+(direct vs connected); financial-services sector **52%**; a watchlist of 3 red +
+4 amber names; the **Vortex UBO** breaching (24M/20M) while no subsidiary does;
+the **Nimbus** NBFI cascade (direct 5M → **47M** connected); and one structural
+**wrong-way-risk** flag (Helios bond). On **calm** every metric sits in band.
+
+Each metric has its own `.rq` (runnable in the Fuseki UI) and is validated
+against the M1 Python oracle in `tests/test_metrics_queries.py`. The portfolio
+metrics use **risk-owner attribution** (each loan counted once); single-name
+utilisation / cascade / UBO use the **connected-exposure** overlap model — see
+`../m1-ingestion/lens_m1/metrics.py`.
 
 ## Test
 
