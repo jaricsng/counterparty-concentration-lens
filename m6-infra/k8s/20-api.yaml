@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: lens-demo
+  labels:
+    app.kubernetes.io/part-of: counterparty-concentration-lens
+    app.kubernetes.io/name: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: counterparty-concentration-lens
+        app.kubernetes.io/name: api
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: api
+          image: lens/api:0.1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: FUSEKI_BASE_URL
+              value: "http://fuseki:3030"
+          ports:
+            - containerPort: 8000
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: lens-demo
+  labels:
+    app.kubernetes.io/part-of: counterparty-concentration-lens
+spec:
+  selector:
+    app.kubernetes.io/name: api
+  ports:
+    - port: 8000
+      targetPort: 8000

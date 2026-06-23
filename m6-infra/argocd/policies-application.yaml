@@ -1,0 +1,24 @@
+# Argo CD Application — the Gatekeeper policies (ConstraintTemplates +
+# Constraints), deployed by GitOps. Keeps policy-as-code in the same GitOps flow
+# as the workloads. The Gatekeeper controller itself is installed by setup.sh.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: lens-policies
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/your-org/counterparty-concentration-lens.git
+    targetRevision: main
+    path: m6-infra/policies
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gatekeeper-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    # Constraints depend on the CRDs the templates generate; let Argo retry.
+    retry:
+      limit: 5

@@ -82,35 +82,45 @@ jobs:
         env:
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
 
-  # --- Activates once M6 Docker images exist ---
+  # --- M6: admission policy-as-code unit tests (gator) ---
+  policy:
+    name: Gatekeeper policy tests (gator)
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('m6-infra/policies/tests/suite.yaml') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install gator
+        run: |
+          GK=v3.22.2
+          curl -fsSL -o gator.tgz \
+            "https://github.com/open-policy-agent/gatekeeper/releases/download/${GK}/gator-${GK}-linux-amd64.tar.gz"
+          tar -xzf gator.tgz gator && sudo install gator /usr/local/bin/gator
+      - name: gator verify (admission policies)
+        run: gator verify m6-infra/policies/tests/suite.yaml
+
+  # --- M6: build images, scan, SBOM ---
   container-scan:
     name: Container image scan + SBOM
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('m6-infra/docker/**/Dockerfile') != '' }}
+    if: ${{ hashFiles('m6-infra/docker/**/*.Dockerfile') != '' }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build images (example — adjust to your Dockerfiles)
-        run: |
-          echo "Build each m6-infra image here, e.g.:"
-          echo "docker build -t lens-api:ci m6-infra/docker/api"
-          # Placeholder: real build steps added with M6.
+      - name: Build the API image
+        run: docker build -f m6-infra/docker/api.Dockerfile -t lens/api:ci .
 
-      - name: Trivy image scan
+      - name: Trivy image scan (report-only during prototyping)
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          scan-type: "fs"
-          scan-ref: "."
+          image-ref: "lens/api:ci"
           format: "table"
-          exit-code: "0"        # report-only during prototyping
+          exit-code: "0" # report-only; flip to 1 to gate
           severity: "CRITICAL,HIGH"
+          scanners: "vuln"
 
-      - name: Generate SBOM (Syft / CycloneDX)
-        uses: anchore/sbom-action@v0
-        with:
-          path: "."
-          format: "cyclonedx-json"
-          output-file: "sbom.cyclonedx.json"
+      - name: Generate SBOM (CycloneDX) with Trivy
+        run: |
+          trivy image --format cyclonedx --output sbom.cyclonedx.json lens/api:ci || true
 
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4

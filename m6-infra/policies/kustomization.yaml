@@ -1,0 +1,14 @@
+# Gatekeeper ConstraintTemplates + Constraints for GitOps (Argo CD) deployment.
+# The gator test suite under tests/ is intentionally excluded (it is not a
+# cluster resource).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - templates/disallow-privileged.yaml
+  - templates/require-resource-limits.yaml
+  - templates/allowed-repos.yaml
+  - templates/required-labels.yaml
+  - constraints/disallow-privileged.yaml
+  - constraints/require-resource-limits.yaml
+  - constraints/required-labels.yaml
+  - constraints/allowed-repos.yaml

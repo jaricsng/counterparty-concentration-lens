@@ -13,6 +13,9 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+        # k8s manifests bundle Deployment+Service; Gatekeeper templates embed
+        # Rego under custom CRDs that the strict schema check can't resolve.
+        args: ["--allow-multiple-documents", "--unsafe"]
       - id: check-added-large-files
         args: ["--maxkb=2048"]
       - id: check-merge-conflict

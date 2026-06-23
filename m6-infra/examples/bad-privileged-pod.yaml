@@ -1,0 +1,15 @@
+# A deliberately NON-COMPLIANT pod: privileged, no resource limits, image from an
+# unapproved repo, and missing the required label. Used to demonstrate that
+# Gatekeeper rejects it on admission (it is NOT part of the deployed kustomize set).
+#   kubectl apply -f m6-infra/examples/bad-privileged-pod.yaml   # -> denied
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rogue
+  namespace: lens-demo
+spec:
+  containers:
+    - name: rogue
+      image: evil.example/cryptominer:latest
+      securityContext:
+        privileged: true

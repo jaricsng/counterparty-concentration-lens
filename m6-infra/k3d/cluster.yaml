@@ -1,0 +1,13 @@
+# k3d cluster config for the local demo.
+#   k3d cluster create --config m6-infra/k3d/cluster.yaml
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: lens
+servers: 1
+agents: 1
+ports:
+  # Expose the Streamlit app NodePort (40-app.yaml) on the host.
+  - port: 8501:30085
+    nodeFilters:
+      - loadbalancer

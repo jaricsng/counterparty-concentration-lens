@@ -1,0 +1,12 @@
+.git
+.venv
+.tools
+**/__pycache__
+**/.pytest_cache
+**/*.pyc
+vendor/fibo/*.ttl
+m0-ontology/.fuseki
+m0-ontology/run
+m2-actions/audit
+*.md
+m1-ingestion/data

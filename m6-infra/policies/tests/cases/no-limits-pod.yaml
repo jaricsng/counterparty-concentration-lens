@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: no-limits
+  namespace: lens-demo
+  labels:
+    app.kubernetes.io/part-of: counterparty-concentration-lens
+spec:
+  containers:
+    - name: app
+      image: lens/app:0.1.0
+      securityContext:
+        privileged: false

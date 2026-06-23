@@ -1,0 +1,23 @@
+# Argo CD Application — the Lens workloads, deployed by GitOps from this repo.
+# Set spec.source.repoURL to your fork's URL. A git commit to m6-infra/k8s then
+# triggers Argo CD to reconcile the cluster to match.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: lens-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/your-org/counterparty-concentration-lens.git
+    targetRevision: main
+    path: m6-infra/k8s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: lens-demo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

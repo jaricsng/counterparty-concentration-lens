@@ -1,0 +1,39 @@
+# Admission policy as code: container images must come from approved repos
+# (a stand-in for "only scanned / approved images run").
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8sallowedrepos
+  annotations:
+    description: Container images must start with an approved repository prefix.
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sAllowedRepos
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            repos:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8sallowedrepos
+
+        all_containers[c] {
+          c := input.review.object.spec.template.spec.containers[_]
+        }
+        all_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+        violation[{"msg": msg}] {
+          c := all_containers[_]
+          satisfied := [good | repo := input.parameters.repos[_]; good := startswith(c.image, repo)]
+          not any(satisfied)
+          msg := sprintf("image %v is not from an approved repo %v", [c.image, input.parameters.repos])
+        }

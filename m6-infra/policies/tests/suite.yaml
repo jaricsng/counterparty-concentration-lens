@@ -1,0 +1,56 @@
+# gator test suite — unit tests for the admission policies (run in CI).
+#   gator test -f m6-infra/policies   (auto-discovers this Suite)
+apiVersion: test.gatekeeper.sh/v1alpha1
+kind: Suite
+tests:
+  - name: disallow-privileged
+    template: ../templates/disallow-privileged.yaml
+    constraint: ../constraints/disallow-privileged.yaml
+    cases:
+      - name: rejects-privileged
+        object: cases/privileged-pod.yaml
+        assertions:
+          - violations: yes
+      - name: allows-compliant
+        object: cases/compliant-pod.yaml
+        assertions:
+          - violations: no
+
+  - name: require-resource-limits
+    template: ../templates/require-resource-limits.yaml
+    constraint: ../constraints/require-resource-limits.yaml
+    cases:
+      - name: rejects-missing-limits
+        object: cases/no-limits-pod.yaml
+        assertions:
+          - violations: yes
+      - name: allows-compliant
+        object: cases/compliant-pod.yaml
+        assertions:
+          - violations: no
+
+  - name: allowed-repos
+    template: ../templates/allowed-repos.yaml
+    constraint: ../constraints/allowed-repos.yaml
+    cases:
+      - name: rejects-unapproved-image
+        object: cases/bad-repo-pod.yaml
+        assertions:
+          - violations: yes
+      - name: allows-approved-image
+        object: cases/compliant-pod.yaml
+        assertions:
+          - violations: no
+
+  - name: required-labels
+    template: ../templates/required-labels.yaml
+    constraint: ../constraints/required-labels.yaml
+    cases:
+      - name: rejects-missing-label
+        object: cases/no-label-pod.yaml
+        assertions:
+          - violations: yes
+      - name: allows-labelled
+        object: cases/compliant-pod.yaml
+        assertions:
+          - violations: no

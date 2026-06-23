@@ -41,3 +41,8 @@ m0-ontology/run/
 
 # M2 audit log (runtime artifact)
 m2-actions/audit/
+
+# M6 local tooling / build artifacts
+.tools/
+sbom*.json
+*.tgz

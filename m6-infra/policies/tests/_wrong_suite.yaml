@@ -1,0 +1,11 @@
+apiVersion: test.gatekeeper.sh/v1alpha1
+kind: Suite
+tests:
+  - name: privileged-should-be-clean-WRONG
+    template: ../templates/disallow-privileged.yaml
+    constraint: ../constraints/disallow-privileged.yaml
+    cases:
+      - name: wrong-expectation
+        object: cases/privileged-pod.yaml
+        assertions:
+          - violations: no

@@ -1,0 +1,32 @@
+# Admission policy as code: every container must declare cpu + memory limits.
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8scontainerlimits
+  annotations:
+    description: Require cpu and memory resource limits on every container.
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sContainerLimits
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8scontainerlimits
+
+        all_containers[c] {
+          c := input.review.object.spec.template.spec.containers[_]
+        }
+        all_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+        required := ["cpu", "memory"]
+
+        violation[{"msg": msg}] {
+          c := all_containers[_]
+          t := required[_]
+          not c.resources.limits[t]
+          msg := sprintf("container %v is missing a %v resource limit", [c.name, t])
+        }
