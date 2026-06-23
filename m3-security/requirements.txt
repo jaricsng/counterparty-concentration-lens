@@ -1,0 +1,5 @@
+# M3 has no third-party Python dependencies — the policy is evaluated by the
+# external OPA binary (a prerequisite), and the wrapper uses only the stdlib.
+#
+# Install OPA:  https://www.openpolicyagent.org/docs/latest/#running-opa
+#   macOS:  brew install opa
