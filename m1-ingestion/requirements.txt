@@ -1,0 +1,4 @@
+# M1 runtime dependencies. Pinned for reproducibility (prototype).
+# Dev/quality tooling lives in the repo-root requirements-dev.txt.
+rdflib==7.2.1
+requests==2.34.2

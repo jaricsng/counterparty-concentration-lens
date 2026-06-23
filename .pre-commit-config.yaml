@@ -35,6 +35,9 @@ repos:
         # add per-module deps here as the build grows, e.g.:
         # additional_dependencies: ["types-requests"]
         args: ["--ignore-missing-imports"]
+        # Each module has same-named `scripts`/`tests` packages mypy can't
+        # disambiguate; logic is in the typed lens_* packages.
+        exclude: '(^|/)(scripts|tests)/'
 
   # --- SAST (Python static security analysis) ---
   - repo: https://github.com/PyCQA/bandit

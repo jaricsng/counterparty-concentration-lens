@@ -31,11 +31,15 @@ python_version = "3.11"
 ignore_missing_imports = true
 warn_unused_ignores = true
 warn_redundant_casts = true
-# Let `mypy .` resolve each module's package (lens_m0, scripts) by directory.
+# Let `mypy .` resolve each module's package (lens_m0, lens_m1, scripts) by directory.
 explicit_package_bases = true
-mypy_path = "m0-ontology"
+mypy_path = "m0-ontology:m1-ingestion"
 # Don't type-check the virtualenv, vendored ontology, or server runtime dirs.
-exclude = '(^|/)(\.venv|vendor|run)/|\.fuseki/'
+# `scripts/` and `tests/` are excluded from the aggregate run: each module has a
+# same-named `scripts`/`tests` package (and a `conftest.py`) that mypy cannot
+# disambiguate in one invocation. The typed logic lives in the lens_* packages,
+# which ARE checked; tests still run under pytest.
+exclude = '(^|/)(\.venv|vendor|run|scripts|tests)/|\.fuseki/'
 # Tighten over time, e.g. disallow_untyped_defs = true per module.
 
 [tool.bandit]
