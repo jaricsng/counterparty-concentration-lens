@@ -1,0 +1,122 @@
+# SHACL shapes — data-quality / business rules as code (M2).
+#
+# These guard every write: a candidate graph (current data + proposed triples)
+# must conform before anything is committed. They enforce structural integrity
+# and referential existence (sh:class fails on a dangling reference because the
+# referenced node has no type in the graph).
+#
+# The connected single-name LIMIT-BREACH rule is NOT here — it is a derived
+# check (multi-hop aggregation) computed in SPARQL by the action layer, because
+# a breach is FLAGGED (audited) rather than rejected, so the sandbox can push a
+# name over its limit and watch the metrics move.
+
+@prefix sh:         <http://www.w3.org/ns/shacl#> .
+@prefix xsd:        <http://www.w3.org/2001/XMLSchema#> .
+@prefix lens-sh:    <https://lens.example/shapes/> .
+@prefix lens:       <https://lens.example/ontology/> .
+@prefix cmns-org:   <https://www.omg.org/spec/Commons/Organizations/> .
+@prefix fibo-loan:  <https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/> .
+@prefix fibo-gty:   <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Guaranty/> .
+@prefix fibo-dbt:   <https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/> .
+
+# --- Legal entity ---------------------------------------------------------- #
+lens-sh:LegalEntityShape a sh:NodeShape ;
+    sh:targetClass cmns-org:LegalEntity ;
+    sh:property [
+        sh:path lens:counterpartyType ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+        sh:in ( "bank" "corporate" "nbfi" "government" ) ;
+        sh:message "counterpartyType must be one of bank/corporate/nbfi/government." ;
+    ] ;
+    sh:property [
+        sh:path lens:sector ;
+        sh:minCount 1 ; sh:datatype xsd:string ;
+        sh:message "Every legal entity needs a sector." ;
+    ] .
+
+# --- Loan ------------------------------------------------------------------ #
+lens-sh:LoanShape a sh:NodeShape ;
+    sh:targetClass fibo-loan:Loan ;
+    sh:property [
+        sh:path lens:borrower ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:class cmns-org:LegalEntity ;
+        sh:message "A loan must reference an existing borrower legal entity." ;
+    ] ;
+    sh:property [
+        sh:path lens:lender ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:class cmns-org:LegalEntity ;
+        sh:message "A loan must reference an existing lender legal entity." ;
+    ] ;
+    sh:property [
+        sh:path lens:principalAmount ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:decimal ;
+        sh:minExclusive 0 ;
+        sh:message "principalAmount must be a positive decimal." ;
+    ] ;
+    sh:property [
+        sh:path lens:status ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ( "active" "closed" ) ;
+        sh:message "status must be active or closed." ;
+    ] .
+
+# --- Guaranty -------------------------------------------------------------- #
+lens-sh:GuarantyShape a sh:NodeShape ;
+    sh:targetClass fibo-gty:Guaranty ;
+    sh:property [
+        sh:path lens:guarantor ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:class cmns-org:LegalEntity ;
+        sh:message "A guaranty must reference an existing guarantor legal entity." ;
+    ] ;
+    sh:property [
+        sh:path lens:guaranteedLoan ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:class fibo-loan:Loan ;
+        sh:message "A guaranty must reference an existing loan." ;
+    ] ;
+    sh:property [
+        sh:path lens:guaranteedAmount ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:decimal ;
+        sh:minExclusive 0 ;
+        sh:message "guaranteedAmount must be a positive decimal." ;
+    ] ;
+    # Two DISTINCT entities: the guarantor cannot be the borrower of the loan.
+    sh:sparql [
+        sh:message "Guarantor must differ from the guaranteed loan's borrower (two distinct entities)." ;
+        sh:select """
+            SELECT $this WHERE {
+                $this <https://lens.example/ontology/guarantor> ?g ;
+                      <https://lens.example/ontology/guaranteedLoan> ?loan .
+                ?loan <https://lens.example/ontology/borrower> ?b .
+                FILTER(?g = ?b)
+            }
+        """ ;
+    ] .
+
+# --- Collateral ------------------------------------------------------------ #
+lens-sh:CollateralShape a sh:NodeShape ;
+    sh:targetClass fibo-dbt:Collateral ;
+    sh:property [
+        sh:path lens:pledgedBy ;
+        sh:minCount 1 ; sh:class cmns-org:LegalEntity ;
+        sh:message "Collateral must be pledged by an existing legal entity." ;
+    ] ;
+    sh:property [
+        sh:path lens:securesLoan ;
+        sh:minCount 1 ; sh:class fibo-loan:Loan ;
+        sh:message "Collateral must secure at least one existing loan." ;
+    ] ;
+    sh:property [
+        sh:path lens:collateralIssuer ;
+        sh:class cmns-org:LegalEntity ;
+        sh:message "collateralIssuer, if present, must be an existing legal entity." ;
+    ] .
+
+# --- Limit ----------------------------------------------------------------- #
+lens-sh:LimitShape a sh:NodeShape ;
+    sh:targetClass lens:Limit ;
+    sh:property [
+        sh:path lens:limitAmount ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:decimal ;
+        sh:minExclusive 0 ;
+        sh:message "limitAmount must be a positive decimal." ;
+    ] .

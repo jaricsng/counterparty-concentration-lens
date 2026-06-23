@@ -38,3 +38,6 @@ m0-ontology/.fuseki/
 apache-jena-fuseki-*/
 # Fuseki runtime working dir (shiro.ini, system store) created on first start
 m0-ontology/run/
+
+# M2 audit log (runtime artifact)
+m2-actions/audit/

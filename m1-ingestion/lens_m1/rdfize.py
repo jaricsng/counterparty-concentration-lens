@@ -46,6 +46,7 @@ def build_graph(spec: DatasetSpec) -> Graph:
         g.add((s, RDFS.label, Literal(e.name)))
         g.add((s, LENS.sector, Literal(e.sector)))
         g.add((s, LENS.counterpartyType, Literal(e.counterparty_type)))
+        g.add((s, LENS.status, Literal("active")))
         g.add((s, DCTERMS.source, Literal("entities.csv")))
         if e.parent_id:
             g.add((s, LENS.isSubsidiaryOf, _iri(e.parent_id)))
@@ -73,6 +74,8 @@ def build_graph(spec: DatasetSpec) -> Graph:
         g.add((s, LENS.guaranteedLoan, _iri(gt.guaranteed_loan_id)))
         g.add((s, LENS.guaranteedAmount, _dec(gt.amount)))
         g.add((s, LENS.currency, Literal(gt.currency)))
+        # Status enables M2 soft-delete (deactivate a guaranty -> drops exposure).
+        g.add((s, LENS.status, Literal("active")))
         g.add((s, DCTERMS.source, Literal("guarantees.csv")))
 
     for col in spec.collateral:
@@ -84,6 +87,7 @@ def build_graph(spec: DatasetSpec) -> Graph:
             g.add((s, LENS.securesLoan, _iri(loan_id)))
         if col.issuer_id:
             g.add((s, LENS.collateralIssuer, _iri(col.issuer_id)))
+        g.add((s, LENS.status, Literal("active")))
         g.add((s, DCTERMS.source, Literal("collateral.csv")))
 
     for lim in spec.limits:
@@ -92,6 +96,7 @@ def build_graph(spec: DatasetSpec) -> Graph:
         g.add((s, RDFS.label, Literal(f"Limit {lim.limit_id}")))
         g.add((s, LENS.limitAmount, _dec(lim.limit_amount)))
         g.add((s, LENS.currency, Literal(lim.currency)))
+        g.add((s, LENS.status, Literal("active")))
         g.add((_iri(lim.entity_id), LENS.hasLimit, s))
         g.add((s, DCTERMS.source, Literal("limits.csv")))
 
