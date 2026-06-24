@@ -130,7 +130,7 @@ This prototype is built to **production-shaped** standards — it demonstrates D
 ├── SECURITY.md                 ← production-shaped vs production-hardened boundary
 ├── .pre-commit-config.yaml     ← local quality + security hooks
 ├── .github/
-│   ├── workflows/ci.yml        ← lint, type, test, scan, SBOM
+│   ├── workflows/ci.yml        ← lint, type, test, live integration (Fuseki+OPA+gator), scan, SBOM
 │   └── dependabot.yml
 ├── docs/
 │   ├── running-the-lens.md     ← run & use the app: ops guide + user guide
@@ -150,7 +150,9 @@ This prototype is built to **production-shaped** standards — it demonstrates D
 ├── m3-security/                ← OPA policy scoping (authz as code)
 ├── m4-ai/                      ← grounded NL→SPARQL agent (query-safe)
 ├── m5-app/                     ← Streamlit interactive app + scenario sandbox (the demo)
-└── m6-infra/                   ← k3d + Argo CD + Gatekeeper + image scan + SBOM
+├── m6-infra/                   ← k3d + Argo CD + Gatekeeper + image scan + SBOM
+├── capstone/                   ← Spark-equivalent loader + "what this is NOT"
+└── tests/                      ← cross-module e2e + live-Fuseki integration tests
 ```
 
 ---

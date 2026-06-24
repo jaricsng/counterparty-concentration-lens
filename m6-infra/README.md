@@ -19,6 +19,7 @@ m6-infra/
 ├── argocd/                # Argo CD Applications (workloads + policies)
 ├── k3d/cluster.yaml       # local cluster config
 ├── examples/              # a deliberately non-compliant pod (admission demo)
+├── tests/                 # pytest: manifest-baseline lint + `gator verify` (runs in the CI integration job)
 └── setup.sh               # one-shot: cluster + images + Gatekeeper + policies + workloads (+ Argo)
 ```
 
@@ -69,9 +70,12 @@ reconcile the cluster to match Git — Synced/Healthy.
 
 ## CI (DevSecOps)
 
-`.github/workflows/ci.yml` adds:
-- **policy** job — installs `gator`, runs `gator verify` on the Suite.
-- **container-scan** job — builds the API image, **Trivy** scans it
+`.github/workflows/ci.yml`:
+- the **integration** job installs `gator` (alongside Fuseki + OPA) and runs the
+  M6 pytest checks — a YAML lint asserting every Deployment meets the admission
+  baseline (non-root, no privilege, resource limits, approved image, key label),
+  plus `gator verify` over the Suite.
+- the **container-scan** job — builds the API image, **Trivy** scans it
   (CRITICAL/HIGH, report-only for a prototype), generates a **CycloneDX SBOM**
   and uploads it as an artifact.
 

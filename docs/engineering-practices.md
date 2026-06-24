@@ -31,12 +31,14 @@ Runs on every push and pull request. The build fails on any gate.
 | Stage | Purpose | Tool |
 |---|---|---|
 | Lint / format / type | Code quality gates | ruff, black --check, mypy |
-| Unit + integration tests | Correctness | pytest |
+| Unit, property-based & integration tests | Correctness | pytest + Hypothesis |
 | Dependency vulnerability scan | Known CVEs in deps | pip-audit + Dependabot |
 | SAST | Static security analysis | bandit |
 | Secret scanning | No leaked secrets | gitleaks |
 | Container image scan | Vulnerabilities in M6 images | trivy |
 | SBOM | Software bill of materials | syft / CycloneDX |
+
+A dedicated **integration** job stands up a live Apache Jena Fuseki plus the **OPA** and **gator** binaries, so the tests that exercise real HTTP/SPARQL/SHACL, the M3 authorization policy, and the M6 admission policy actually run in CI (they auto-skip locally when those tools are absent). The fast lint/type job runs the unit tests on every push regardless.
 
 Local equivalents run via **pre-commit hooks** (`.pre-commit-config.yaml`): ruff, black, mypy, gitleaks, whitespace/EOF fixers.
 

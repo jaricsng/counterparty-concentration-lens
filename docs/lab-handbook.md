@@ -72,7 +72,7 @@ This is part of the deliverable, not an afterthought. Each module is **built tes
 - Config via environment; no secrets in code or git.
 - Conventional Commits; per-module README (run / test / verify).
 - Security-as-code: SHACL (validation, M2) and OPA/Rego (authorization, M3) are tested artifacts; LLM-generated SPARQL (M4) is schema-validated and read-only.
-- CI (GitHub Actions): lint → type → test → pip-audit → bandit → gitleaks → (M6) trivy + SBOM.
+- CI (GitHub Actions): lint → type → test → live integration (Fuseki + OPA + gator) → pip-audit → bandit → gitleaks → (M6) trivy + SBOM.
 
 ---
 
