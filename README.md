@@ -133,6 +133,7 @@ This prototype is built to **production-shaped** standards — it demonstrates D
 │   ├── workflows/ci.yml        ← lint, type, test, scan, SBOM
 │   └── dependabot.yml
 ├── docs/
+│   ├── running-the-lens.md     ← run & use the app: ops guide + user guide
 │   ├── lab-handbook.md         ← step-by-step build, module by module
 │   ├── architecture.md         ← diagrams (light-theme Mermaid)
 │   ├── oss-stack-mapping.md    ← platform layers → open-source equivalents
@@ -189,7 +190,9 @@ Imported data is **validated on the way in** (through the same SHACL guard as ev
 
 Everything is free and open-source; no cloud account or API key is required. A fresh clone loads the **calm** dataset by default.
 
-Quickstart (high level — see [`docs/lab-handbook.md`](docs/lab-handbook.md) and each module's README for detail):
+> **📖 [Running the Lens — Operations & User Guide](docs/running-the-lens.md)** — copy-pasteable bring-up, the component/port map, dataset switching & reset, troubleshooting, a screen-by-screen walkthrough, and a 5-minute demo script. Start here to *run and use* the app.
+
+Quickstart (high level — see [`docs/running-the-lens.md`](docs/running-the-lens.md) for the full sequence, [`docs/lab-handbook.md`](docs/lab-handbook.md) to build it yourself, and each module's README for detail):
 
 1. Create a virtualenv and `pip install -r requirements-dev.txt` (dev gates) and the module requirements.
 2. Fetch the FIBO modules into `vendor/fibo/` — **BE, LOAN, FBC/Debt, FND, Guaranty, and SEC** (SEC is needed for securities-as-collateral / wrong-way-risk).
