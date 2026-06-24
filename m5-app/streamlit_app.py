@@ -154,7 +154,7 @@ def main() -> None:
             sectors = st.multiselect("Filter sector", sorted(df["sector"].unique()))
             if sectors:
                 df = df[df["sector"].isin(sectors)]
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.dataframe(df, width="stretch", hide_index=True)
 
         st.subheader("Watchlist (connected utilisation)")
         wl = pd.DataFrame(
@@ -170,7 +170,7 @@ def main() -> None:
                 for w in dash.watchlist
             ]
         )
-        st.dataframe(wl, use_container_width=True, hide_index=True)
+        st.dataframe(wl, width="stretch", hide_index=True)
 
         if dash.wwr:
             st.subheader("Structural wrong-way risk")
@@ -185,7 +185,7 @@ def main() -> None:
                         for f in dash.wwr
                     ]
                 ),
-                use_container_width=True,
+                width="stretch",
                 hide_index=True,
             )
 
@@ -211,7 +211,7 @@ def main() -> None:
             )
             st.dataframe(
                 pd.DataFrame([{**c, "amount": _m(c["amount"])} for c in gv.contributions]),
-                use_container_width=True,
+                width="stretch",
                 hide_index=True,
             )
 
@@ -221,7 +221,7 @@ def main() -> None:
         st.caption(f"If Nimbus (LE-0030) fails, second-order connected exposure = {_m(total)}")
         st.dataframe(
             pd.DataFrame([{**c, "amount": _m(c["amount"])} for c in cascade]),
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 
@@ -245,7 +245,7 @@ def main() -> None:
                 with st.expander(f"Generated SPARQL (engine: {res.engine}; read-only, validated)"):
                     st.code(res.sparql, language="sparql")
             if res.rows:
-                st.dataframe(pd.DataFrame(res.rows), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(res.rows), width="stretch", hide_index=True)
 
     # --------------------------------------------------------------- Sandbox
     with tabs[3]:
@@ -334,7 +334,7 @@ def main() -> None:
                                 for r in report.rejections()
                             ]
                         ),
-                        use_container_width=True,
+                        width="stretch",
                         hide_index=True,
                     )
                 if report.loaded:
@@ -346,7 +346,7 @@ def main() -> None:
         st.subheader("Audit log (who / what / when)")
         entries = ctx.audit.entries()
         if entries:
-            st.dataframe(pd.DataFrame(entries[-50:]), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(entries[-50:]), width="stretch", hide_index=True)
         else:
             st.caption("No sandbox actions yet.")
 
