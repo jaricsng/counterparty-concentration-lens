@@ -20,7 +20,8 @@ select = ["E", "F", "I", "B", "UP", "S"]  # incl. flake8-bandit (S) basics
 ignore = []
 
 [tool.ruff.lint.per-file-ignores]
-"**/tests/**" = ["S101"]   # allow asserts in tests
+# Asserts and subprocess calls (fixed args, no shell) are fine in CLI smoke tests.
+"**/tests/**" = ["S101", "S603", "S607"]
 
 [tool.black]
 line-length = 100
