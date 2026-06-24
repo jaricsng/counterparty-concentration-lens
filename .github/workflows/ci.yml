@@ -48,6 +48,56 @@ jobs:
       - name: Tests (pytest)
         run: pytest -q
 
+  # --- Live integration: e2e + FusekiStore + M2 API + BYOD + AppTest clicks ---
+  # The same tests skip locally when no Fuseki is reachable; here we stand one up
+  # (in-memory, updatable) plus OPA so they actually run.
+  integration:
+    name: Integration (live Fuseki + OPA)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Set up Java (for Fuseki)
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          for f in $(find . -name requirements.txt -not -path "./.venv/*"); do pip install -r "$f" || true; done
+
+      - name: Install OPA (M3 policy)
+        run: |
+          curl -fsSL -o opa \
+            "https://github.com/open-policy-agent/opa/releases/download/v1.17.1/opa_linux_amd64_static"
+          chmod +x opa && sudo install opa /usr/local/bin/opa
+          opa version
+
+      - name: Start Fuseki (in-memory, updatable, /lens on :3030)
+        run: |
+          curl -fsSL -o fuseki.tgz \
+            "https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-6.1.0.tar.gz"
+          tar -xzf fuseki.tgz
+          ./apache-jena-fuseki-6.1.0/fuseki-server --mem --update --port 3030 /lens &
+          for i in $(seq 1 30); do
+            curl -sf 'http://localhost:3030/$/ping' && { echo "Fuseki up"; break; }
+            sleep 1
+          done
+
+      - name: Tests (full suite against live services)
+        env:
+          FUSEKI_BASE_URL: "http://localhost:3030"
+        run: pytest -q
+
   security:
     name: Dependency, SAST, secret scan
     runs-on: ubuntu-latest
