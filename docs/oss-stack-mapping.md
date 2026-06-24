@@ -5,7 +5,7 @@ How the layers of a commercial ontology-driven operational platform map to the o
 | Platform layer | Function | Open-source equivalent (used here) | Swap difficulty |
 |---|---|---|---|
 | App / Presentation | Operational apps, dashboards | Streamlit (or React/Next.js) | 🟢 Easy |
-| AI layer | LLM connectors, grounded agents | Ollama + LangChain; pgvector/Qdrant if RAG | 🟡 Moderate |
+| AI layer | LLM connectors, grounded agents | local LLM (Ollama) + safety-validated NL→SPARQL; pgvector/Qdrant if RAG | 🟡 Moderate |
 | **Ontology** | Semantic model + store + actions + security | **FIBO/OWL + Fuseki + SHACL + OPA** (assembled) | 🔴 Hard — no 1:1 |
 | Compute / data plane | Batch/stream transforms | DuckDB + dbt (Spark/Flink at scale) | 🔵 1:1 (same engines) |
 | Delivery | Continuous delivery | Argo CD / Flux | 🟢 Easy |

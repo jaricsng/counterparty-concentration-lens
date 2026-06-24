@@ -73,7 +73,7 @@ flowchart TB
         A2["Scenario sandbox<br/>add / edit / soft-delete (guarded)"]
     end
     subgraph AI["Grounded AI"]
-        I1["Ollama + LangChain<br/>NL → SPARQL (schema-validated, read-only)"]
+        I1["NL → SPARQL (safety-validated, read-only)<br/>templates + local LLM (Ollama) when available"]
     end
     subgraph ONT["Semantic model (FIBO) + analytics"]
         O1["FIBO: BE · LOAN · FBC/Debt · FND · Guaranty · SEC"]
@@ -194,13 +194,14 @@ Thresholds (illustrative): single-name > 25% of capital / > 10% of revenue; CR�
 
 | Layer | Component |
 |---|---|
-| Semantic model | OWL / FIBO, authored in Protégé |
+| Semantic model | OWL 2 DL / FIBO (vendored) + a thin, hand-authored application ontology |
 | Triplestore + query | Apache Jena Fuseki + SPARQL |
 | Validation / rules | SHACL (pySHACL) |
 | Action services | FastAPI |
 | Access control | Open Policy Agent (OPA) |
-| Grounded AI | Ollama (local LLM) + LangChain |
+| Grounded AI | safety-validated NL→SPARQL — deterministic templates, with a local LLM (Ollama) when available |
 | App | Streamlit |
-| Infra / delivery | k3d (Kubernetes) + Argo CD |
+| Infra / delivery | k3d (Kubernetes) + Argo CD (GitOps) + OPA Gatekeeper (admission policy-as-code) |
+| Scale (capstone) | Apache Spark (PySpark) ingestion equivalent |
 
 See `oss-stack-mapping.md` for how these map to the layers of a commercial platform, and `fibo-notes.md` for the FIBO modules.

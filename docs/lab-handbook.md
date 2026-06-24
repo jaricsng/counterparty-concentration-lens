@@ -34,7 +34,7 @@ flowchart TB
     M1["Module 1 · Ingestion<br/>synthetic source data → FIBO triples<br/>📦 idempotent load with lineage"]
     M2["Module 2 · Validation & Actions<br/>SHACL + FastAPI<br/>📦 guarded actions + sandbox/import validation"]
     M3["Module 3 · Security<br/>OPA / Rego (authorization as code)<br/>📦 role-scoped exposure queries"]
-    M4["Module 4 · Grounded AI<br/>Ollama + LangChain<br/>📦 NL → SPARQL, schema-validated"]
+    M4["Module 4 · Grounded AI<br/>templates + Ollama (optional)<br/>📦 NL → SPARQL, safety-validated"]
     M5["Module 5 · Exposure App<br/>Streamlit · filters · scenario sandbox<br/>📦 interactive counterparty view (the demo)"]
     M6["Module 6 · Infra & Delivery<br/>k3d + Argo CD + Gatekeeper + trivy + SBOM<br/>📦 GitOps deploy + policy-as-code on K8s"]
     CAP["Capstone · Scale & Reflect<br/>DuckDB → Spark · what-this-is-NOT<br/>📦 same logic, scaled"]
@@ -89,8 +89,8 @@ This is part of the deliverable, not an afterthought. Each module is **built tes
 | FastAPI + uvicorn | M2 | `pip install fastapi uvicorn` |
 | pySHACL | M2 | `pip install pyshacl` |
 | Open Policy Agent | M3 | openpolicyagent.org |
-| Ollama | M4 | ollama.com (`ollama pull llama3.2`) |
-| LangChain | M4 | `pip install langchain langchain-community` |
+| Ollama (optional) | M4 | ollama.com (`ollama pull llama3.2`) |
+| NL→SPARQL (M4) | M4 | rdflib + requests (already installed); safety-validated templates, no LangChain |
 | Streamlit | M5 | `pip install streamlit` |
 | k3d + kubectl, Argo CD | M6 | k3d.io, argo-cd.readthedocs.io |
 | Dev gates | all | `pip install -r requirements-dev.txt` |
@@ -206,7 +206,7 @@ One "show exposures" request, two roles, two correctly different result sets.
 
 ## Module 4 — Grounded AI query
 
-**Folder:** `m4-ai/` · **Stack:** Ollama (local LLM) + LangChain · *needs local Docker/Ollama*
+**Folder:** `m4-ai/` · **Stack:** safety-validated NL→SPARQL (deterministic templates + optional local Ollama) · *Ollama needs local Docker*
 
 ### Learning objectives
 Ground an LLM in the FIBO model so answers come from governed data, not the model's memory — safely.
@@ -305,7 +305,7 @@ The entire Lens running on Kubernetes, deployed and updated through GitOps, with
 | 1 | Compute / ingestion | synthetic sources → triples | Data plane + lineage |
 | 2 | Ontology (kinetic) | SHACL + FastAPI | Validated action services |
 | 3 | Ontology (security) | OPA | Dynamic per-object security |
-| 4 | AI | Ollama + LangChain | Grounded platform AI |
+| 4 | AI | NL→SPARQL (templates + Ollama) | Grounded platform AI |
 | 5 | App | Streamlit | Operational apps |
 | 6 | Substrate + delivery | k3d + Argo CD | Container substrate + GitOps |
 | Capstone | Scale | Spark | Production compute |

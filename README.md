@@ -105,14 +105,15 @@ This prototype is built on the same layered, open-source stack documented in the
 
 | Layer | Component |
 |---|---|
-| Semantic model | OWL / FIBO, authored in Protégé |
+| Semantic model | OWL 2 DL / FIBO (vendored) + a thin, hand-authored application ontology |
 | Triplestore + query | Apache Jena Fuseki + SPARQL |
 | Validation / rules | SHACL (pySHACL) |
 | Action services | FastAPI |
 | Access control | Open Policy Agent (OPA) |
-| Grounded AI | local LLM (Ollama) + LangChain |
+| Grounded AI | safety-validated NL→SPARQL — deterministic templates, with a local LLM (Ollama) when available |
 | App | Streamlit |
-| Infra / delivery | k3d (Kubernetes) + Argo CD (GitOps) |
+| Infra / delivery | k3d (Kubernetes) + Argo CD (GitOps) + OPA Gatekeeper (admission policy-as-code) |
+| Scale (capstone) | Apache Spark (PySpark) ingestion equivalent |
 
 See [`docs/`](docs/) for the full lab handbook, the architecture and diagrams, the open-source-stack mapping, the FIBO module notes, and the [engineering & DevSecOps practices](docs/engineering-practices.md) applied throughout.
 
