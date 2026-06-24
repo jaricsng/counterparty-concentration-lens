@@ -1,6 +1,6 @@
 # M4 grounded NL agent service. Build from the repo root:
 #   docker build -f m6-infra/docker/agent.Dockerfile -t lens/agent:0.1.0 .
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
