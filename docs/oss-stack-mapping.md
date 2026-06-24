@@ -7,7 +7,7 @@ How the layers of a commercial ontology-driven operational platform map to the o
 | App / Presentation | Operational apps, dashboards | Streamlit (or React/Next.js) | 🟢 Easy |
 | AI layer | LLM connectors, grounded agents | local LLM (Ollama) + safety-validated NL→SPARQL; pgvector/Qdrant if RAG | 🟡 Moderate |
 | **Ontology** | Semantic model + store + actions + security | **FIBO/OWL + Fuseki + SHACL + OPA** (assembled) | 🔴 Hard — no 1:1 |
-| Compute / data plane | Batch/stream transforms | DuckDB + dbt (Spark/Flink at scale) | 🔵 1:1 (same engines) |
+| Compute / data plane | Batch/stream transforms | plain-Python loader → **Apache Spark** at scale (capstone); DuckDB/dbt optional | 🔵 1:1 (same engines) |
 | Delivery | Continuous delivery | Argo CD / Flux | 🟢 Easy |
 | Substrate | Hardened, autoscaling K8s | Kubernetes / k3d (+ Cilium, OPA, Falco for hardening) | 🟢 Easy (DIY ops) |
 

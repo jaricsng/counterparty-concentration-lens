@@ -37,7 +37,7 @@ flowchart TB
     M4["Module 4 · Grounded AI<br/>templates + Ollama (optional)<br/>📦 NL → SPARQL, safety-validated"]
     M5["Module 5 · Exposure App<br/>Streamlit · filters · scenario sandbox<br/>📦 interactive counterparty view (the demo)"]
     M6["Module 6 · Infra & Delivery<br/>k3d + Argo CD + Gatekeeper + trivy + SBOM<br/>📦 GitOps deploy + policy-as-code on K8s"]
-    CAP["Capstone · Scale & Reflect<br/>DuckDB → Spark · what-this-is-NOT<br/>📦 same logic, scaled"]
+    CAP["Capstone · Scale & Reflect<br/>Python → Spark · what-this-is-NOT<br/>📦 same logic, scaled"]
 
     M0 --> M1 --> M2 --> M3 --> M4 --> M5 --> M6 --> CAP
 
@@ -84,8 +84,8 @@ This is part of the deliverable, not an afterthought. Each module is **built tes
 | FIBO ontology files | M0 | github.com/edmcouncil/fibo (into `vendor/fibo/`) |
 | Protégé (optional, authoring) | M0 | protege.stanford.edu |
 | Apache Jena Fuseki | M0–M5 | jena.apache.org/download |
-| rdflib / owlready2 | M0–M1 | `pip install rdflib owlready2` |
-| dbt-duckdb (optional) / Python | M1 | `pip install dbt-duckdb` |
+| rdflib | M0–M1 | `pip install rdflib` |
+| dbt-duckdb (optional; not used — plain Python) | M1 | `pip install dbt-duckdb` |
 | FastAPI + uvicorn | M2 | `pip install fastapi uvicorn` |
 | pySHACL | M2 | `pip install pyshacl` |
 | Open Policy Agent | M3 | openpolicyagent.org |
@@ -291,7 +291,7 @@ The entire Lens running on Kubernetes, deployed and updated through GitOps, with
 2. **Gap analysis + "What this is NOT" (required):** state plainly what the prototype is not — production-grade, scalable as built, concurrency-safe, hardened, integration-complete, or operated. Tie it to the build-vs-buy trade-off.
 
 ### Verify
-- [ ] Spark pipeline output matches the DuckDB/Python version
+- [ ] Spark pipeline output matches the plain-Python (M1) version
 - [ ] "What this is NOT" statement present, accurate, in your own words
 - [ ] Build-vs-buy trade-off articulated with nuance
 

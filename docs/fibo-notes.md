@@ -17,7 +17,7 @@ FIBO is organised into **domains**, each containing modules and dozens of OWL on
 | Debt instruments; interest & debt common terms | **Debt & Equities** module, within **Financial Business & Commerce (FBC)** | Debt-instrument detail lives here, separate from the LOAN domain. |
 | Contracts, agreements, parties, and **roles** | **Foundations (FND)** (with OMG Commons) | The machinery that lets one entity play many roles. |
 | Guarantees & collateral | **Guaranty** package (under FBC) | Guarantee and letter-of-credit structures that link one party's risk to another's. |
-| (Optional) swap-style & securities instruments | **Securities (SEC)** | Include only if total-return-swap-style exposures are in scope. |
+| Securities pledged as collateral; their **issuer** | **Securities (SEC)** + the FIBO issuance relation (`fibo-fnd-rel-rel:isIssuedBy`) | Lets collateral that is a security carry a proper issuer — the basis for **structural wrong-way-risk** detection (collateral issued by the same group as the borrower). Added in the concentration enhancement. |
 
 ## The key modelling idea: counterparty is a *role*
 
