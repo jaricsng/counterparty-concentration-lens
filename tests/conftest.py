@@ -52,16 +52,21 @@ def load_dataset(name: str) -> int:
     return m1_load(m1_settings(dataset=name)).graph_triples_in_store
 
 
-@pytest.fixture(scope="session", autouse=True)
-def _restore_calm_after_session():
+@pytest.fixture(scope="session")
+def _fuseki_session():
+    """Restore the calm baseline after integration tests that mutated the store.
+
+    Depended on by ``require_fuseki`` only, so a plain (non-integration) run never
+    touches a live Fuseki — the dev triplestore is left exactly as it was found.
+    """
     yield
-    if fuseki_up():  # leave a shared store in a known baseline state
+    if fuseki_up():
         with contextlib.suppress(Exception):  # best-effort cleanup
             load_dataset("calm")
 
 
 @pytest.fixture
-def require_fuseki() -> None:
+def require_fuseki(_fuseki_session: None) -> None:
     if not fuseki_up():
         pytest.skip(f"Fuseki not reachable at {m1_settings().fuseki_base_url}")
 

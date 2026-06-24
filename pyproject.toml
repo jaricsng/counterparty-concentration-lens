@@ -59,7 +59,7 @@ skips = ["B101"]
 
 [tool.pytest.ini_options]
 addopts = "-q"
-testpaths = ["m0-ontology", "m1-ingestion", "m2-actions", "m3-security", "m4-ai", "m5-app", "tests"]
+testpaths = ["m0-ontology", "m1-ingestion", "m2-actions", "m3-security", "m4-ai", "m5-app", "m6-infra", "tests"]
 python_files = ["test_*.py", "*_test.py"]
 markers = [
     "integration: tests that need a live Fuseki server (skipped if unreachable)",
