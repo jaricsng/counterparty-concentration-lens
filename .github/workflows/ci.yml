@@ -150,7 +150,7 @@ jobs:
         run: docker build -f m6-infra/docker/api.Dockerfile -t lens/api:ci .
 
       - name: Trivy image scan (report-only during prototyping)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: "lens/api:ci"
           format: "table"
@@ -159,14 +159,19 @@ jobs:
           scanners: "vuln"
 
       - name: Generate SBOM (CycloneDX) with Trivy
-        run: |
-          trivy image --format cyclonedx --output sbom.cyclonedx.json lens/api:ci || true
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: "lens/api:ci"
+          format: "cyclonedx"
+          output: "sbom.cyclonedx.json"
+          scanners: "vuln"
 
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
         with:
           name: sbom
           path: sbom.cyclonedx.json
+          if-no-files-found: warn
 
 # Hardening notes (for when this graduates beyond a prototype):
 # - Flip the `|| true` and `exit-code: 0` to hard failures to truly gate.
