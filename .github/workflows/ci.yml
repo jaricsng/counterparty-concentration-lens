@@ -32,7 +32,7 @@ jobs:
       - name: Install dev tooling
         run: |
           python -m pip install --upgrade pip
-          pip install ruff black mypy pytest pip-audit bandit
+          pip install -r requirements-dev.txt   # ruff, black, mypy, pytest, hypothesis, ...
           # Install module requirements if present (build grows over time)
           for f in $(find . -name requirements.txt); do pip install -r "$f" || true; done
 
