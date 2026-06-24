@@ -49,9 +49,8 @@ def test_deployment_meets_gatekeeper_baseline(name: str, dep: dict) -> None:
         assert sec.get("allowPrivilegeEscalation") is False, f"{where}: allowPrivilegeEscalation"
         limits = c.get("resources", {}).get("limits", {})
         assert "cpu" in limits and "memory" in limits, f"{where}: missing resource limits"
-        assert c["image"].startswith(_APPROVED_PREFIXES), (
-            f"{where}: image {c['image']} not approved"
-        )
+        approved = c["image"].startswith(_APPROVED_PREFIXES)
+        assert approved, f"{where}: image {c['image']} not approved"
 
 
 def test_bad_example_pod_really_violates_the_policy() -> None:
