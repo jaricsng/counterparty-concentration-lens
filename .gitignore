@@ -46,3 +46,10 @@ m2-actions/audit/
 .tools/
 sbom*.json
 *.tgz
+
+# Capstone Spark venv + local artifacts
+capstone/.venv-spark/
+spark-warehouse/
+metastore_db/
+derby.log
+*.crc

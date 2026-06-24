@@ -1,0 +1,11 @@
+# Capstone Spark loader. Pinned for reproducibility (prototype).
+#
+# Spark 3.5 requires Java 17 and Python <= 3.12 — install into a DEDICATED venv
+# (capstone/.venv-spark via python3.12), separate from the repo's 3.14 .venv:
+#   python3.12 -m venv capstone/.venv-spark
+#   capstone/.venv-spark/bin/pip install -r capstone/requirements.txt
+# The pure transform (lens_capstone.triples_map) and its equivalence test use
+# only rdflib and run in the main 3.14 venv.
+pyspark==3.5.3
+rdflib==7.2.1
+requests==2.34.2

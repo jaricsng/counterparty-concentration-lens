@@ -33,7 +33,7 @@ warn_unused_ignores = true
 warn_redundant_casts = true
 # Let `mypy .` resolve each module's package (lens_m0, lens_m1, scripts) by directory.
 explicit_package_bases = true
-mypy_path = "m0-ontology:m1-ingestion:m2-actions:m3-security:m4-ai:m5-app"
+mypy_path = "m0-ontology:m1-ingestion:m2-actions:m3-security:m4-ai:m5-app:capstone"
 # Don't type-check the virtualenv, vendored ontology, or server runtime dirs.
 # `scripts/` and `tests/` are excluded from the aggregate run: each module has a
 # same-named `scripts`/`tests` package (and a `conftest.py`) that mypy cannot
