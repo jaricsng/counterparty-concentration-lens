@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-for _mod in ("m0-ontology", "m1-ingestion", "m2-actions", "m3-security", "m4-ai"):
+for _mod in ("m0-ontology", "m1-ingestion", "m2-actions", "m3-security", "m4-ai", "capstone"):
     _p = str(REPO_ROOT / _mod)
     if _p not in sys.path:
         sys.path.insert(0, _p)

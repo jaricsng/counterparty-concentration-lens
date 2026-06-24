@@ -42,7 +42,17 @@ python -m scripts.generate_data                 # writes data/calm/ and data/str
 python -m scripts.show_metrics                   # print the calm-vs-stressed numbers
 python -m scripts.load_data                      # load calm (default) into Fuseki
 python -m scripts.load_data --dataset stressed   # or stressed
+
+# Bring your own TEST data (validated + audited via the M2 import path):
+python -m scripts.load_data --source <folder> --name my-scenario
+python -m scripts.load_data --source <folder> --mapping <map.yaml> --name my-scenario
 ```
+
+`lens_m1.byod` reads a folder of CSVs in the canonical shape (`../templates/`,
+see `templates/README.md`), with an optional Tier-2 YAML column/value mapping for
+differently-shaped files. Imported rows are routed through the **M2** guarded
+import path (SHACL validation + per-row report + audit); see `../docs/data-import.md`.
+**Synthetic / sample TEST data only.**
 
 The M0 concentration query runs unchanged on the loaded data
 (`cd ../m0-ontology && python -m scripts.run_money_shot`): on **stressed** the

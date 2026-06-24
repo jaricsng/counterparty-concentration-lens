@@ -29,6 +29,10 @@ class Store(Protocol):
 
     def update(self, sparql_update: str) -> None: ...
 
+    def replace(self, graph: Graph) -> None:
+        """Replace the entire default graph with ``graph`` (for dataset loads)."""
+        ...
+
     def snapshot(self) -> Graph:
         """Return the full current graph (for SHACL validation)."""
         ...
@@ -55,6 +59,11 @@ class InMemoryStore:
 
     def update(self, sparql_update: str) -> None:
         self._graph.update(sparql_update)
+
+    def replace(self, graph: Graph) -> None:
+        new = Graph()
+        new += graph
+        self._graph = new
 
     def snapshot(self) -> Graph:
         # Return an independent copy so callers can build candidate graphs
@@ -102,6 +111,13 @@ class FusekiStore:
             raise StoreError(f"update failed: {exc}") from exc
         if not resp.ok:
             raise StoreError(f"update failed: {resp.status_code} {resp.text[:200]}")
+
+    def replace(self, graph: Graph) -> None:
+        # Drop the default graph and insert the new triples in one update.
+        triples = graph.serialize(format="nt")
+        self.update("DROP DEFAULT")
+        if triples.strip():
+            self.update(f"INSERT DATA {{\n{triples}}}")
 
     def snapshot(self) -> Graph:
         # Fetch the whole graph as Turtle for SHACL validation.

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 from decimal import Decimal
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
@@ -16,7 +17,7 @@ import streamlit as st
 from lens_m3.portfolios import DEFAULT_USER, DEMO_USERS  # noqa: E402
 from lens_m4 import agent, ollama  # noqa: E402
 from lens_m5 import data
-from lens_m5.bootstrap import build_context, reload_dataset
+from lens_m5.bootstrap import REPO_ROOT, build_context, reload_dataset
 
 st.set_page_config(page_title="Counterparty Concentration Lens", layout="wide")
 
@@ -75,7 +76,12 @@ def main() -> None:
 
     # --- banner ------------------------------------------------------------- #
     ds = ss["dataset"]
-    if ds == "stressed":
+    if ds.startswith("imported:"):
+        st.warning(
+            f"📥 Dataset: IMPORTED — '{ds.split(':', 1)[1]}'. Bring-Your-Own **TEST** "
+            "data (synthetic/sample only). Reset to calm/stressed to restore the bundled set."
+        )
+    elif ds == "stressed":
         st.warning(
             "⚠ Dataset: STRESSED — illustrative synthetic data, deliberately engineered "
             "to breach risk thresholds. Not real portfolio statistics."
@@ -87,7 +93,9 @@ def main() -> None:
         f"({len(visible)}/{len(candidates)} counterparty groups visible)"
     )
 
-    tabs = st.tabs(["Dashboard", "Explore", "Ask (NL)", "Scenario Sandbox", "Audit"])
+    tabs = st.tabs(
+        ["Dashboard", "Explore", "Ask (NL)", "Scenario Sandbox", "Bring Your Own", "Audit"]
+    )
 
     # ---------------------------------------------------------------- Dashboard
     with tabs[0]:
@@ -264,8 +272,61 @@ def main() -> None:
                 )
                 (st.success if r.accepted else st.error)(r.reason)
 
-    # ----------------------------------------------------------------- Audit
+    # --------------------------------------------------------- Bring Your Own
     with tabs[4]:
+        from lens_m1 import byod
+
+        st.warning(
+            "Bring-Your-Own **TEST** Data — synthetic / sample only. Not for real, "
+            "production, or customer data. Imported rows are validated (SHACL) and "
+            "audited through the M2 path; on success they load as a named dataset that "
+            "never overwrites calm/stressed (use 'Reset' in the sidebar to restore)."
+        )
+        st.caption("Folder of CSVs in the documented template shape (see templates/README.md).")
+        source = st.text_input("Source folder path", str(REPO_ROOT / "templates"))
+        mapping_path = st.text_input("Mapping YAML (optional, for differently-shaped CSVs)", "")
+        name = st.text_input("Dataset name", "my-scenario")
+        allow_partial = st.checkbox("Allow partial load (skip rejected rows)", value=False)
+        if st.button("Validate & import via M2"):
+            try:
+                mapping = byod.load_mapping(Path(mapping_path)) if mapping_path else None
+                rows = byod.read_source(Path(source), mapping)
+                report = ctx.service.import_dataset(
+                    rows,
+                    dataset_name=name,
+                    actor=principal.role,
+                    role=principal.role,
+                    allow_partial=allow_partial,
+                )
+            except byod.ByodError as exc:
+                st.error(f"Import aborted: {exc}")
+            else:
+                summary = (
+                    f"{report.accepted} accepted · {report.rejected} rejected · "
+                    f"loaded={report.loaded} ({report.triples} triples)"
+                )
+                (st.success if report.loaded else st.error)(summary)
+                if report.rejections():
+                    st.dataframe(
+                        pd.DataFrame(
+                            [
+                                {
+                                    "table": r.table,
+                                    "id": r.record_id,
+                                    "reason": "; ".join(r.reasons),
+                                }
+                                for r in report.rejections()
+                            ]
+                        ),
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+                if report.loaded:
+                    ss["dataset"] = f"imported:{name}"
+                    st.rerun()
+
+    # ----------------------------------------------------------------- Audit
+    with tabs[5]:
         st.subheader("Audit log (who / what / when)")
         entries = ctx.audit.entries()
         if entries:

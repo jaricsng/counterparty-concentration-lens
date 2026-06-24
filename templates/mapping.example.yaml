@@ -1,0 +1,27 @@
+# Example Tier-2 mapping — translate differently-shaped CSVs to the Lens schema.
+# Use with:  python -m scripts.import_data --source <folder> --mapping mapping.example.yaml
+#
+# Only the tables you provide need a block; omitted tables are skipped.
+entities:
+  file: my_counterparties.csv
+  columns: # canonical_field: your_column
+    entity_id: cpty_ref
+    entity_name: cpty_name
+    counterparty_type: type
+    sector: gics_sector
+    parent_entity_id: parent_ref
+  value_map: # your value -> Lens enum
+    counterparty_type:
+      "Bank": bank
+      "Corp": corporate
+      "Non-Bank FI": nbfi
+      "Govt": government
+loans:
+  file: my_exposures.csv
+  columns:
+    loan_id: deal_id
+    lender_entity_id: lender_ref
+    borrower_entity_id: cpty_ref
+    exposure_amount: notional
+    currency: ccy
+    status: deal_status

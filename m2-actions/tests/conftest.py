@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 
 M2_ROOT = Path(__file__).resolve().parent.parent
-M1_ROOT = M2_ROOT.parent / "m1-ingestion"
-for _p in (str(M2_ROOT), str(M1_ROOT)):
+REPO = M2_ROOT.parent
+for _p in (str(M2_ROOT), str(REPO / "m1-ingestion"), str(REPO / "capstone")):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 

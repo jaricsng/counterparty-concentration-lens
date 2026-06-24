@@ -15,6 +15,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from rdflib import Graph
 
@@ -23,6 +24,9 @@ from .audit import AuditLog, AuditRecord
 from .derived import Breach, WwrFlag, limit_breaches, wrong_way_risk
 from .store import InMemoryStore, Store
 from .validation import validate
+
+if TYPE_CHECKING:
+    from .importer import ImportReport
 
 _PREFIX = "PREFIX lens: <https://lens.example/ontology/>\n"
 
@@ -229,6 +233,31 @@ class ActionService:
         if self._store.select(q):
             return "entity still referenced by an active loan or guaranty; deactivate those first"
         return None
+
+    # --- bring-your-own-data import (guarded, audited) ---------------------- #
+
+    def import_dataset(
+        self,
+        rows_by_table: dict[str, list[dict[str, str]]],
+        *,
+        dataset_name: str,
+        actor: str,
+        role: str,
+        allow_partial: bool = False,
+    ) -> ImportReport:
+        """Validate + load a user TEST dataset through this guarded layer."""
+        from .importer import import_dataset as _import_dataset
+
+        return _import_dataset(
+            rows_by_table,
+            store=self._store,
+            audit=self._audit,
+            shapes_path=self._shapes,
+            dataset_name=dataset_name,
+            actor=actor,
+            role=role,
+            allow_partial=allow_partial,
+        )
 
     # --- explicit flag actions --------------------------------------------- #
 

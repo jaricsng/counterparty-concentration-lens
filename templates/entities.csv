@@ -1,0 +1,4 @@
+entity_id,entity_name,counterparty_type,sector,parent_entity_id,eligible_capital,annual_revenue
+LE-EXAMPLE-BANK,Example Lender Bank (REPLACE ME),bank,financial services,,100000000,
+LE-EXAMPLE-1,Example Holdings Ltd (REPLACE ME),corporate,technology,,,50000000
+LE-EXAMPLE-2,Example Subsidiary Ltd (REPLACE ME),corporate,technology,LE-EXAMPLE-1,,20000000

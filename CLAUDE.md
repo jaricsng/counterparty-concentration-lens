@@ -25,7 +25,7 @@ Counterparty / lending exposure, modelled on **FIBO** (EDM Council / OMG, OWL 2 
 
 ## Module plan & verification gates
 
-> **Every module's verification ALSO includes the engineering gates** from the standards section below: tests pass, `ruff`/`black`/`mypy` clean, CI green, and any new security surface scanned. The functional "verify" below is necessary but not sufficient on its own.
+> **Every module's verification ALSO inc1ludes the engineering gates** from the standards section below: tests pass, `ruff`/`black`/`mypy` clean, CI green, and any new security surface scanned. The functional "verify" below is necessary but not sufficient on its own.
 
 ### M0 — FIBO model + store + concentration query  (`m0-ontology/`)
 Import the relevant FIBO modules (BE, LOAN, FBC/Debt, FND, Guaranty) into Apache Jena Fuseki. Author a thin **application ontology** that imports FIBO and adds only what's missing for the demo (e.g. an `Exposure` convenience view, a `Limit`). Load synthetic instances: ~15–25 legal entities, some in group/ownership structures; loans; guarantees linking entities; shared collateral; per-counterparty limits.

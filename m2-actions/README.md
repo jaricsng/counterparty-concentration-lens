@@ -78,10 +78,23 @@ curl -s localhost:8000/actions/record-exposure -H 'content-type: application/jso
 pytest m2-actions -q     # in-memory store (rdflib) — no Fuseki required
 ```
 
+## Bring-your-own-data import (`importer.py`)
+
+The same guarded path also ingests user **TEST** datasets: `import_dataset()`
+builds a candidate graph from canonical rows (`lens_m1.byod`), SHACL-validates it,
+returns a **per-row accepted/rejected report**, and — only if every row passes
+(`validate-all-then-load`, or `allow_partial=True` to load just the good rows) —
+replaces the active graph as a named dataset and audits the import. Bundled
+calm/stressed are never overwritten; "reset" restores them. See
+`../docs/data-import.md` and `../templates/`.
+
 ## Verify (M2 gates)
 
 - Valid create **writes + audits**; invalid (self-guaranty, dangling borrower,
   negative amount) is **rejected pre-write** and the rejection is audited.
+- BYOD import: valid templates load + audit; an invalid import is **rejected with
+  per-row reasons and nothing written** (atomic); `--allow-partial` loads only
+  passing rows.
 - A sandbox loan can push connected exposure **over a single-name limit** — it is
   written and the breach is flagged + audited.
 - **Soft-delete** a guaranty → the NBFI cascade connected exposure drops
