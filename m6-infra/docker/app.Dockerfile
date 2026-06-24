@@ -2,7 +2,7 @@
 #   docker build -f m6-infra/docker/app.Dockerfile -t lens/app:0.1.0 .
 #
 # Bundles the `opa` binary so the M3 policy (role scoping) works in-cluster.
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

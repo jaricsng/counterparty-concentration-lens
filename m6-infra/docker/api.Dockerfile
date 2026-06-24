@@ -1,6 +1,6 @@
 # M2 actions API (guarded SHACL-validated writes). Build from the repo root:
 #   docker build -f m6-infra/docker/api.Dockerfile -t lens/api:0.1.0 .
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
