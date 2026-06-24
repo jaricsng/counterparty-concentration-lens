@@ -7,17 +7,33 @@ Needs a running Fuseki with a dataset loaded (see M0/M1).
 from __future__ import annotations
 
 import os
+import sys
 from decimal import Decimal
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
-# These imports resolve because bootstrap put the module roots on sys.path.
+# Make the sibling module packages importable when launched via `streamlit run`
+# (this must happen BEFORE the lens_* imports below).
+_REPO = Path(__file__).resolve().parent.parent
+for _mod in (
+    "m5-app",
+    "m0-ontology",
+    "m1-ingestion",
+    "m2-actions",
+    "m3-security",
+    "m4-ai",
+    "capstone",
+):
+    _path = str(_REPO / _mod)
+    if _path not in sys.path:
+        sys.path.insert(0, _path)
+
 from lens_m3.portfolios import DEFAULT_USER, DEMO_USERS  # noqa: E402
 from lens_m4 import agent, ollama  # noqa: E402
-from lens_m5 import data
-from lens_m5.bootstrap import REPO_ROOT, build_context, reload_dataset
+from lens_m5 import data  # noqa: E402
+from lens_m5.bootstrap import REPO_ROOT, build_context, reload_dataset  # noqa: E402
 
 st.set_page_config(page_title="Counterparty Concentration Lens", layout="wide")
 
