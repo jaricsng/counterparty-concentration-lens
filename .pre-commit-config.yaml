@@ -22,13 +22,18 @@ repos:
       - id: detect-private-key
       - id: mixed-line-ending
 
-  # --- Lint + format (Python) ---
+  # --- Lint (Python) ---
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.18
     hooks:
       - id: ruff           # lint
         args: ["--fix"]
-      - id: ruff-format    # format (black-compatible)
+
+  # --- Format (Python) — black, the same formatter CI checks with ---
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 26.5.1
+    hooks:
+      - id: black
 
   # --- Type checking ---
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -57,6 +62,6 @@ repos:
       - id: gitleaks
 
 # Notes:
-# - ruff replaces black/flake8/isort; ruff-format is the formatter.
+# - ruff lints; black formats (same formatter CI runs as `black --check`).
 # - bandit reads config from pyproject.toml ([tool.bandit]).
 # - If a hook version warns as outdated, run: pre-commit autoupdate
