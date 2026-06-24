@@ -82,6 +82,13 @@ jobs:
           chmod +x opa && sudo install opa /usr/local/bin/opa
           opa version
 
+      - name: Install gator (M6 admission policy)
+        run: |
+          GK=v3.22.2
+          curl -fsSL -o gator.tgz \
+            "https://github.com/open-policy-agent/gatekeeper/releases/download/${GK}/gator-${GK}-linux-amd64.tar.gz"
+          tar -xzf gator.tgz gator && sudo install gator /usr/local/bin/gator
+
       - name: Start Fuseki (in-memory, updatable, /lens on :3030)
         run: |
           curl -fsSL -o fuseki.tgz \
@@ -131,22 +138,6 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
-
-  # --- M6: admission policy-as-code unit tests (gator) ---
-  policy:
-    name: Gatekeeper policy tests (gator)
-    runs-on: ubuntu-latest
-    if: ${{ hashFiles('m6-infra/policies/tests/suite.yaml') != '' }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install gator
-        run: |
-          GK=v3.22.2
-          curl -fsSL -o gator.tgz \
-            "https://github.com/open-policy-agent/gatekeeper/releases/download/${GK}/gator-${GK}-linux-amd64.tar.gz"
-          tar -xzf gator.tgz gator && sudo install gator /usr/local/bin/gator
-      - name: gator verify (admission policies)
-        run: gator verify m6-infra/policies/tests/suite.yaml
 
   # --- M6: build images, scan, SBOM ---
   container-scan:
