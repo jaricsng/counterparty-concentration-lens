@@ -16,9 +16,11 @@ pre-commit>=4.0
 # --- Lint + format (ruff replaces flake8 + black + isort) ---
 ruff>=0.8
 
-# --- Formatter (kept explicit; CLAUDE.md references black --check.
-#     If you standardise on `ruff format`, you can drop black.) ---
-black>=24.10
+# --- Formatter (black, per CLAUDE.md; CI runs `black --check`) ---
+#     PINNED EXACTLY to the .pre-commit-config.yaml black rev so the local hook
+#     and CI never disagree on formatting. Bump both together (or run
+#     `pre-commit autoupdate` and update this pin to match).
+black==26.5.1
 
 # --- Type checking ---
 mypy>=1.13
