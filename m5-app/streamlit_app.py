@@ -262,7 +262,7 @@ def main() -> None:
                 candidates + [h for h in m2h if h not in candidates],
                 format_func=lambda x: name_of.get(x, x),
             )
-            principal = st.number_input(
+            principal_amt = st.number_input(
                 "Principal (SGD)", min_value=1, value=30_000_000, step=1_000_000
             )
             if st.form_submit_button("Submit via M2"):
@@ -270,7 +270,7 @@ def main() -> None:
                     loan_id=lid,
                     lender_id="LE-0099",
                     borrower_id=borrower,
-                    principal=int(principal),
+                    principal=int(principal_amt),
                     actor=principal.role,
                     role=role,
                 )
