@@ -11,10 +11,10 @@
 # (or use `uv pip compile`), then install from the .lock in CI.
 
 # --- Orchestration of hooks ---
-pre-commit>=4.0
+pre-commit>=4.6.0
 
 # --- Lint + format (ruff replaces flake8 + black + isort) ---
-ruff>=0.8
+ruff>=0.15.19
 
 # --- Formatter (black, per CLAUDE.md; CI runs `black --check`) ---
 #     PINNED EXACTLY to the .pre-commit-config.yaml black rev so the local hook
@@ -23,13 +23,13 @@ ruff>=0.8
 black==26.5.1
 
 # --- Type checking ---
-mypy>=1.13
+mypy>=2.1.0
 
 # --- Tests ---
-pytest>=8.3
-pytest-cov>=6.0
-hypothesis>=6.0          # property-based tests (metric invariants)
+pytest>=9.1.1
+pytest-cov>=7.1.0
+hypothesis>=6.155.7          # property-based tests (metric invariants)
 
 # --- Security ---
-bandit[toml]>=1.8        # SAST; reads config from pyproject.toml
-pip-audit>=2.7           # dependency vulnerability scan
+bandit[toml]>=1.9.4        # SAST; reads config from pyproject.toml
+pip-audit>=2.10.1           # dependency vulnerability scan

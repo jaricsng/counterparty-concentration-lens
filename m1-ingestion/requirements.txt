@@ -1,6 +1,6 @@
 # M1 runtime dependencies. Pinned for reproducibility (prototype).
 # Dev/quality tooling lives in the repo-root requirements-dev.txt.
-rdflib==7.2.1
+rdflib==7.6.0
 requests==2.34.2
 # Bring-your-own-data: parse the optional Tier-2 column/value mapping (lens_m1.byod).
 PyYAML==6.0.3
