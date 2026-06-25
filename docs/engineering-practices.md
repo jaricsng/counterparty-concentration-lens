@@ -65,9 +65,10 @@ full suite runs so the HTTP/SPARQL paths count — CI aggregate ~89%), and
 **mutation testing** (`cosmic-ray`, weekly/manual via `mutation.yml` and
 `scripts/run_mutation.sh`) which mutates the core risk logic and checks the tests
 actually *kill* the mutants — coverage proves lines ran, mutation proves the
-assertions catch bugs. Current mutation scores: `lens_m2/derived.py` 100%,
-`lens_m4/safety.py` ~83%, `lens_m1/metrics.py` ~80% killed. Mutation is
-report-only (slow + equivalent-mutant noise), so it informs rather than blocks.
+assertions catch bugs. Mutation scores (CI) land **~77–83% killed** across the
+core modules (`lens_m1/metrics.py`, `lens_m2/derived.py`, `lens_m4/safety.py`);
+they vary run-to-run from equivalent mutants and timing, which is why mutation is
+**report-only** (a signal, not a merge gate).
 
 Local equivalents run via **pre-commit hooks** (`.pre-commit-config.yaml`): ruff, black, mypy, gitleaks, whitespace/EOF fixers.
 
