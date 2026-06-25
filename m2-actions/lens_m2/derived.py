@@ -151,6 +151,36 @@ def net_exposure(store: Store, entity_iri: str) -> Decimal:
     return max(Decimal(0), gross - _collateral_mitigant(facts, cp))
 
 
+@dataclass(frozen=True)
+class NetExposure:
+    entity: str
+    name: str
+    gross: Decimal
+    mitigant: Decimal
+    net: Decimal
+
+
+def net_exposures(store: Store) -> list[NetExposure]:
+    """Counterparties with eligible collateral: gross -> net (post-CRM) exposure."""
+    facts = _facts(store)
+    names = {
+        _local(r["e"]): (r["n"] or "")
+        for r in store.select(
+            "SELECT ?e ?n WHERE { ?e <http://www.w3.org/2000/01/rdf-schema#label> ?n }"
+        )
+    }
+    rows: list[NetExposure] = []
+    for cp in sorted({b for b, _ in facts.loans.values()}):
+        mitigant = _collateral_mitigant(facts, cp)
+        if mitigant <= 0:
+            continue
+        gross = sum((amt for b, amt in facts.loans.values() if b == cp), Decimal(0))
+        rows.append(
+            NetExposure(cp, names.get(cp, cp), gross, mitigant, max(Decimal(0), gross - mitigant))
+        )
+    return rows
+
+
 def limit_breaches(store: Store) -> list[Breach]:
     """Names whose connected exposure meets or exceeds their limit."""
     facts = _facts(store)

@@ -189,6 +189,29 @@ def main() -> None:
                 hide_index=True,
             )
 
+        nets = ctx.service.net_exposures()
+        if nets:
+            st.subheader("Net exposure (post-collateral / netting)")
+            st.caption(
+                "Gross single-name exposure reduced by eligible collateral = value × (1 − haircut)."
+            )
+            st.dataframe(
+                pd.DataFrame(
+                    [
+                        {
+                            "entity": n.entity,
+                            "name": n.name,
+                            "gross": _m(n.gross),
+                            "collateral mitigant": _m(n.mitigant),
+                            "net (post-CRM)": _m(n.net),
+                        }
+                        for n in nets
+                    ]
+                ),
+                width="stretch",
+                hide_index=True,
+            )
+
     # ------------------------------------------------------------------- Explore
     with tabs[1]:
         visible_heads = [(h, name_of.get(h, h)) for h in candidates if h in visible]
