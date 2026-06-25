@@ -10,12 +10,54 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Protocol
 
+from lens_m1.credit_risk import CAPITAL_RATIO, expected_loss, rw_for
+
 from . import nl2sparql, ollama
 from .safety import is_safe
 
 
 class Runner(Protocol):
     def select(self, query: str) -> list[dict[str, str | None]]: ...
+
+
+# Dedicated-collateral mitigant per counterparty (mirrors lens_m2.derived); used
+# to net EAD before applying the credit_risk parameters in the computed intents.
+_MITIGANT_Q = (
+    "PREFIX lens: <https://lens.example/ontology/>\n"
+    "SELECT ?cp (SUM(?elig) AS ?mit) WHERE {\n"
+    "  { SELECT ?col (SAMPLE(?b) AS ?cp) (SAMPLE(?val) AS ?v) (SAMPLE(?hc) AS ?h)\n"
+    "           (COUNT(DISTINCT ?b) AS ?nb) WHERE {\n"
+    "    ?col lens:collateralValue ?val ; lens:haircut ?hc ; lens:securesLoan ?l ;\n"
+    '         lens:status "active" .\n'
+    '    ?l lens:borrower ?b ; lens:status "active" .\n'
+    "  } GROUP BY ?col } FILTER(?nb = 1) BIND(?v * (1 - ?h) AS ?elig)\n"
+    "} GROUP BY ?cp"
+)
+
+
+def _credit_risk_rows(runner: Runner, gross_query: str) -> list[dict[str, str | None]]:
+    """Per-borrower net EAD / EL / capital, computed with the credit_risk parameters.
+
+    EAD = gross - dedicated collateral mitigant; EL/capital via lens_m1.credit_risk.
+    Computed (not pure SPARQL) because PD / risk-weight are parametric.
+    """
+    mit = {_local(r.get("cp")): Decimal(r.get("mit") or 0) for r in runner.select(_MITIGANT_Q)}
+    rows: list[dict[str, str | None]] = []
+    for r in runner.select(gross_query):
+        cp = _local(r.get("cp"))
+        rating = r.get("rating")
+        ead = max(Decimal(0), Decimal(r.get("gross") or 0) - mit.get(cp, Decimal(0)))
+        rows.append(
+            {
+                "entity": cp,
+                "name": r.get("name"),
+                "rating": rating or "unrated",
+                "ead": str(ead),
+                "el": str(expected_loss(ead, rating)),
+                "capital": str(CAPITAL_RATIO * rw_for(rating) * ead),
+            }
+        )
+    return sorted(rows, key=lambda x: Decimal(x["el"] or "0"), reverse=True)
 
 
 @dataclass(frozen=True)
@@ -106,6 +148,20 @@ def _summarise(intent: str, rows: list[dict[str, str | None]], params: dict[str,
             f"{len(rows)} name(s) collateralised. Largest net (post-collateral): "
             f"{name} {_money(top.get('gross'))} gross -> {_money(top.get('net'))} net."
         )
+    if intent == "expected_loss":
+        if not rows:
+            return "No exposures."
+        total = sum((Decimal(r.get("el") or 0) for r in rows), Decimal(0))
+        top = rows[0]
+        return (
+            f"Total expected loss: {_money(str(total))}. Largest contributor: "
+            f"{top.get('name')} ({top.get('rating')}) at {_money(top.get('el'))}."
+        )
+    if intent == "capital":
+        if not rows:
+            return "No exposures."
+        total = sum((Decimal(r.get("capital") or 0) for r in rows), Decimal(0))
+        return f"Total capital (8% of RWA): {_money(str(total))} across {len(rows)} counterparties."
     return f"{len(rows)} row(s)."
 
 
@@ -149,7 +205,12 @@ def answer(
             safe=False,
         )
 
-    rows = _scope_rows(runner.select(nlq.sparql), visible_groups, member_to_head)
+    if nlq.intent in ("expected_loss", "capital"):
+        # Computed intents: PD / risk-weight are parametric (not pure SPARQL).
+        raw = _credit_risk_rows(runner, nlq.sparql)
+    else:
+        raw = runner.select(nlq.sparql)
+    rows = _scope_rows(raw, visible_groups, member_to_head)
     return AnswerResult(
         question,
         True,

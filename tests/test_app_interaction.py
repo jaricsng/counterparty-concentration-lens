@@ -141,3 +141,24 @@ def test_country_filter_narrows(require_fuseki: None) -> None:
     ms.set_value(["HK"]).run()
     ctable = next(df.value for df in at.dataframe if "country" in list(map(str, df.value.columns)))
     assert set(ctable["country"]) == {"HK"}
+
+
+def test_dashboard_expected_loss_and_capital(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    labels = {str(m.label) for m in at.metric}
+    assert {"Total EAD", "Expected loss", "RWA", "Capital (8%)"} <= labels
+    eltable = next(
+        df.value for df in at.dataframe if "expected loss" in list(map(str, df.value.columns))
+    )
+    helios = eltable[eltable["entity"] == "LE-0011"]
+    assert not helios.empty and helios.iloc[0]["rating"] == "BB"
+
+
+def test_expected_loss_rating_filter(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    ms = next(m for m in at.multiselect if (m.label or "").lower() == "filter rating (el)")
+    ms.set_value(["B"]).run()
+    eltable = next(
+        df.value for df in at.dataframe if "expected loss" in list(map(str, df.value.columns))
+    )
+    assert set(eltable["rating"]) == {"B"}

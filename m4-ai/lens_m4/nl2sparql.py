@@ -108,6 +108,15 @@ _RATING = """SELECT ?rating (SUM(?amt) AS ?exposure) WHERE {
   BIND(COALESCE(?gubo, ?bubo) AS ?owner) ?owner lens:rating ?rating .
 } GROUP BY ?rating ORDER BY DESC(?exposure)"""
 
+# Credit-risk (EAD/EL/capital) is a COMPUTED intent: this representative query
+# returns per-borrower gross exposure + rating; the agent nets collateral and
+# applies the credit_risk PD / risk-weight parameters (see lens_m1.credit_risk).
+_CREDIT = """SELECT ?cp ?name ?rating (SUM(?amt) AS ?gross) WHERE {
+  ?ln lens:borrower ?cp ; lens:principalAmount ?amt ; lens:status "active" .
+  OPTIONAL { ?cp rdfs:label ?name }
+  OPTIONAL { ?cp lens:rating ?rating }
+} GROUP BY ?cp ?name ?rating ORDER BY DESC(?gross)"""
+
 _WWR = """SELECT ?loan ?borrowerName ?issuerName WHERE {
   ?collateral lens:collateralIssuer ?issuer ; lens:securesLoan ?loan ; lens:status "active" .
   ?loan lens:borrower ?borrower ; lens:status "active" .
@@ -176,6 +185,24 @@ def generate(question: str, label_index: dict[str, str] | None = None) -> NLQuer
 
     if any(w in q for w in ("country", "countries", "geograph", "jurisdiction")):
         return NLQuery(question, "country_concentration", "template", _q(_COUNTRY))
+
+    # Capital keywords are specific phrases (bare "capital" collides with entity
+    # names like "Nimbus Capital Partners").
+    _capital_kw = (
+        "rwa",
+        "risk-weight",
+        "risk weight",
+        "risk-weighted",
+        "regulatory capital",
+        "capital requirement",
+        "capital ratio",
+        "capital charge",
+        "how much capital",
+    )
+    _el_kw = ("expected loss", "ecl", "provision")
+    if any(w in q for w in _capital_kw + _el_kw):
+        intent = "capital" if any(w in q for w in _capital_kw) else "expected_loss"
+        return NLQuery(question, intent, "template", _q(_CREDIT))
 
     if any(w in q for w in ("rating", "grade", "investment grade", "credit quality")):
         return NLQuery(question, "rating_concentration", "template", _q(_RATING))

@@ -253,6 +253,47 @@ def main() -> None:
                 ndf = ndf[ndf["sector"].isin(nsec)]
             st.dataframe(ndf, width="stretch", hide_index=True)
 
+        cap = ctx.service.capital_summary()
+        st.subheader("Expected loss & capital (simplified, point-in-time)")
+        st.caption(
+            "EAD = net (post-collateral) exposure · PD from rating · EL = PD × LGD × EAD · "
+            "RWA = standardised risk-weight × EAD · capital = 8% × RWA. "
+            "Deterministic point-in-time view — NOT Monte-Carlo PFE/CVA or full IFRS-9."
+        )
+        k1, k2, k3, k4 = st.columns(4)
+        k1.metric("Total EAD", _m(cap.total_ead))
+        k2.metric("Expected loss", _m(cap.total_el))
+        k3.metric("RWA", _m(cap.total_rwa))
+        k4.metric("Capital (8%)", _m(cap.total_capital))
+        eldf = pd.DataFrame(
+            [
+                {
+                    "entity": r.entity,
+                    "name": r.name,
+                    "sector": r.sector,
+                    "rating": r.rating,
+                    "EAD": _m(r.ead),
+                    "PD": f"{float(r.pd) * 100:.2f}%",
+                    "expected loss": f"SGD {float(r.el):,.0f}",
+                    "capital": f"SGD {float(r.capital):,.0f}",
+                }
+                for r in ctx.service.expected_losses()
+            ]
+        )
+        if not eldf.empty:
+            f1, f2 = st.columns(2)
+            rsel = f1.multiselect(
+                "Filter rating (EL)", sorted(eldf["rating"].unique()), key="el_rating"
+            )
+            ssel = f2.multiselect(
+                "Filter sector (EL)", sorted(eldf["sector"].unique()), key="el_sector"
+            )
+            if rsel:
+                eldf = eldf[eldf["rating"].isin(rsel)]
+            if ssel:
+                eldf = eldf[eldf["sector"].isin(ssel)]
+        st.dataframe(eldf, width="stretch", hide_index=True)
+
     # ------------------------------------------------------------------- Explore
     with tabs[1]:
         visible_heads = [(h, name_of.get(h, h)) for h in candidates if h in visible]
