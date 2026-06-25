@@ -181,6 +181,40 @@ def build_stressed() -> DatasetSpec:
             collateral_value=5 * _M,
             haircut_pct=20,
         ),
+        # Spread of collateralised names across sectors (for the net-exposure view
+        # + sector filtering). Haircuts reflect collateral quality.
+        Collateral(  # government bond — low haircut
+            "COL-3004",
+            "Sovereign 5% bond",
+            "LE-0042",
+            ("LN-1042",),
+            collateral_value=2 * _M,
+            haircut_pct=5,
+        ),
+        Collateral(  # commercial real estate
+            "COL-3005",
+            "Office tower",
+            "LE-0040",
+            ("LN-1040",),
+            collateral_value=2 * _M,
+            haircut_pct=25,
+        ),
+        Collateral(  # trade receivables — high haircut
+            "COL-3006",
+            "Trade receivables",
+            "LE-0043",
+            ("LN-1016",),
+            collateral_value=4 * _M,
+            haircut_pct=40,
+        ),
+        Collateral(  # listed equities pledged by an NBFI
+            "COL-3007",
+            "Listed equities",
+            "LE-0030",
+            ("LN-1010",),
+            collateral_value=3 * _M,
+            haircut_pct=30,
+        ),
     ]
     return DatasetSpec(
         "stressed",
@@ -264,6 +298,22 @@ def build_calm() -> DatasetSpec:
             ("LN-1020",),
             collateral_value=3 * _M,
             haircut_pct=20,
+        ),
+        Collateral(  # government bond — low haircut
+            "COL-3004",
+            "Sovereign 5% bond",
+            "LE-0042",
+            ("LN-1042",),
+            collateral_value=3 * _M,
+            haircut_pct=5,
+        ),
+        Collateral(  # commercial real estate
+            "COL-3005",
+            "Office tower",
+            "LE-0040",
+            ("LN-1040",),
+            collateral_value=2 * _M,
+            haircut_pct=25,
         ),
     ]
     return DatasetSpec(

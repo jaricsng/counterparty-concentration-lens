@@ -155,6 +155,7 @@ def net_exposure(store: Store, entity_iri: str) -> Decimal:
 class NetExposure:
     entity: str
     name: str
+    sector: str
     gross: Decimal
     mitigant: Decimal
     net: Decimal
@@ -169,6 +170,10 @@ def net_exposures(store: Store) -> list[NetExposure]:
             "SELECT ?e ?n WHERE { ?e <http://www.w3.org/2000/01/rdf-schema#label> ?n }"
         )
     }
+    sectors = {
+        _local(r["e"]): (r["s"] or "")
+        for r in store.select(_PREFIX + "SELECT ?e ?s WHERE { ?e lens:sector ?s }")
+    }
     rows: list[NetExposure] = []
     for cp in sorted({b for b, _ in facts.loans.values()}):
         mitigant = _collateral_mitigant(facts, cp)
@@ -176,7 +181,14 @@ def net_exposures(store: Store) -> list[NetExposure]:
             continue
         gross = sum((amt for b, amt in facts.loans.values() if b == cp), Decimal(0))
         rows.append(
-            NetExposure(cp, names.get(cp, cp), gross, mitigant, max(Decimal(0), gross - mitigant))
+            NetExposure(
+                cp,
+                names.get(cp, cp),
+                sectors.get(cp, ""),
+                gross,
+                mitigant,
+                max(Decimal(0), gross - mitigant),
+            )
         )
     return rows
 

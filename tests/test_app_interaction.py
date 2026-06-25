@@ -113,3 +113,15 @@ def test_nl_net_exposure_question_via_app(require_fuseki: None) -> None:
     assert len(at.exception) == 0
     answer = " ".join(str(m.value) for m in at.info).lower()
     assert "net" in answer and ("collateral" in answer or "helios" in answer)
+
+
+def test_net_exposure_sector_filter(require_fuseki: None) -> None:
+    # drive the net-exposure sector filter and assert the table narrows
+    at = _run_app("stressed")
+    ms = next(m for m in at.multiselect if "net exposure" in (m.label or "").lower())
+    ms.set_value(["financial services"]).run()
+    table = next(
+        df.value for df in at.dataframe if "net (post-CRM)" in list(map(str, df.value.columns))
+    )
+    assert set(table["sector"]) == {"financial services"}
+    assert set(table["entity"]) == {"LE-0021", "LE-0030"}
