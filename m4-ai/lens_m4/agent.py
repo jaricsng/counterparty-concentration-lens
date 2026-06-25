@@ -83,6 +83,14 @@ def _summarise(intent: str, rows: list[dict[str, str | None]], params: dict[str,
             name = top_sector.get("sector")
             return f"Largest sector: {name} at {share:.0f}% of connected exposure."
         return "No sector data."
+    if intent in ("country_concentration", "rating_concentration"):
+        dim = "country" if intent == "country_concentration" else "rating"
+        total = sum((Decimal(r.get("exposure") or 0) for r in rows), Decimal(0))
+        top = max(rows, key=lambda r: Decimal(r.get("exposure") or 0)) if rows else None
+        if top is not None and total:
+            share = float(Decimal(top.get("exposure") or 0) / total) * 100
+            return f"Largest {dim}: {top.get(dim)} at {share:.0f}% of connected exposure."
+        return f"No {dim} data."
     if intent == "wrong_way_risk":
         return (
             f"{len(rows)} structural wrong-way-risk flag(s)."

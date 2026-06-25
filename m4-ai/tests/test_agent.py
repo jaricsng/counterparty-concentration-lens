@@ -78,3 +78,17 @@ def test_net_exposure_after_collateral(runner: GraphRunner) -> None:
     assert Decimal(helios["net"]) == 5_000_000  # 4M bond @ 50% haircut -> 2M mitigant
     # every generated query is still safe (read-only, known schema)
     assert is_safe(a.sparql).safe
+
+
+def test_country_concentration(runner: GraphRunner) -> None:
+    a = _ans(runner, "which country are we most exposed to?")
+    assert a.intent == "country_concentration"
+    assert "SG" in a.summary
+    assert is_safe(a.sparql).safe
+
+
+def test_rating_concentration(runner: GraphRunner) -> None:
+    a = _ans(runner, "what is our credit rating concentration?")
+    assert a.intent == "rating_concentration"
+    assert "BB" in a.summary
+    assert is_safe(a.sparql).safe

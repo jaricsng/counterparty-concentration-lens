@@ -39,6 +39,8 @@ amounts are integers in a single currency.
 | `parent_entity_id` | no | the entity's owner (for ownership / UBO chains); blank if top-level |
 | `eligible_capital` | lender only | the lending bank's regulatory capital (limit basis) |
 | `annual_revenue` | corporates | revenue (alternative limit basis) |
+| `country` | no | country of risk (ISO-style code, e.g. `SG`); enables country concentration |
+| `rating` | no | credit rating grade (e.g. `AAA`..`CCC`); enables rating-bucket concentration |
 
 ### `loans.csv`
 | column | required | meaning |

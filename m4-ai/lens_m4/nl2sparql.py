@@ -89,6 +89,25 @@ _SECTOR = """SELECT ?sector (SUM(?amt) AS ?exposure) WHERE {
   BIND(COALESCE(?gubo, ?bubo) AS ?owner) ?owner lens:sector ?sector .
 } GROUP BY ?sector ORDER BY DESC(?exposure)"""
 
+# Country / rating concentration — same risk-owner attribution as _SECTOR.
+_COUNTRY = """SELECT ?country (SUM(?amt) AS ?exposure) WHERE {
+  ?loan lens:borrower ?b ; lens:principalAmount ?amt ; lens:status "active" .
+  ?b lens:isSubsidiaryOf* ?bubo . FILTER NOT EXISTS { ?bubo lens:isSubsidiaryOf ?bp }
+  OPTIONAL { ?g lens:guaranteedLoan ?loan ; lens:guarantor ?gtor .
+    ?gtor lens:isSubsidiaryOf* ?gubo . FILTER NOT EXISTS { ?gubo lens:isSubsidiaryOf ?gp }
+    FILTER(?gubo != ?bubo) }
+  BIND(COALESCE(?gubo, ?bubo) AS ?owner) ?owner lens:country ?country .
+} GROUP BY ?country ORDER BY DESC(?exposure)"""
+
+_RATING = """SELECT ?rating (SUM(?amt) AS ?exposure) WHERE {
+  ?loan lens:borrower ?b ; lens:principalAmount ?amt ; lens:status "active" .
+  ?b lens:isSubsidiaryOf* ?bubo . FILTER NOT EXISTS { ?bubo lens:isSubsidiaryOf ?bp }
+  OPTIONAL { ?g lens:guaranteedLoan ?loan ; lens:guarantor ?gtor .
+    ?gtor lens:isSubsidiaryOf* ?gubo . FILTER NOT EXISTS { ?gubo lens:isSubsidiaryOf ?gp }
+    FILTER(?gubo != ?bubo) }
+  BIND(COALESCE(?gubo, ?bubo) AS ?owner) ?owner lens:rating ?rating .
+} GROUP BY ?rating ORDER BY DESC(?exposure)"""
+
 _WWR = """SELECT ?loan ?borrowerName ?issuerName WHERE {
   ?collateral lens:collateralIssuer ?issuer ; lens:securesLoan ?loan ; lens:status "active" .
   ?loan lens:borrower ?borrower ; lens:status "active" .
@@ -154,6 +173,12 @@ def generate(question: str, label_index: dict[str, str] | None = None) -> NLQuer
 
     if "sector" in q:
         return NLQuery(question, "sector_concentration", "template", _q(_SECTOR))
+
+    if any(w in q for w in ("country", "countries", "geograph", "jurisdiction")):
+        return NLQuery(question, "country_concentration", "template", _q(_COUNTRY))
+
+    if any(w in q for w in ("rating", "grade", "investment grade", "credit quality")):
+        return NLQuery(question, "rating_concentration", "template", _q(_RATING))
 
     if (
         any(w in q for w in ("within", "near", "approaching", "close to", "watchlist"))

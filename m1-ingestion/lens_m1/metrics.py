@@ -239,6 +239,29 @@ def sector_shares(spec: DatasetSpec) -> dict[str, Decimal]:
     return {s: v / total for s, v in shares.items()}
 
 
+def _attribute_shares(spec: DatasetSpec, attr: str, default: str) -> dict[str, Decimal]:
+    """Share of attributed (risk-owner) exposure grouped by an entity attribute."""
+    vector = attributed_vector(spec)
+    total = sum(vector.values(), Decimal(0))
+    if total == 0:
+        return {}
+    shares: dict[str, Decimal] = {}
+    for name, exposure in vector.items():
+        key = getattr(spec.entity(name), attr) or default
+        shares[key] = shares.get(key, Decimal(0)) + exposure
+    return {k: v / total for k, v in shares.items()}
+
+
+def country_shares(spec: DatasetSpec) -> dict[str, Decimal]:
+    """Share of attributed exposure by the risk-owner's country of risk."""
+    return _attribute_shares(spec, "country", "unknown")
+
+
+def rating_shares(spec: DatasetSpec) -> dict[str, Decimal]:
+    """Share of attributed exposure by the risk-owner's credit-rating grade."""
+    return _attribute_shares(spec, "rating", "unrated")
+
+
 # --------------------------------------------------------------------------- #
 #  Single-name utilisation / watchlist bands (§9.2)
 # --------------------------------------------------------------------------- #
