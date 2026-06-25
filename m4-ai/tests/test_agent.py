@@ -92,3 +92,24 @@ def test_rating_concentration(runner: GraphRunner) -> None:
     assert a.intent == "rating_concentration"
     assert "BB" in a.summary
     assert is_safe(a.sparql).safe
+
+
+def test_expected_loss(runner: GraphRunner) -> None:
+    from decimal import Decimal
+
+    a = _ans(runner, "what is our total expected loss?")
+    assert a.intent == "expected_loss"
+    assert is_safe(a.sparql).safe
+    assert round(sum(Decimal(r["el"] or 0) for r in a.rows)) == 811_287  # == derived
+
+
+def test_capital(runner: GraphRunner) -> None:
+    a = _ans(runner, "how much regulatory capital do we need?")
+    assert a.intent == "capital"
+    assert "capital" in a.summary.lower()
+
+
+def test_capital_keyword_does_not_hijack_entity_name(runner: GraphRunner) -> None:
+    # "Nimbus Capital Partners" contains "capital" but this is an exposure question
+    a = _ans(runner, "what is our exposure to Nimbus Capital Partners?")
+    assert a.intent == "exposure_to_group"

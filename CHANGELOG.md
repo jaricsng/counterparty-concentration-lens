@@ -6,21 +6,48 @@ the project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
-### Added
-- **Observability & traceability**: request-scoped correlation IDs propagated to
-  structured JSON logs and the audit trail (`lens_m2/obs.py`); `X-Correlation-ID`
-  request/response header on the M2 API.
-- **Auditability**: tamper-evident, hash-chained audit log with a `verify()`
-  integrity check and an `/audit/verify` endpoint.
-- **Governance**: `CODEOWNERS`, PR template, `CONTRIBUTING.md`, this changelog, and
-  Architecture Decision Records under `docs/adr/`.
-- **Compliance**: data-governance & BCBS 239 mapping (`docs/compliance-and-data-governance.md`)
-  and a STRIDE threat model (`docs/threat-model.md`).
-- **Supply chain / DevSecOps**: GitHub Actions pinned by commit SHA; CodeQL workflow.
-- **Reuse**: a "golden path" to seed new projects with these practices
-  (`docs/golden-path.md`).
+## [0.2.0] - 2026-06-25
 
-### Earlier (build history)
-M0–M6 + Capstone, the BYOD test-data import, the P1–P3 test suites (e2e/integration,
-per-shape SHACL, property-based, contracts, M6 manifest lint), and the CI integration
-job (live Fuseki + OPA + gator). See the Conventional-Commit history for detail.
+### Added
+- **Counterparty credit risk — EAD, Expected Loss & capital** (simplified, deterministic,
+  point-in-time; clearly labelled, not a production model):
+  - `lens_m1/credit_risk.py`: EAD = net (post-collateral) exposure; PD from the credit
+    rating; LGD 45%; **EL = PD × LGD × EAD**; RWA = standardised risk-weight × EAD;
+    capital = 8% × RWA. Per-counterparty and book-level summary.
+  - M2 `derived.expected_losses` / `capital_summary` over the live store, exposed via
+    `ActionService` (parity-tested against the M1 oracle).
+  - Dashboard "Expected loss & capital" section: portfolio metrics (EAD/EL/RWA/capital)
+    + per-counterparty table with rating + sector filters.
+  - NL **computed** intents `expected_loss` and `capital` (PD/risk-weight are parametric;
+    the agent nets collateral and applies the `credit_risk` parameters — consistent with
+    the dashboard; "capital" no longer hijacks entity names like "Nimbus Capital Partners").
+  - Reuses the merged netting (→ EAD) and rating (→ PD/risk-weight) features. Still
+    out of scope: Monte-Carlo PFE/CVA, full IFRS-9 staging, IRB.
+
+## [0.1.0] - 2026-06-25
+
+First versioned release of the learning prototype (synthetic data; production-shaped,
+not production-hardened).
+
+### Added
+- **Core Lens (M0–M6 + Capstone)**: FIBO model + Fuseki, synthetic data + ingestion,
+  SHACL validation + guarded actions, OPA/Rego dynamic security, grounded NL query
+  (M4), the Streamlit demo app, and k3d/Argo CD infra with OPA Gatekeeper.
+- **Netting & collateral**: collateralised **net exposure** (gross − Σ value×(1−haircut)
+  over dedicated collateral), surfaced on the dashboard with a sector filter, an NL
+  intent, BYOD columns, and a behavioral UI→backend test.
+- **Country & rating concentration**: geographic and credit-rating-bucket concentration
+  attributed to the risk-owner; dashboard tables + filters, NL intents, BYOD columns.
+- **Observability & traceability**: request-scoped correlation IDs in structured JSON
+  logs and the audit trail; `X-Correlation-ID` header on the M2 API.
+- **Auditability**: tamper-evident, hash-chained audit log with `verify()` and an
+  `/audit/verify` endpoint.
+- **Governance**: `CODEOWNERS`, PR template, `CONTRIBUTING.md`, this changelog, ADRs.
+- **Compliance**: data-governance & BCBS 239 mapping and a STRIDE threat model.
+- **Supply chain / DevSecOps**: GitHub Actions pinned by commit SHA; CodeQL; the CI
+  integration job (live Fuseki + OPA + gator); the P1–P3 test suites.
+- **Reuse**: a "golden path" to seed new projects with these practices.
+
+[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/jaricsng/counterparty-concentration-lens/releases/tag/v0.1.0

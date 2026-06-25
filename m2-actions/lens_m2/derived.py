@@ -14,6 +14,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal
 
+from lens_m1.credit_risk import CAPITAL_RATIO, expected_loss, pd_for, rw_for
+
 from .store import Store
 
 _PREFIX = "PREFIX lens: <https://lens.example/ontology/>\n"
@@ -191,6 +193,86 @@ def net_exposures(store: Store) -> list[NetExposure]:
             )
         )
     return rows
+
+
+@dataclass(frozen=True)
+class CreditRisk:
+    entity: str
+    name: str
+    sector: str
+    rating: str
+    ead: Decimal
+    pd: Decimal
+    el: Decimal
+    rwa: Decimal
+    capital: Decimal
+
+
+def _entity_meta(store: Store) -> tuple[dict[str, str], dict[str, tuple[str, str]]]:
+    names = {
+        _local(r["e"]): (r["n"] or "")
+        for r in store.select(
+            "SELECT ?e ?n WHERE { ?e <http://www.w3.org/2000/01/rdf-schema#label> ?n }"
+        )
+    }
+    meta = {
+        _local(r["e"]): (r["s"] or "", r["rt"] or "")
+        for r in store.select(
+            _PREFIX + "SELECT ?e ?s ?rt WHERE { ?e lens:sector ?s . "
+            "OPTIONAL { ?e lens:rating ?rt } }"
+        )
+    }
+    return names, meta
+
+
+def expected_losses(store: Store) -> list[CreditRisk]:
+    """Per-counterparty EAD/PD/EL/RWA/capital from the live store (status-aware).
+
+    EAD = net (post-collateral) exposure; PD/RW from rating; EL = PD x LGD x EAD.
+    Simplified point-in-time view — see lens_m1.credit_risk for the honesty caveats.
+    """
+    facts = _facts(store)
+    names, meta = _entity_meta(store)
+    rows: list[CreditRisk] = []
+    for cp in sorted({b for b, _ in facts.loans.values()}):
+        gross = sum((amt for b, amt in facts.loans.values() if b == cp), Decimal(0))
+        ead = max(Decimal(0), gross - _collateral_mitigant(facts, cp))
+        sector, rating = meta.get(cp, ("", ""))
+        rwa = rw_for(rating) * ead
+        rows.append(
+            CreditRisk(
+                cp,
+                names.get(cp, cp),
+                sector,
+                rating or "unrated",
+                ead,
+                pd_for(rating),
+                expected_loss(ead, rating),
+                rwa,
+                CAPITAL_RATIO * rwa,
+            )
+        )
+    return sorted(rows, key=lambda r: r.el, reverse=True)
+
+
+@dataclass(frozen=True)
+class CapitalSummary:
+    total_ead: Decimal
+    total_el: Decimal
+    total_rwa: Decimal
+    total_capital: Decimal
+
+
+def capital_summary(store: Store) -> CapitalSummary:
+    """Book-level EAD / EL / RWA / capital from the live store."""
+    rows = expected_losses(store)
+    total_rwa = sum((r.rwa for r in rows), Decimal(0))
+    return CapitalSummary(
+        total_ead=sum((r.ead for r in rows), Decimal(0)),
+        total_el=sum((r.el for r in rows), Decimal(0)),
+        total_rwa=total_rwa,
+        total_capital=CAPITAL_RATIO * total_rwa,
+    )
 
 
 def limit_breaches(store: Store) -> list[Breach]:
