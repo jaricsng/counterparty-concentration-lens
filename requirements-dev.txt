@@ -27,8 +27,9 @@ mypy>=1.13
 
 # --- Tests ---
 pytest>=8.3
-pytest-cov>=6.0
+pytest-cov>=6.0          # coverage; gate enforced in CI (fail_under in pyproject)
 hypothesis>=6.0          # property-based tests (metric invariants)
+cosmic-ray>=8.3          # mutation testing (weekly/manual job; needs Python <3.13)
 
 # --- Security ---
 bandit[toml]>=1.8        # SAST; reads config from pyproject.toml

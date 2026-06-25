@@ -100,10 +100,12 @@ jobs:
             sleep 1
           done
 
-      - name: Tests (full suite against live services)
+      - name: Tests (full suite against live services) + coverage gate
         env:
           FUSEKI_BASE_URL: "http://localhost:3030"
-        run: pytest -q
+        # coverage is meaningful only here (the HTTP/SPARQL paths need live Fuseki);
+        # fail_under=90 is enforced from [tool.coverage.report] in pyproject.toml.
+        run: pytest -q --cov --cov-report=term-missing
 
   security:
     name: Dependency, SAST, secret scan

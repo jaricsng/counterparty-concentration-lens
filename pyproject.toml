@@ -70,3 +70,22 @@ filterwarnings = [
     "ignore::DeprecationWarning:rdflib.*",
     "ignore::DeprecationWarning:starlette.*",
 ]
+
+[tool.coverage.run]
+# Measure the lens_* packages by import name (they live under m*/ on sys.path),
+# which is what makes aggregate coverage work across the multi-root layout.
+source_pkgs = ["lens_m0", "lens_m1", "lens_m2", "lens_m3", "lens_m4", "lens_m5", "lens_capstone"]
+relative_files = true
+omit = ["*/tests/*", "*/scripts/*"]
+
+[tool.coverage.report]
+show_missing = true
+# Enforced in the CI integration job (full suite, live services). Aggregate sits
+# at ~96%; gate at 90 to block regressions while allowing minor variance.
+fail_under = 90
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "\\.\\.\\.",  # Protocol / overload stubs
+]
