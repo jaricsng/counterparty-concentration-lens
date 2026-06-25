@@ -89,6 +89,15 @@ def _summarise(intent: str, rows: list[dict[str, str | None]], params: dict[str,
             if rows
             else "No wrong-way-risk flags."
         )
+    if intent == "net_exposure":
+        if not rows:
+            return "No counterparties have eligible collateral."
+        top = rows[0]
+        name = top.get("entityName") or "a counterparty"
+        return (
+            f"{len(rows)} name(s) collateralised. Largest net (post-collateral): "
+            f"{name} {_money(top.get('gross'))} gross -> {_money(top.get('net'))} net."
+        )
     return f"{len(rows)} row(s)."
 
 
