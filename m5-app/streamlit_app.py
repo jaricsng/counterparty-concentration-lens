@@ -170,6 +170,10 @@ def main() -> None:
                 for w in dash.watchlist
             ]
         )
+        if not wl.empty:
+            wband = st.multiselect("Filter band", sorted(wl["band"].unique()), key="wl_band")
+            if wband:
+                wl = wl[wl["band"].isin(wband)]
         st.dataframe(wl, width="stretch", hide_index=True)
 
         if dash.wwr:
@@ -195,22 +199,25 @@ def main() -> None:
             st.caption(
                 "Gross single-name exposure reduced by eligible collateral = value × (1 − haircut)."
             )
-            st.dataframe(
-                pd.DataFrame(
-                    [
-                        {
-                            "entity": n.entity,
-                            "name": n.name,
-                            "gross": _m(n.gross),
-                            "collateral mitigant": _m(n.mitigant),
-                            "net (post-CRM)": _m(n.net),
-                        }
-                        for n in nets
-                    ]
-                ),
-                width="stretch",
-                hide_index=True,
+            ndf = pd.DataFrame(
+                [
+                    {
+                        "entity": n.entity,
+                        "name": n.name,
+                        "sector": n.sector,
+                        "gross": _m(n.gross),
+                        "collateral mitigant": _m(n.mitigant),
+                        "net (post-CRM)": _m(n.net),
+                    }
+                    for n in nets
+                ]
             )
+            nsec = st.multiselect(
+                "Filter sector (net exposure)", sorted(ndf["sector"].unique()), key="net_sector"
+            )
+            if nsec:
+                ndf = ndf[ndf["sector"].isin(nsec)]
+            st.dataframe(ndf, width="stretch", hide_index=True)
 
     # ------------------------------------------------------------------- Explore
     with tabs[1]:
