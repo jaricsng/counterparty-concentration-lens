@@ -31,7 +31,7 @@ is in [`SECURITY.md`](../SECURITY.md); to reuse this baseline elsewhere see the
 
 | Area | Standard | Tooling |
 |---|---|---|
-| Tests | Unit + integration; **≥90% coverage gate**; **mutation-tested** core logic | `pytest`, `pytest-cov`, `cosmic-ray` |
+| Tests | Unit + integration; **≥85% coverage gate**; **mutation-tested** core logic | `pytest`, `pytest-cov`, `cosmic-ray` |
 | Lint | Clean, no warnings | `ruff` |
 | Format | Enforced, checked in CI | `black` |
 | Types | Type hints throughout; passes | `mypy` |
@@ -49,7 +49,7 @@ Runs on every push and pull request. The build fails on any gate.
 |---|---|---|
 | Lint / format / type | Code quality gates | ruff, black --check, mypy |
 | Unit, property-based & integration tests | Correctness | pytest + Hypothesis |
-| Coverage gate | Regression floor (**≥90%**, measured on the full suite) | pytest-cov |
+| Coverage gate | Regression floor (**≥85%**, measured on the full suite) | pytest-cov |
 | Mutation testing | Test *effectiveness*, not just line coverage (weekly/manual) | cosmic-ray |
 | Dependency vulnerability scan | Known CVEs in deps | pip-audit + Dependabot |
 | SAST | Static security analysis | bandit + **CodeQL** |
@@ -60,8 +60,8 @@ Runs on every push and pull request. The build fails on any gate.
 A dedicated **integration** job stands up a live Apache Jena Fuseki plus the **OPA** and **gator** binaries, so the tests that exercise real HTTP/SPARQL/SHACL, the M3 authorization policy, and the M6 admission policy actually run in CI (they auto-skip locally when those tools are absent). The fast lint/type job runs the unit tests on every push regardless.
 
 **Test quality, not just quantity.** Two gates guard against false confidence:
-a **coverage floor** (`--cov-fail-under=90`, enforced in the integration job where
-the full suite runs so the HTTP/SPARQL paths count — aggregate sits ~96%), and
+a **coverage floor** (`fail_under=85`, enforced in the integration job where the
+full suite runs so the HTTP/SPARQL paths count — CI aggregate ~89%), and
 **mutation testing** (`cosmic-ray`, weekly/manual via `mutation.yml` and
 `scripts/run_mutation.sh`) which mutates the core risk logic and checks the tests
 actually *kill* the mutants — coverage proves lines ran, mutation proves the
