@@ -156,6 +156,40 @@ def main() -> None:
                 df = df[df["sector"].isin(sectors)]
         st.dataframe(df, width="stretch", hide_index=True)
 
+        st.subheader("Country & rating concentration (connected, risk-owner)")
+        top_ctry = max(dash.countries.items(), key=lambda kv: kv[1], default=("-", Decimal(0)))
+        top_rtg = max(dash.ratings.items(), key=lambda kv: kv[1], default=("-", Decimal(0)))
+        st.caption(
+            f"Top country: **{top_ctry[0]}** {float(top_ctry[1]) * 100:.0f}% · "
+            f"Top rating: **{top_rtg[0]}** {float(top_rtg[1]) * 100:.0f}% "
+            "(attributed to the risk-owner; sub-investment-grade = BB and below)."
+        )
+        cc, rc = st.columns(2)
+        with cc:
+            cdf = pd.DataFrame(
+                [
+                    {"country": k, "share": f"{float(v) * 100:.0f}%"}
+                    for k, v in sorted(dash.countries.items(), key=lambda kv: -kv[1])
+                ]
+            )
+            if not cdf.empty:
+                pick = st.multiselect("Filter country", cdf["country"].tolist(), key="ctry_f")
+                if pick:
+                    cdf = cdf[cdf["country"].isin(pick)]
+            st.dataframe(cdf, width="stretch", hide_index=True)
+        with rc:
+            rdf = pd.DataFrame(
+                [
+                    {"rating": k, "share": f"{float(v) * 100:.0f}%"}
+                    for k, v in sorted(dash.ratings.items(), key=lambda kv: -kv[1])
+                ]
+            )
+            if not rdf.empty:
+                pick = st.multiselect("Filter rating", rdf["rating"].tolist(), key="rtg_f")
+                if pick:
+                    rdf = rdf[rdf["rating"].isin(pick)]
+            st.dataframe(rdf, width="stretch", hide_index=True)
+
         st.subheader("Watchlist (connected utilisation)")
         wl = pd.DataFrame(
             [

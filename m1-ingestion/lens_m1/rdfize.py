@@ -56,6 +56,10 @@ def build_graph(spec: DatasetSpec) -> Graph:
             g.add((s, LENS.eligibleCapital, _dec(e.eligible_capital)))
         if e.annual_revenue is not None:
             g.add((s, LENS.annualRevenue, _dec(e.annual_revenue)))
+        if e.country:
+            g.add((s, LENS.country, Literal(e.country)))
+        if e.rating:
+            g.add((s, LENS.rating, Literal(e.rating)))
 
     for ln in spec.loans:
         s = _iri(ln.loan_id)

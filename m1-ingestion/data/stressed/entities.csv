@@ -1,31 +1,31 @@
-entity_id,entity_name,counterparty_type,sector,parent_entity_id,eligible_capital,annual_revenue
-LE-0099,Lender Bank Pte Ltd,bank,financial services,,100000000,
-LE-0001,Acme Holdings Pte Ltd,corporate,commercial real estate,,,80000000
-LE-0002,Acme Trading Pte Ltd,corporate,commercial real estate,LE-0001,,
-LE-0003,Acme Capital SPV Ltd,corporate,commercial real estate,LE-0001,,
-LE-0004,Acme Logistics Sdn Bhd,corporate,transport & logistics,LE-0002,,
-LE-0010,Helios Holdings Ltd,corporate,energy,,,60000000
-LE-0011,Helios Power Pte Ltd,corporate,energy,LE-0010,,
-LE-0012,Helios Retail Energy Ltd,corporate,energy,LE-0010,,
-LE-0020,Vortex Global Holdings Ltd,nbfi,financial services,,,
-LE-0021,Vortex Alpha Fund Ltd,nbfi,financial services,LE-0020,,
-LE-0022,Vortex Beta Fund Ltd,nbfi,financial services,LE-0020,,
-LE-0023,Vortex Gamma Fund Ltd,nbfi,financial services,LE-0020,,
-LE-0030,Nimbus Capital Partners Ltd,nbfi,financial services,,,
-LE-0031,Pinnacle Developments Ltd,corporate,commercial real estate,,,40000000
-LE-0032,Summit Resources Ltd,corporate,energy,,,35000000
-LE-0033,Crest Manufacturing Ltd,corporate,industrials,,,30000000
-LE-0040,Orion Estates Ltd,corporate,commercial real estate,,,25000000
-LE-0041,Zenith Tech Pte Ltd,corporate,technology,,,20000000
-LE-0042,Sirius Public Authority,government,government,,,
-LE-0043,Castor Health Ltd,corporate,healthcare,,,15000000
-LE-0044,Pollux Logistics Ltd,corporate,transport & logistics,,,12000000
-LE-0045,Borealis Foods Ltd,corporate,consumer,,,18000000
-LE-0046,Lyra Capital Ltd,nbfi,financial services,,,
-LE-0047,Draco Industrial Ltd,corporate,industrials,,,14000000
-LE-0048,Vega Retail Ltd,corporate,consumer,,,10000000
-LE-0049,Altair Energy Ltd,corporate,energy,,,16000000
-LE-0050,Mistral Foods Ltd,corporate,consumer,,,11000000
-LE-0051,Cobalt Materials Ltd,corporate,industrials,,,13000000
-LE-0052,Delphi Health Ltd,corporate,healthcare,,,9000000
-LE-0053,Aster Retail Pte Ltd,corporate,consumer,,,8000000
+entity_id,entity_name,counterparty_type,sector,parent_entity_id,eligible_capital,annual_revenue,country,rating
+LE-0099,Lender Bank Pte Ltd,bank,financial services,,100000000,,SG,AAA
+LE-0001,Acme Holdings Pte Ltd,corporate,commercial real estate,,,80000000,SG,A
+LE-0002,Acme Trading Pte Ltd,corporate,commercial real estate,LE-0001,,,SG,A
+LE-0003,Acme Capital SPV Ltd,corporate,commercial real estate,LE-0001,,,SG,BBB
+LE-0004,Acme Logistics Sdn Bhd,corporate,transport & logistics,LE-0002,,,MY,BBB
+LE-0010,Helios Holdings Ltd,corporate,energy,,,60000000,SG,BBB
+LE-0011,Helios Power Pte Ltd,corporate,energy,LE-0010,,,SG,BB
+LE-0012,Helios Retail Energy Ltd,corporate,energy,LE-0010,,,MY,BB
+LE-0020,Vortex Global Holdings Ltd,nbfi,financial services,,,,HK,BB
+LE-0021,Vortex Alpha Fund Ltd,nbfi,financial services,LE-0020,,,HK,BB
+LE-0022,Vortex Beta Fund Ltd,nbfi,financial services,LE-0020,,,HK,B
+LE-0023,Vortex Gamma Fund Ltd,nbfi,financial services,LE-0020,,,HK,B
+LE-0030,Nimbus Capital Partners Ltd,nbfi,financial services,,,,SG,BB
+LE-0031,Pinnacle Developments Ltd,corporate,commercial real estate,,,40000000,SG,BBB
+LE-0032,Summit Resources Ltd,corporate,energy,,,35000000,MY,BBB
+LE-0033,Crest Manufacturing Ltd,corporate,industrials,,,30000000,ID,BB
+LE-0040,Orion Estates Ltd,corporate,commercial real estate,,,25000000,SG,BBB
+LE-0041,Zenith Tech Pte Ltd,corporate,technology,,,20000000,SG,A
+LE-0042,Sirius Public Authority,government,government,,,,SG,AAA
+LE-0043,Castor Health Ltd,corporate,healthcare,,,15000000,SG,BBB
+LE-0044,Pollux Logistics Ltd,corporate,transport & logistics,,,12000000,MY,BB
+LE-0045,Borealis Foods Ltd,corporate,consumer,,,18000000,SG,BBB
+LE-0046,Lyra Capital Ltd,nbfi,financial services,,,,SG,BB
+LE-0047,Draco Industrial Ltd,corporate,industrials,,,14000000,ID,B
+LE-0048,Vega Retail Ltd,corporate,consumer,,,10000000,SG,BBB
+LE-0049,Altair Energy Ltd,corporate,energy,,,16000000,MY,BB
+LE-0050,Mistral Foods Ltd,corporate,consumer,,,11000000,SG,BBB
+LE-0051,Cobalt Materials Ltd,corporate,industrials,,,13000000,MY,BB
+LE-0052,Delphi Health Ltd,corporate,healthcare,,,9000000,SG,BBB
+LE-0053,Aster Retail Pte Ltd,corporate,consumer,,,8000000,ID,B

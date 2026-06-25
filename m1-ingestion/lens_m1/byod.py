@@ -27,6 +27,8 @@ COLUMNS: dict[str, list[str]] = {
         "parent_entity_id",
         "eligible_capital",
         "annual_revenue",
+        "country",
+        "rating",
     ],
     "loans": [
         "loan_id",

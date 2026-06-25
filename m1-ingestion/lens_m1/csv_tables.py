@@ -36,6 +36,8 @@ def write_dataset(spec: DatasetSpec, out_dir: Path) -> dict[str, int]:
                 "parent_entity_id",
                 "eligible_capital",
                 "annual_revenue",
+                "country",
+                "rating",
             ]
         )
         for e in spec.entities:
@@ -48,6 +50,8 @@ def write_dataset(spec: DatasetSpec, out_dir: Path) -> dict[str, int]:
                     _w(e.parent_id),
                     _w(e.eligible_capital),
                     _w(e.annual_revenue),
+                    _w(e.country),
+                    _w(e.rating),
                 ]
             )
         counts["entities"] = len(spec.entities)
@@ -137,6 +141,8 @@ def read_dataset(in_dir: Path, name: str) -> DatasetSpec:
                 parent_id=_opt(r["parent_entity_id"]),
                 eligible_capital=int(r["eligible_capital"]) if r["eligible_capital"] else None,
                 annual_revenue=int(r["annual_revenue"]) if r["annual_revenue"] else None,
+                country=_opt(r.get("country", "")),
+                rating=_opt(r.get("rating", "")),
             )
             for r in csv.DictReader(fh)
         ]

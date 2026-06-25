@@ -1,0 +1,24 @@
+# Country concentration of CONNECTED exposure.
+#
+# countryShare(c) = sum(connected exposure attributed to country c) / total.
+# Attribution is by the RISK-OWNER's country of risk (the UBO of the borrower, or
+# of the guarantor when a loan is guaranteed) — the same risk-owner model as sector.
+
+PREFIX lens: <https://lens.example/ontology/>
+
+SELECT ?country (SUM(?amt) AS ?exposure)
+WHERE {
+  ?loan lens:borrower ?b ; lens:principalAmount ?amt ; lens:status "active" .
+  ?b lens:isSubsidiaryOf* ?bubo .
+  FILTER NOT EXISTS { ?bubo lens:isSubsidiaryOf ?bAnyParent }
+  OPTIONAL {
+    ?g lens:guaranteedLoan ?loan ; lens:guarantor ?gtor .
+    ?gtor lens:isSubsidiaryOf* ?gubo .
+    FILTER NOT EXISTS { ?gubo lens:isSubsidiaryOf ?gAnyParent }
+    FILTER(?gubo != ?bubo)
+  }
+  BIND(COALESCE(?gubo, ?bubo) AS ?owner)
+  ?owner lens:country ?country .
+}
+GROUP BY ?country
+ORDER BY DESC(?exposure)

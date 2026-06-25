@@ -59,6 +59,23 @@ def sector_shares(runner: QueryRunner, queries_dir: Path) -> dict[str, Decimal]:
     return {str(r.get("sector")): _dec(r.get("exposure")) / total for r in rows}
 
 
+def _dimension_shares(runner: QueryRunner, queries_dir: Path, dim: str) -> dict[str, Decimal]:
+    """Share of attributed exposure grouped by a risk-owner attribute (country/rating)."""
+    rows = runner.select(load_query(queries_dir, f"{dim}_concentration"))
+    total = sum((_dec(r.get("exposure")) for r in rows), Decimal(0))
+    if total == 0:
+        return {}
+    return {str(r.get(dim)): _dec(r.get("exposure")) / total for r in rows}
+
+
+def country_shares(runner: QueryRunner, queries_dir: Path) -> dict[str, Decimal]:
+    return _dimension_shares(runner, queries_dir, "country")
+
+
+def rating_shares(runner: QueryRunner, queries_dir: Path) -> dict[str, Decimal]:
+    return _dimension_shares(runner, queries_dir, "rating")
+
+
 @dataclass(frozen=True)
 class WwrFlag:
     loan: str

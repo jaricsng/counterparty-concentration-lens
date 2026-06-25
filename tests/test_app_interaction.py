@@ -125,3 +125,19 @@ def test_net_exposure_sector_filter(require_fuseki: None) -> None:
     )
     assert set(table["sector"]) == {"financial services"}
     assert set(table["entity"]) == {"LE-0021", "LE-0030"}
+
+
+def test_dashboard_shows_country_rating_concentration(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    ctable = next(df.value for df in at.dataframe if "country" in list(map(str, df.value.columns)))
+    assert ctable.iloc[0]["country"] == "SG"  # sorted desc -> home market on top
+    rtable = next(df.value for df in at.dataframe if "rating" in list(map(str, df.value.columns)))
+    assert rtable.iloc[0]["rating"] == "BB"  # sub-investment-grade dominates
+
+
+def test_country_filter_narrows(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    ms = next(m for m in at.multiselect if (m.label or "").lower() == "filter country")
+    ms.set_value(["HK"]).run()
+    ctable = next(df.value for df in at.dataframe if "country" in list(map(str, df.value.columns)))
+    assert set(ctable["country"]) == {"HK"}

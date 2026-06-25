@@ -26,6 +26,8 @@ class Entity:
     parent_id: str | None = None  # immediate owner, for ownership/UBO chains
     eligible_capital: int | None = None  # set on the lending institution
     annual_revenue: int | None = None  # set on corporate counterparties
+    country: str | None = None  # ISO-style country code, for country concentration
+    rating: str | None = None  # credit rating grade (AAA..CCC), for rating concentration
 
     def __post_init__(self) -> None:
         if self.counterparty_type not in COUNTERPARTY_TYPES:

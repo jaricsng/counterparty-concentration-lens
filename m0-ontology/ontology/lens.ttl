@@ -201,6 +201,21 @@ lens:sector a owl:DatatypeProperty ;
         'commercial real estate', 'technology', 'energy'). Used for sector
         concentration shares.""" .
 
+lens:country a owl:DatatypeProperty ;
+    rdfs:label "country" ;
+    rdfs:domain cmns-org:LegalEntity ;
+    rdfs:range  xsd:string ;
+    rdfs:comment """Country of risk (ISO-style code, e.g. 'SG', 'HK'). Used for
+        geographic/country concentration. Corresponds to FIBO LCC country codes.""" .
+
+lens:rating a owl:DatatypeProperty ;
+    rdfs:label "credit rating" ;
+    rdfs:domain cmns-org:LegalEntity ;
+    rdfs:range  xsd:string ;
+    rdfs:comment """Credit rating grade (e.g. 'AAA'..'CCC'). Used for rating-bucket
+        concentration and (later) PD/risk-weight mapping. Corresponds to FIBO's
+        credit-rating concept (fibo-fbc-dae-cr).""" .
+
 lens:counterpartyType a owl:DatatypeProperty ;
     rdfs:label "counterparty type" ;
     rdfs:domain cmns-org:LegalEntity ;

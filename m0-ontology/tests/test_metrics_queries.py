@@ -95,6 +95,22 @@ def test_sector_calm_within_band() -> None:
     assert max(got.values()) < Decimal("0.30")
 
 
+def test_country_concentration_matches_oracle() -> None:
+    spec = datasets.get_dataset("stressed")
+    got = Q.country_shares(_runner("stressed"), QUERIES)
+    oracle = Oracle.country_shares(spec)
+    assert _approx(got["SG"], oracle["SG"])
+    assert got["SG"] > Decimal("0.5")  # home-market country concentration
+
+
+def test_rating_concentration_matches_oracle() -> None:
+    spec = datasets.get_dataset("stressed")
+    got = Q.rating_shares(_runner("stressed"), QUERIES)
+    oracle = Oracle.rating_shares(spec)
+    assert _approx(got["BB"], oracle["BB"])
+    assert got["BB"] > Decimal("0.5")  # sub-investment-grade dominates
+
+
 # --- Structural wrong-way risk ---------------------------------------------- #
 
 

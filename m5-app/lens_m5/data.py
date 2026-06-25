@@ -95,6 +95,8 @@ class Dashboard:
     watchlist: list[Q.WatchlistRow]
     wwr: list[Q.WwrFlag]
     exposures: list[Exposure] = field(default_factory=list)
+    countries: dict[str, Decimal] = field(default_factory=dict)
+    ratings: dict[str, Decimal] = field(default_factory=dict)
 
 
 def dashboard(
@@ -122,6 +124,8 @@ def dashboard(
         watchlist=watch,
         wwr=wwr,
         exposures=exposures(runner, queries_dir, visible),
+        countries=Q.country_shares(runner, queries_dir),
+        ratings=Q.rating_shares(runner, queries_dir),
     )
 
 

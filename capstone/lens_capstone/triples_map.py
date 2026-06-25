@@ -57,6 +57,10 @@ def entity_to_triples(row: dict[str, str]) -> list[str]:
         g.add((s, LENS.eligibleCapital, _dec(row["eligible_capital"])))
     if _opt(row.get("annual_revenue")):
         g.add((s, LENS.annualRevenue, _dec(row["annual_revenue"])))
+    if _opt(row.get("country")):
+        g.add((s, LENS.country, Literal(row["country"])))
+    if _opt(row.get("rating")):
+        g.add((s, LENS.rating, Literal(row["rating"])))
     g.add((s, DCTERMS.source, Literal("entities.csv")))
     return _nt(g)
 
