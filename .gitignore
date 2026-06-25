@@ -53,3 +53,12 @@ spark-warehouse/
 metastore_db/
 derby.log
 *.crc
+
+# Coverage + mutation testing artifacts
+.coverage
+.coverage.*
+**/.coverage
+htmlcov/
+.mutmut-cache
+**/.mutmut-cache
+cosmic-ray*.sqlite
