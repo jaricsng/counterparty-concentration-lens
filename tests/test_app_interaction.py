@@ -103,3 +103,13 @@ def test_dashboard_shows_net_exposure_post_collateral(require_fuseki: None) -> N
     assert not helios.empty
     assert helios.iloc[0]["gross"] == "SGD 7.0M"
     assert helios.iloc[0]["net (post-CRM)"] == "SGD 5.0M"
+
+
+def test_nl_net_exposure_question_via_app(require_fuseki: None) -> None:
+    # type a net-exposure question into the app's NL box -> agent -> live Fuseki
+    at = _run_app("stressed")
+    box = next(t for t in at.text_input if "question" in (t.label or "").lower())
+    box.set_value("what is the net exposure after collateral?").run()
+    assert len(at.exception) == 0
+    answer = " ".join(str(m.value) for m in at.info).lower()
+    assert "net" in answer and ("collateral" in answer or "helios" in answer)
