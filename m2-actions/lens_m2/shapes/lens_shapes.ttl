@@ -109,6 +109,17 @@ lens-sh:CollateralShape a sh:NodeShape ;
         sh:path lens:collateralIssuer ;
         sh:class cmns-org:LegalEntity ;
         sh:message "collateralIssuer, if present, must be an existing legal entity." ;
+    ] ;
+    sh:property [
+        sh:path lens:collateralValue ;
+        sh:maxCount 1 ; sh:datatype xsd:decimal ; sh:minExclusive 0 ;
+        sh:message "collateralValue, if present, must be a positive decimal." ;
+    ] ;
+    sh:property [
+        sh:path lens:haircut ;
+        sh:maxCount 1 ; sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ; sh:maxInclusive 1 ;
+        sh:message "haircut, if present, must be a fraction between 0 and 1." ;
     ] .
 
 # --- Limit ----------------------------------------------------------------- #

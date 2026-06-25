@@ -73,6 +73,11 @@ class Collateral:
     pledged_by_id: str
     secures_loan_ids: tuple[str, ...]
     issuer_id: str | None = None
+    # Credit-risk mitigation: market value of the collateral and the supervisory
+    # haircut (percent, 0-100). Eligible mitigant = value * (1 - haircut/100).
+    # Optional, so pre-existing collateral (no CRM data) still loads.
+    collateral_value: int | None = None
+    haircut_pct: int = 0
 
 
 @dataclass(frozen=True)

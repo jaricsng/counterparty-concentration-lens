@@ -13,6 +13,8 @@ is correct.
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.namespace import DCTERMS, RDF, RDFS, XSD
 
@@ -97,6 +99,11 @@ def collateral_to_triples(row: dict[str, str]) -> list[str]:
     issuer = _opt(row.get("issuer_entity_id"))
     if issuer:
         g.add((s, LENS.collateralIssuer, _id(issuer)))
+    value = _opt(row.get("collateral_value"))
+    if value:
+        g.add((s, LENS.collateralValue, _dec(value)))
+        haircut = Decimal(int(row.get("haircut_pct") or 0)) / 100
+        g.add((s, LENS.haircut, Literal(str(haircut), datatype=XSD.decimal)))
     g.add((s, LENS.status, Literal("active")))
     g.add((s, DCTERMS.source, Literal("collateral.csv")))
     return _nt(g)

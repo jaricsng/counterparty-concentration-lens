@@ -1,5 +1,5 @@
-collateral_id,collateral_type,pledged_by_entity_id,securing_loan_id,issuer_entity_id
-COL-3001,Marina warehouse,LE-0002,LN-1001,
-COL-3001,Marina warehouse,LE-0002,LN-1006,
-COL-3002,Helios Holdings 5% bond,LE-0011,LN-1030,LE-0010
-COL-3003,Plant & equipment,LE-0021,LN-1020,
+collateral_id,collateral_type,pledged_by_entity_id,securing_loan_id,issuer_entity_id,collateral_value,haircut_pct
+COL-3001,Marina warehouse,LE-0002,LN-1001,,6000000,20
+COL-3001,Marina warehouse,LE-0002,LN-1006,,6000000,20
+COL-3002,Helios Holdings 5% bond,LE-0011,LN-1030,LE-0010,4000000,50
+COL-3003,Plant & equipment,LE-0021,LN-1020,,5000000,20

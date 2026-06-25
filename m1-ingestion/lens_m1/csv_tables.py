@@ -90,13 +90,23 @@ def write_dataset(spec: DatasetSpec, out_dir: Path) -> dict[str, int]:
                 "pledged_by_entity_id",
                 "securing_loan_id",
                 "issuer_entity_id",
+                "collateral_value",
+                "haircut_pct",
             ]
         )
         rows = 0
         for c in spec.collateral:
             for loan_id in c.secures_loan_ids:  # one row per secured loan
                 wr.writerow(
-                    [c.collateral_id, c.description, c.pledged_by_id, loan_id, _w(c.issuer_id)]
+                    [
+                        c.collateral_id,
+                        c.description,
+                        c.pledged_by_id,
+                        loan_id,
+                        _w(c.issuer_id),
+                        _w(c.collateral_value),
+                        c.haircut_pct,
+                    ]
                 )
                 rows += 1
         counts["collateral"] = rows
@@ -158,7 +168,7 @@ def read_dataset(in_dir: Path, name: str) -> DatasetSpec:
 
     # Re-group collateral rows (one per secured loan) back into items, keeping
     # first-seen order.
-    attrs: dict[str, tuple[str, str, str | None]] = {}
+    attrs: dict[str, tuple[str, str, str | None, int | None, int]] = {}
     secured: dict[str, list[str]] = {}
     with (in_dir / "collateral.csv").open(encoding="utf-8") as fh:
         for r in csv.DictReader(fh):
@@ -168,6 +178,8 @@ def read_dataset(in_dir: Path, name: str) -> DatasetSpec:
                     r["collateral_type"],
                     r["pledged_by_entity_id"],
                     _opt(r["issuer_entity_id"]),
+                    int(r["collateral_value"]) if r.get("collateral_value") else None,
+                    int(r["haircut_pct"]) if r.get("haircut_pct") else 0,
                 )
                 secured[cid] = []
             secured[cid].append(r["securing_loan_id"])
@@ -178,6 +190,8 @@ def read_dataset(in_dir: Path, name: str) -> DatasetSpec:
             pledged_by_id=attrs[cid][1],
             secures_loan_ids=tuple(secured[cid]),
             issuer_id=attrs[cid][2],
+            collateral_value=attrs[cid][3],
+            haircut_pct=attrs[cid][4],
         )
         for cid in attrs
     ]

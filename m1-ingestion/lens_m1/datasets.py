@@ -151,13 +151,36 @@ def build_stressed() -> DatasetSpec:
         Guarantee("GTY-2007", "LE-0030", "LN-1016", 7 * _M),  # Nimbus -> Castor
     ]
     collateral = [
-        # Shared collateral linking Vega's loan to an Acme loan
-        Collateral("COL-3001", "Marina warehouse", "LE-0002", ("LN-1001", "LN-1006")),
-        # WWR: Helios Power pledges a bond ISSUED BY its own parent Helios Holdings
+        # Shared collateral linking Vega's loan to an Acme loan. Because it secures
+        # two DIFFERENT borrowers' loans it is not dedicated to one netting set, so
+        # it is excluded from netting (its value still present in the data).
         Collateral(
-            "COL-3002", "Helios Holdings 5% bond", "LE-0011", ("LN-1030",), issuer_id="LE-0010"
+            "COL-3001",
+            "Marina warehouse",
+            "LE-0002",
+            ("LN-1001", "LN-1006"),
+            collateral_value=6 * _M,
+            haircut_pct=20,
         ),
-        Collateral("COL-3003", "Plant & equipment", "LE-0021", ("LN-1020",)),
+        # WWR: Helios Power pledges a bond ISSUED BY its own parent Helios Holdings.
+        # Wrong-way collateral is weak protection -> a heavy 50% haircut.
+        Collateral(
+            "COL-3002",
+            "Helios Holdings 5% bond",
+            "LE-0011",
+            ("LN-1030",),
+            issuer_id="LE-0010",
+            collateral_value=4 * _M,
+            haircut_pct=50,
+        ),
+        Collateral(
+            "COL-3003",
+            "Plant & equipment",
+            "LE-0021",
+            ("LN-1020",),
+            collateral_value=5 * _M,
+            haircut_pct=20,
+        ),
     ]
     return DatasetSpec(
         "stressed",
@@ -216,10 +239,32 @@ def build_calm() -> DatasetSpec:
         Guarantee("GTY-2002", "LE-0030", "LN-1011", 5 * _M),  # Nimbus -> Pinnacle
     ]
     collateral = [
-        Collateral("COL-3001", "Marina warehouse", "LE-0002", ("LN-1001",)),  # not shared
-        # Calm: bond issued by an unrelated third party (Sirius) -> no WWR
-        Collateral("COL-3002", "Government 3% bond", "LE-0011", ("LN-1030",), issuer_id="LE-0042"),
-        Collateral("COL-3003", "Plant & equipment", "LE-0021", ("LN-1020",)),
+        Collateral(
+            "COL-3001",
+            "Marina warehouse",
+            "LE-0002",
+            ("LN-1001",),  # not shared
+            collateral_value=3 * _M,
+            haircut_pct=20,
+        ),
+        # Calm: bond issued by an unrelated third party -> no WWR -> light haircut
+        Collateral(
+            "COL-3002",
+            "Government 3% bond",
+            "LE-0011",
+            ("LN-1030",),
+            issuer_id="LE-0042",
+            collateral_value=4 * _M,
+            haircut_pct=10,
+        ),
+        Collateral(
+            "COL-3003",
+            "Plant & equipment",
+            "LE-0021",
+            ("LN-1020",),
+            collateral_value=3 * _M,
+            haircut_pct=20,
+        ),
     ]
     return DatasetSpec(
         "calm",

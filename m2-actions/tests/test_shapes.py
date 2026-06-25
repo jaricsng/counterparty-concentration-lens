@@ -12,7 +12,7 @@ from lens_m2.config import SHAPES_PATH
 from lens_m2.graphbuild import CMNS_ORG, LENS, iri
 from lens_m2.validation import validate
 from rdflib import Graph, Literal
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF, XSD
 
 
 def _base() -> Graph:
@@ -116,3 +116,19 @@ def test_limit_amount_must_be_positive() -> None:
     res = _check(_base() + G.limit_graph("LIM-2", "LE-A", -1))
     assert not res.conforms
     assert any("limitAmount must be a positive decimal" in m for m in res.messages)
+
+
+# --- CollateralShape: credit-risk-mitigation bounds ---------------------- #
+
+
+def test_collateral_value_and_haircut_bounds() -> None:
+    def _col(value: str, haircut: str) -> Graph:
+        g = _base() + G.collateral_graph("COL-1", "bond", "LE-A", ["LN-1"])
+        c = iri("COL-1")
+        g.add((c, LENS.collateralValue, Literal(value, datatype=XSD.decimal)))
+        g.add((c, LENS.haircut, Literal(haircut, datatype=XSD.decimal)))
+        return g
+
+    assert _check(_col("1000", "0.2")).conforms
+    assert any("haircut" in m for m in _check(_col("1000", "1.5")).messages)
+    assert any("collateralValue" in m for m in _check(_col("-5", "0.2")).messages)

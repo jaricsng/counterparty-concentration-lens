@@ -30,6 +30,7 @@ class _Facts:
     loans: dict[str, tuple[str, Decimal]]  # loan -> (borrower, principal)
     guarantees: list[tuple[str, str, Decimal]]  # (guarantor, guaranteed_loan, amount)
     collateral: dict[str, list[str]]  # collateral -> [loan, ...]
+    crm: dict[str, tuple[Decimal, Decimal]]  # collateral -> (value, haircut fraction)
 
 
 def _facts(store: Store) -> _Facts:
@@ -63,7 +64,14 @@ def _facts(store: Store) -> _Facts:
         _PREFIX + 'SELECT ?col ?loan WHERE { ?col lens:securesLoan ?loan ; lens:status "active" . }'
     ):
         collateral.setdefault(_local(r["col"]), []).append(_local(r["loan"]))
-    return _Facts(parent, limits, loans, guarantees, collateral)
+    crm = {
+        _local(r["col"]): (Decimal(r["val"] or 0), Decimal(r["hc"] or 0))
+        for r in store.select(
+            _PREFIX + "SELECT ?col ?val ?hc WHERE { ?col lens:collateralValue ?val ; "
+            'lens:haircut ?hc ; lens:status "active" . }'
+        )
+    }
+    return _Facts(parent, limits, loans, guarantees, collateral, crm)
 
 
 def _ancestors(facts: _Facts, entity: str) -> set[str]:
@@ -119,6 +127,28 @@ class Breach:
 def connected_exposure(store: Store, entity_iri: str) -> Decimal:
     """Status-aware connected exposure for one entity."""
     return _connected(_facts(store), _local(entity_iri))
+
+
+def _collateral_mitigant(facts: _Facts, cp: str) -> Decimal:
+    """Eligible (post-haircut) collateral dedicated to one counterparty's loans."""
+    cp_loans = {loan for loan, (b, _amt) in facts.loans.items() if b == cp}
+    total = Decimal(0)
+    for col, loans in facts.collateral.items():
+        if col not in facts.crm:
+            continue
+        secured = set(loans)
+        if secured and secured <= cp_loans:
+            value, haircut = facts.crm[col]
+            total += value * (1 - haircut)
+    return total
+
+
+def net_exposure(store: Store, entity_iri: str) -> Decimal:
+    """Single-name exposure after credit-risk mitigation: max(0, gross - mitigant)."""
+    facts = _facts(store)
+    cp = _local(entity_iri)
+    gross = sum((amt for b, amt in facts.loans.values() if b == cp), Decimal(0))
+    return max(Decimal(0), gross - _collateral_mitigant(facts, cp))
 
 
 def limit_breaches(store: Store) -> list[Breach]:
