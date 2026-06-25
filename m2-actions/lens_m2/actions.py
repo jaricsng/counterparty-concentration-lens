@@ -21,7 +21,7 @@ from rdflib import Graph
 
 from . import graphbuild as G
 from .audit import AuditLog, AuditRecord
-from .derived import Breach, WwrFlag, limit_breaches, wrong_way_risk
+from .derived import Breach, NetExposure, WwrFlag, limit_breaches, net_exposures, wrong_way_risk
 from .store import InMemoryStore, Store
 from .validation import validate
 
@@ -260,6 +260,10 @@ class ActionService:
         )
 
     # --- explicit flag actions --------------------------------------------- #
+
+    def net_exposures(self) -> list[NetExposure]:
+        """Read-only: counterparties whose exposure is reduced by collateral/netting."""
+        return net_exposures(self._store)
 
     def flag_limit_breaches(self, *, actor: str, role: str) -> list[Breach]:
         breaches = limit_breaches(self._store)

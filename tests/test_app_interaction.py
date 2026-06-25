@@ -90,3 +90,16 @@ def test_sandbox_softdelete_flows_to_ui_backend_audit_and_metric(require_fuseki:
     assert any(
         "GTY-2002" in df.value.to_csv() and "deactivate" in df.value.to_csv() for df in at.dataframe
     )
+
+
+def test_dashboard_shows_net_exposure_post_collateral(require_fuseki: None) -> None:
+    # render on stressed -> the dashboard queries the backend for net (post-CRM)
+    # exposure and renders the table; assert the computed numbers reach the UI.
+    at = _run_app("stressed")
+    table = next(
+        df.value for df in at.dataframe if "net (post-CRM)" in list(map(str, df.value.columns))
+    )
+    helios = table[table["entity"] == "LE-0011"]  # 7M gross, 4M bond @ 50% haircut -> 5M net
+    assert not helios.empty
+    assert helios.iloc[0]["gross"] == "SGD 7.0M"
+    assert helios.iloc[0]["net (post-CRM)"] == "SGD 5.0M"
