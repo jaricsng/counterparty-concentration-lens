@@ -1,0 +1,22 @@
+# Code ownership — who reviews what. GitHub requests these reviewers
+# automatically and (with branch protection) can require their approval.
+# Replace @jaricsng with teams (e.g. @org/lens-maintainers) in a real org.
+
+# Default owner for everything
+*                       @jaricsng
+
+# Security-as-code and policy artifacts get extra scrutiny
+/m2-actions/lens_m2/shapes/   @jaricsng
+/m3-security/policies/        @jaricsng
+/m6-infra/policies/           @jaricsng
+/m2-actions/lens_m2/audit.py  @jaricsng
+
+# Pipeline + supply chain
+/.github/                     @jaricsng
+/.pre-commit-config.yaml      @jaricsng
+/requirements-dev.txt         @jaricsng
+
+# The build spec and the practices that govern the repo
+/CLAUDE.md                    @jaricsng
+/docs/engineering-practices.md @jaricsng
+/SECURITY.md                  @jaricsng

@@ -10,6 +10,23 @@ The point of documenting this is twofold: it makes the prototype a credible port
 - **Security as code.** Authorization (OPA/Rego) and data validation (SHACL) are first-class, version-controlled, tested artifacts — not configuration afterthoughts.
 - **Honest framing.** The pipeline demonstrates the practice; it does not make a synthetic-data prototype production-secure.
 
+## Practice maturity by domain
+
+| Domain | Status | Where |
+|---|---|---|
+| Observability | 🟡 partial — structured JSON logs + access logging; no metrics/tracing backend | `lens_m2/obs.py`, M2 API middleware |
+| Traceability | 🟢 request correlation IDs → logs + audit; ADRs for decisions; Conventional Commits | `obs.py`, [`adr/`](adr/) |
+| Auditability | 🟢 tamper-evident, hash-chained audit + `verify()` | `audit.py`, [ADR-0003](adr/0003-tamper-evident-audit-log.md) |
+| Security | 🟢 SHACL + OPA + injection guards + NL-query safety; bandit/CodeQL/gitleaks/trivy | M2/M3/M4, CI, [threat model](threat-model.md) |
+| Governance | 🟢 CODEOWNERS, PR template, CONTRIBUTING, ADRs, CHANGELOG, branch protection | `.github/`, [`CONTRIBUTING.md`](../CONTRIBUTING.md) |
+| Compliance | 🟡 data-governance + BCBS 239 *illustration* on synthetic data (not conformance) | [compliance doc](compliance-and-data-governance.md) |
+| Supply chain | 🟢 pinned deps + SHA-pinned actions + Dependabot + SBOM | `requirements*`, `.github/` |
+| Documentation | 🟢 per-module READMEs, ops/user guide, lab handbook, ADRs | `docs/`, module READMEs |
+
+🟢 implemented (prototype-grade) · 🟡 partial / named gap. The boundary to production
+is in [`SECURITY.md`](../SECURITY.md); to reuse this baseline elsewhere see the
+[golden path](golden-path.md).
+
 ## Software-engineering standards
 
 | Area | Standard | Tooling |
@@ -20,7 +37,7 @@ The point of documenting this is twofold: it makes the prototype a credible port
 | Types | Type hints throughout; passes | `mypy` |
 | Dependencies | Pinned + lockfile; no unpinned installs | `pip-tools` / `uv` |
 | Config | Environment-based; `.env.example` committed, real `.env` never | `python-dotenv` |
-| Logging | Structured logs, not `print` | std `logging` |
+| Logging | Structured **JSON** logs + request **correlation IDs** | std `logging` + `lens_m2/obs.py` |
 | Commits | Conventional Commits | — |
 | Docs | Docstrings + per-module README (run/test/verify) | — |
 
@@ -33,7 +50,7 @@ Runs on every push and pull request. The build fails on any gate.
 | Lint / format / type | Code quality gates | ruff, black --check, mypy |
 | Unit, property-based & integration tests | Correctness | pytest + Hypothesis |
 | Dependency vulnerability scan | Known CVEs in deps | pip-audit + Dependabot |
-| SAST | Static security analysis | bandit |
+| SAST | Static security analysis | bandit + **CodeQL** |
 | Secret scanning | No leaked secrets | gitleaks |
 | Container image scan | Vulnerabilities in M6 images | trivy |
 | SBOM | Software bill of materials | syft / CycloneDX |
@@ -63,9 +80,48 @@ This repo treats **policy as code (PaC)** as a first-class engineering practice 
 
 **Policy lifecycle (applies to both layers):** policies live in Git, are reviewed in PRs, tested in CI (OPA unit tests for M3; `gator test` against pass/fail fixtures for Gatekeeper constraints in M6), and deployed via GitOps (Argo CD). Use **audit mode** when rolling out new admission policies, then switch to **enforce** once existing violations are cleared.
 
+## Observability & traceability
+
+- **Structured JSON logs** (`lens_m2/obs.py`) — one machine-parseable event per line.
+- **Correlation IDs** — one id per request (honouring an inbound `X-Correlation-ID`),
+  propagated via a context variable into both the logs and the audit trail, and echoed
+  back in the response header — so a single action is traceable end to end.
+- **Access logging** — the M2 API middleware logs method / path / status / latency per request.
+- *Named gaps:* no metrics/tracing backend (Prometheus/OpenTelemetry) or dashboards —
+  runtime **operations** are consciously out of scope (see the SDLC table and `SECURITY.md`).
+
+## Auditability
+
+Every guarded action — accepted or rejected — is recorded with who/what/when/outcome.
+The trail is **tamper-evident**: a hash chain (`seq` + `prev_hash` + `entry_hash`) that
+`AuditLog.verify()` (and `GET /audit/verify`) recomputes to detect any edit, deletion,
+reorder, or insertion — see [ADR-0003](adr/0003-tamper-evident-audit-log.md). It is
+tamper-*evident*, not tamper-*proof*; production would anchor the chain externally.
+
+## Supply-chain security
+
+- **Pinned dependencies** — including `black` pinned exactly to the pre-commit hook so
+  local and CI never diverge; `pip-audit` + Dependabot for CVEs.
+- **GitHub Actions pinned by commit SHA** (not moving tags); Dependabot bumps them safely.
+- **CodeQL** semantic analysis alongside `bandit` (Python SAST) and `gitleaks` (secrets).
+- **SBOM** (CycloneDX) for the built image; `trivy` image scan.
+
+## Governance, decisions & compliance
+
+- **Ownership & review:** `CODEOWNERS`, a PR template carrying the Definition of Done,
+  and [`CONTRIBUTING.md`](../CONTRIBUTING.md).
+- **Decisions:** significant choices captured as immutable [ADRs](adr/).
+- **Change log:** user-visible changes in [`CHANGELOG.md`](../CHANGELOG.md).
+- **Risk & compliance:** a [STRIDE threat model](threat-model.md) and a
+  [data-governance + BCBS 239 mapping](compliance-and-data-governance.md).
+- **Reuse:** to carry all of this into the next project, see the
+  [golden path](golden-path.md).
+
 ## Branch & merge guidance
 
-- Protect `main`: require CI to pass before merge.
+- Protect `main`: require the `quality`, `integration`, `security`, and `codeql` checks
+  plus a CODEOWNERS review before merge (see [golden path §2](golden-path.md) for how to
+  make the gates unskippable). Without branch protection, green CI is advisory.
 - Prefer signed commits where feasible.
 - Keep the per-module commit history clean and Conventional-Commit formatted (it doubles as a readable build narrative).
 
@@ -79,7 +135,10 @@ This repo treats **policy as code (PaC)** as a first-class engineering practice 
 | Test | pytest unit/integration; policy + shape tests |
 | Release | Conventional Commits; GitOps via Argo CD (M6) |
 | Deploy | k3d + Argo CD reconciliation (M6) |
-| Operate | (Out of scope for a prototype — named as a gap in SECURITY.md) |
-| Secure (cross-cutting) | pip-audit, bandit, gitleaks, trivy, SBOM, pre-commit |
+| Operate | Structured logs + correlation IDs + **tamper-evident audit** (`/audit/verify`); monitoring/alerting/HA-DR remain out of scope |
+| Secure (cross-cutting) | pip-audit, bandit, **CodeQL**, gitleaks, trivy, SBOM, pre-commit, **SHA-pinned actions** |
 
-The "Operate" stage is deliberately out of scope and named as such — a prototype demonstrates build-time and release-time practice; runtime operations (monitoring, alerting, incident response, HA/DR) are part of what separates this from a production system.
+The build demonstrates build-time and release-time practice, and adds operational
+**traceability** (structured logs, correlation IDs, a verifiable audit trail). Runtime
+**operations** proper — monitoring, alerting, incident response, HA/DR — remain out of
+scope and are part of what separates this from a production system.
