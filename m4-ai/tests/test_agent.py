@@ -65,3 +65,16 @@ def test_role_scoping_filters_rows(runner: GraphRunner) -> None:
     scoped = _ans(runner, "top counterparties", visible_groups={"LE-0001"})
     assert len(scoped.rows) < len(full.rows)
     assert all(r.get("owner", "").endswith("LE-0001") for r in scoped.rows)
+
+
+def test_net_exposure_after_collateral(runner: GraphRunner) -> None:
+    from decimal import Decimal
+
+    a = _ans(runner, "what is the net exposure after collateral?")
+    assert a.intent == "net_exposure"
+    assert a.answered
+    helios = next(r for r in a.rows if r["entityName"] == "Helios Power Pte Ltd")
+    assert Decimal(helios["gross"]) == 7_000_000
+    assert Decimal(helios["net"]) == 5_000_000  # 4M bond @ 50% haircut -> 2M mitigant
+    # every generated query is still safe (read-only, known schema)
+    assert is_safe(a.sparql).safe

@@ -98,6 +98,25 @@ _WWR = """SELECT ?loan ?borrowerName ?issuerName WHERE {
   OPTIONAL { ?issuer rdfs:label ?issuerName }
 }"""
 
+# Net (post-credit-risk-mitigation) exposure: gross minus dedicated collateral
+# (counted once, post-haircut). Mirrors lens_m2.derived.net_exposures.
+_NET_EXPOSURE = """SELECT ?entityName ?gross ?mitigant (?gross - ?mitigant AS ?net) WHERE {
+  { SELECT ?cp (SUM(?elig) AS ?mitigant) WHERE {
+      { SELECT ?col (SAMPLE(?b) AS ?cp) (SAMPLE(?val) AS ?v) (SAMPLE(?hc) AS ?h)
+               (COUNT(DISTINCT ?b) AS ?nb) WHERE {
+          ?col lens:collateralValue ?val ; lens:haircut ?hc ;
+               lens:securesLoan ?l ; lens:status "active" .
+          ?l lens:borrower ?b ; lens:status "active" .
+      } GROUP BY ?col }
+      FILTER(?nb = 1)
+      BIND(?v * (1 - ?h) AS ?elig)
+  } GROUP BY ?cp }
+  { SELECT ?cp (SUM(?amt) AS ?gross) WHERE {
+      ?ln lens:borrower ?cp ; lens:principalAmount ?amt ; lens:status "active" .
+  } GROUP BY ?cp }
+  ?cp rdfs:label ?entityName .
+} ORDER BY DESC(?net)"""
+
 
 @dataclass(frozen=True)
 class NLQuery:
@@ -148,6 +167,20 @@ def generate(question: str, label_index: dict[str, str] | None = None) -> NLQuer
             _q(_NEAR_LIMIT.replace("__THRESHOLD__", thr)),
             {"threshold": thr},
         )
+
+    if any(
+        w in q
+        for w in (
+            "net exposure",
+            "post-collateral",
+            "after collateral",
+            "collateral",
+            "netting",
+            "mitigant",
+            "post-crm",
+        )
+    ):
+        return NLQuery(question, "net_exposure", "template", _q(_NET_EXPOSURE))
 
     if any(w in q for w in ("top", "largest", "biggest")):
         return NLQuery(question, "top_counterparties", "template", _q(_TOP_COUNTERPARTIES))
