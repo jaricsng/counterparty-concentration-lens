@@ -7,10 +7,12 @@ check is included as a placeholder for the full OPA authorization in M3.
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 
+from . import obs
 from .actions import ActionResult, ActionService
 from .audit import AuditLog
 from .config import load_settings
@@ -25,6 +27,8 @@ from .models import (
     UpdateAmountIn,
 )
 from .store import FusekiStore
+
+_log = obs.get_logger("lens.m2.api")
 
 # Roles permitted to mutate limits (full role policy lives in M3 / OPA).
 _LIMIT_WRITE_ROLES = {"group_risk"}
@@ -48,9 +52,34 @@ def create_app(service: ActionService, audit: AuditLog) -> FastAPI:
         version="0.1.0",
     )
 
+    @app.middleware("http")
+    async def correlate_and_log(request: Request, call_next):
+        # One trace id per request (honour an inbound one), propagated to the
+        # audit records written during the request and echoed back in a header.
+        cid = request.headers.get("X-Correlation-ID") or obs.new_correlation_id()
+        obs.set_correlation_id(cid)
+        started = time.perf_counter()
+        response = await call_next(request)
+        obs.log(
+            _log,
+            "request",
+            method=request.method,
+            path=request.url.path,
+            status=response.status_code,
+            latency_ms=round((time.perf_counter() - started) * 1000, 1),
+        )
+        response.headers["X-Correlation-ID"] = cid
+        return response
+
     @app.get("/health")
     def health() -> dict[str, str]:
         return {"status": "ok", "note": "synthetic data; guarded write layer"}
+
+    @app.get("/audit/verify")
+    def audit_verify() -> dict[str, Any]:
+        """Integrity check of the audit hash chain (tamper-evidence)."""
+        status = audit.verify()
+        return {"ok": status.ok, "length": status.length, "problems": status.problems}
 
     @app.post("/actions/entities", response_model=ActionOut)
     def create_entity(body: EntityIn) -> ActionOut:
