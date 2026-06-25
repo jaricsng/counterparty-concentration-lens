@@ -1,2 +1,2 @@
-collateral_id,collateral_type,pledged_by_entity_id,securing_loan_id,issuer_entity_id
-COL-EXAMPLE-1,Example warehouse,LE-EXAMPLE-2,LN-EXAMPLE-1,
+collateral_id,collateral_type,pledged_by_entity_id,securing_loan_id,issuer_entity_id,collateral_value,haircut_pct
+COL-EXAMPLE-1,Example warehouse,LE-EXAMPLE-2,LN-EXAMPLE-1,,3000000,20

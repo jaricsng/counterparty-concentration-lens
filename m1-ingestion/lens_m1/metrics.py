@@ -82,6 +82,36 @@ def direct_exposure(spec: DatasetSpec, entity_id: str) -> Decimal:
 
 
 # --------------------------------------------------------------------------- #
+#  Credit-risk mitigation: netting + collateral (post-CRM net exposure)
+# --------------------------------------------------------------------------- #
+
+
+def collateral_mitigant(spec: DatasetSpec, entity_id: str) -> Decimal:
+    """Eligible (post-haircut) collateral dedicated to one counterparty's loans.
+
+    Netting here is one set per counterparty: a collateral counts only if EVERY
+    active loan it secures is a loan to this counterparty. Collateral shared across
+    different counterparties is conservatively excluded (no allocation guesswork,
+    no double counting). Eligible value = value * (1 - haircut).
+    """
+    cp_loans = {ln.loan_id for ln in _active_loans(spec) if ln.borrower_id == entity_id}
+    total = Decimal(0)
+    for c in spec.collateral:
+        if c.collateral_value is None:
+            continue
+        secured = set(c.secures_loan_ids)
+        if secured and secured <= cp_loans:
+            total += Decimal(c.collateral_value) * (Decimal(100 - c.haircut_pct) / 100)
+    return total
+
+
+def net_exposure(spec: DatasetSpec, entity_id: str) -> Decimal:
+    """Single-name exposure after credit-risk mitigation: max(0, gross - mitigant)."""
+    gross = direct_exposure(spec, entity_id)
+    return max(Decimal(0), gross - collateral_mitigant(spec, entity_id))
+
+
+# --------------------------------------------------------------------------- #
 #  Single-name connected exposure (overlap model)
 # --------------------------------------------------------------------------- #
 

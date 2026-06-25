@@ -49,6 +49,8 @@ COLUMNS: dict[str, list[str]] = {
         "pledged_by_entity_id",
         "securing_loan_id",
         "issuer_entity_id",
+        "collateral_value",
+        "haircut_pct",
     ],
     "limits": ["limit_id", "entity_id", "single_name_limit", "currency"],
 }

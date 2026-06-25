@@ -56,6 +56,14 @@ lens:Limit a owl:Class ;
     rdfs:label "Counterparty Limit" ;
     rdfs:comment "A per-entity or per-group credit limit. Breached when connected exposure exceeds limitAmount." .
 
+lens:NettingSet a owl:Class ;
+    rdfs:label "Netting Set" ;
+    rdfs:comment """A set of exposures to a counterparty that net against each other and
+        against eligible collateral under a master agreement (corresponds to a FIBO/ISDA
+        master-agreement netting set). This prototype models ONE netting set per counterparty
+        pair implicitly: a counterparty's active loans net, and collateral dedicated to those
+        loans mitigates the set. Net exposure = max(0, gross - collateralValue*(1-haircut))." .""" .
+
 #################################################################
 #  Ownership / group structure (BE — Business Entities)
 #################################################################
@@ -137,6 +145,19 @@ lens:limitAmount a owl:DatatypeProperty ;
     rdfs:label "limit amount" ;
     rdfs:domain lens:Limit ;
     rdfs:range  xsd:decimal .
+
+lens:collateralValue a owl:DatatypeProperty ;
+    rdfs:label "collateral value" ;
+    rdfs:domain fibo-dbt:Collateral ;
+    rdfs:range  xsd:decimal ;
+    rdfs:comment "Market value of the collateral, before haircut. Credit-risk-mitigation convenience attribute." .
+
+lens:haircut a owl:DatatypeProperty ;
+    rdfs:label "haircut" ;
+    rdfs:domain fibo-dbt:Collateral ;
+    rdfs:range  xsd:decimal ;
+    rdfs:comment """Supervisory/market haircut as a fraction in [0,1]. Eligible mitigant
+        = collateralValue * (1 - haircut). Higher for volatile or wrong-way collateral.""" .
 
 lens:currency a owl:DatatypeProperty ;
     rdfs:label "currency" ;

@@ -69,6 +69,8 @@ secure several loans (shared / cross-pledged collateral).
 | `pledged_by_entity_id` | yes | who pledged it (must exist) |
 | `securing_loan_id` | yes | the loan it secures (must exist) |
 | `issuer_entity_id` | no | the security's issuer (must exist); same-group-as-borrower = wrong-way risk |
+| `collateral_value` | no | market value (before haircut); enables collateralised **net exposure** |
+| `haircut_pct` | no | supervisory haircut, 0–100. Eligible mitigant = value × (1 − haircut/100) |
 
 ### `limits.csv`
 | column | required | meaning |

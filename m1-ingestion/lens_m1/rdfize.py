@@ -8,6 +8,8 @@ recording the source table it came from.
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.namespace import DCTERMS, RDF, RDFS, XSD
 
@@ -87,6 +89,10 @@ def build_graph(spec: DatasetSpec) -> Graph:
             g.add((s, LENS.securesLoan, _iri(loan_id)))
         if col.issuer_id:
             g.add((s, LENS.collateralIssuer, _iri(col.issuer_id)))
+        if col.collateral_value is not None:
+            g.add((s, LENS.collateralValue, _dec(col.collateral_value)))
+            haircut = Decimal(col.haircut_pct) / 100
+            g.add((s, LENS.haircut, Literal(str(haircut), datatype=XSD.decimal)))
         g.add((s, LENS.status, Literal("active")))
         g.add((s, DCTERMS.source, Literal("collateral.csv")))
 
