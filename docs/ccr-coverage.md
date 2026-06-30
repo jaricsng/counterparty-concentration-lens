@@ -45,7 +45,7 @@ honest, not production-accurate) · ❌ consciously out of scope (see
 | **Rating-bucket concentration** | ✅ | Sub-investment-grade share; dashboard, NL, BYOD, filter. **v0.1.0** |
 | NBFI cascade | ✅ | Small direct, large connected via guarantees (Archegos-shaped). |
 | **Stress / scenario engine** | ⚠️ | Deterministic named shocks re-derive **every** metric (incl. EL/capital); a what-if, **not** Monte-Carlo. **v0.3.0** |
-| Macro / multi-factor stress | ❌ | No macro model, no correlated factor shocks. |
+| **Macro / multi-factor stress** | ⚠️ | Deterministic factor model: a named scenario's factor vector × per-sector sensitivities → correlated downgrades. Not a simulated correlation matrix. **v0.8.0** |
 | **Systemic contagion** | ⚠️ | Deterministic two-hop default cascade over the guarantee/ownership graph (direct + lost-guarantee contagion, amplification). Not a calibrated network model. **v0.6.0** |
 
 ## C. Engineering & delivery (cross-cutting, every feature)
@@ -71,3 +71,4 @@ honest, not production-accurate) · ❌ consciously out of scope (see
 | `v0.5.0` | IFRS-9 staging & lifetime ECL |
 | `v0.6.0` | Systemic contagion (default cascade) |
 | `v0.7.0` | Full xVA (FVA / MVA / KVA) · bilateral CVA/DVA |
+| `v0.8.0` | Macro / multi-factor (correlated) stress |

@@ -257,3 +257,28 @@ def test_full_xva_rating_filter(require_fuseki: None) -> None:
         df.value for df in at.dataframe if "total xVA" in list(map(str, df.value.columns))
     )
     assert set(ftable["rating"]) == {"B"}
+
+
+def test_dashboard_macro_stress(require_fuseki: None) -> None:
+    # default macro scenario (property_crash): CRE is the hardest-hit sector
+    at = _run_app("stressed")
+    mtable = next(
+        df.value
+        for df in at.dataframe
+        if "downgrade" in list(map(str, df.value.columns))
+        and "Δ EL" in list(map(str, df.value.columns))
+    )
+    assert mtable.iloc[0]["sector"] == "commercial real estate"
+
+
+def test_macro_downgraded_only_filter(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    cb = next(c for c in at.checkbox if "downgraded sectors only" in (c.label or "").lower())
+    cb.set_value(True).run()
+    mtable = next(
+        df.value
+        for df in at.dataframe
+        if "downgrade" in list(map(str, df.value.columns))
+        and "Δ EL" in list(map(str, df.value.columns))
+    )
+    assert all(str(d) != "−0" for d in mtable["downgrade"])

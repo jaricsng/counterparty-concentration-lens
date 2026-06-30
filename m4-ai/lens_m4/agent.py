@@ -101,6 +101,28 @@ def _xva_rows() -> list[dict[str, str | None]]:
     ]
 
 
+def _macro_rows(scenario_key: str) -> list[dict[str, str | None]]:
+    """Per-sector macro-stress EL impact on the stressed base (correlated factor model)."""
+    from lens_m1 import datasets, macro
+
+    spec = datasets.get_dataset("stressed")
+    label = macro.MACRO_SCENARIOS.get(scenario_key, macro.MACRO_SCENARIOS["recession"]).label
+    base, shocked = macro.compare(spec, scenario_key)
+    return [
+        {
+            "sector": si.sector,
+            "notches": str(si.notches),
+            "el_base": str(si.el_base),
+            "el_shocked": str(si.el_shocked),
+            "delta": str(si.delta),
+            "scenario": label,
+            "total_base": str(base.total_el),
+            "total_shocked": str(shocked.total_el),
+        }
+        for si in macro.sector_impacts(spec, scenario_key)
+    ]
+
+
 def _xva_full_rows() -> list[dict[str, str | None]]:
     """Full xVA breakdown (CVA/DVA/FVA/MVA/KVA + total) on the stressed base."""
     from lens_m1 import datasets, xva
@@ -290,6 +312,18 @@ def _summarise(intent: str, rows: list[dict[str, str | None]], params: dict[str,
             f"Total recognised ECL (stressed base): {_money(str(total))}. "
             f"Stage 2: {stage2} names, Stage 3: {stage3} (lifetime ECL)."
         )
+    if intent == "macro":
+        if not rows:
+            return "No exposures."
+        label = rows[0].get("scenario") or "Macro scenario"
+        base_total = rows[0].get("total_base")
+        shocked_total = rows[0].get("total_shocked")
+        top = max(rows, key=lambda r: Decimal(r.get("delta") or 0))
+        return (
+            f"{label} (stressed base): expected loss {_money(base_total)} -> "
+            f"{_money(shocked_total)}. Hardest-hit sector: {top.get('sector')} "
+            f"(−{top.get('notches')} notches)."
+        )
     if intent == "xva_full":
         if not rows:
             return "No exposures."
@@ -353,7 +387,9 @@ def answer(
             safe=False,
         )
 
-    if nlq.intent == "stress":
+    if nlq.intent == "macro":
+        raw = _macro_rows(nlq.params.get("scenario", "recession"))
+    elif nlq.intent == "stress":
         raw = _stress_rows(nlq.params.get("scenario", "broad_downgrade"))
     elif nlq.intent == "xva":
         raw = _xva_rows()

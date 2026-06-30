@@ -251,6 +251,29 @@ def generate(question: str, label_index: dict[str, str] | None = None) -> NLQuer
     ):
         return NLQuery(question, "xva", "template", _q(_CREDIT))
 
+    # Macro / multi-factor (correlated) stress — before the single-factor stress branch.
+    if any(
+        w in q
+        for w in (
+            "macro",
+            "recession",
+            "property crash",
+            "stagflation",
+            "multi-factor",
+            "rate shock",
+            "rates shock",
+        )
+    ):
+        if "property" in q:
+            macro_key = "property_crash"
+        elif "rate" in q:
+            macro_key = "rates_shock"
+        elif "stagflation" in q:
+            macro_key = "stagflation"
+        else:
+            macro_key = "recession"
+        return NLQuery(question, "macro", "template", _q(_CREDIT), {"scenario": macro_key})
+
     # Stress / scenario (computed what-if on the stressed base). Checked before the
     # capital/EL branch so "what happens to expected loss if NBFIs downgrade" stresses.
     if any(
