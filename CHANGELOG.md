@@ -6,6 +6,21 @@ the project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-06-30
+
+### Added
+- **Conversational NL chat** (M5 "Ask (NL)" tab) — replaced the single-shot question box
+  with a multi-turn `st.chat_input` + `st.chat_message` history. Each turn is answered,
+  grounded (generated read-only SPARQL shown), role-scoped, and kept in the conversation;
+  a **light follow-up context** reuses the last-named group when a question names none
+  (e.g. "exposure to Acme?" → "show guarantee chains").
+
+### Changed
+- The NL chat prompt and the agent's "unsupported question" help message now advertise the
+  **full CCR intent set** (net exposure, EL, capital, IFRS-9, PFE/CVA/xVA, stress, macro,
+  contagion) — previously they listed only the original concentration intents, so the CCR
+  questions were answerable but not discoverable.
+
 ## [1.0.0] - 2026-06-30
 
 Milestone: **feature-complete CCR coverage on synthetic data, with documentation and
@@ -175,7 +190,8 @@ not production-hardened).
   integration job (live Fuseki + OPA + gator); the P1–P3 test suites.
 - **Reuse**: a "golden path" to seed new projects with these practices.
 
-[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.9.0...v1.0.0
 [0.9.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.7.0...v0.8.0

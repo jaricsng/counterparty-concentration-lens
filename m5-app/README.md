@@ -32,8 +32,10 @@ m5-app/
 - **Explore** — pick a counterparty group → direct (named entity) vs direct
   (group) vs connected, the limit-breach verdict, and the contributing paths;
   plus the NBFI cascade chain.
-- **Ask (NL)** — free-text question → M4 answer; shows the generated, validated,
-  read-only SPARQL and the result rows.
+- **Ask (NL)** — a **multi-turn chat** (`st.chat_input` + history): ask in plain
+  English about concentration *or* any CCR layer (net exposure, EL, capital, IFRS-9,
+  PFE/CVA/xVA, stress, macro, contagion); each turn shows the generated, validated,
+  read-only SPARQL and result rows. Group-less follow-ups reuse the last-named group.
 - **Scenario Sandbox** — add a loan / soft-delete an object **via M2** (validated
   + audited); flags (e.g. limit breach) surface; metrics recompute on rerun.
   Limits require the `group_risk` role.

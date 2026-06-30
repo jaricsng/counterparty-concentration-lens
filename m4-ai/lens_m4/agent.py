@@ -399,8 +399,12 @@ def answer(
             "none",
             "unsupported",
             "",
-            "I can answer questions about exposure to a group, top counterparties, names "
-            "near their limit, guarantee chains, sector concentration, or wrong-way risk.",
+            "I can answer questions about: exposure to a group · top counterparties · names "
+            "near their limit · guarantee chains · sector / country / rating concentration · "
+            "wrong-way risk · net (post-collateral) exposure · expected loss · regulatory "
+            "capital · IFRS-9 ECL & staging · PFE / CVA / total xVA · stress & macro scenarios "
+            "· systemic contagion (incl. multi-round fire-sale cascade). "
+            "Try: 'what is our total expected loss?' or 'what happens in a property crash?'",
         )
 
     safety = is_safe(nlq.sparql)
