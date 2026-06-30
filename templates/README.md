@@ -51,6 +51,7 @@ amounts are integers in a single currency.
 | `exposure_amount` | yes | outstanding principal (positive integer) |
 | `currency` | yes | ISO code, e.g. `SGD` |
 | `status` | yes | `active` or `closed` (closed is excluded from metrics) |
+| `maturity_years` | no | remaining tenor in years; drives forward-looking exposure (PFE/EE) and CVA (default 3) |
 
 ### `guarantees.csv`
 | column | required | meaning |

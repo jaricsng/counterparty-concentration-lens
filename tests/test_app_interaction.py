@@ -186,3 +186,17 @@ def test_stress_rating_filter(require_fuseki: None) -> None:
         df.value for df in at.dataframe if any("Δ EL" in str(c) for c in df.value.columns)
     )
     assert all("CCC" in str(r) for r in stable["rating"])
+
+
+def test_dashboard_xva_cva(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    xtable = next(df.value for df in at.dataframe if "peak PFE" in list(map(str, df.value.columns)))
+    assert xtable.iloc[0]["rating"] in ("B", "CCC", "BB")  # CVA-sorted; worst grade on top
+
+
+def test_xva_rating_filter(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    ms = next(m for m in at.multiselect if (m.label or "").lower() == "filter rating (cva)")
+    ms.set_value(["B"]).run()
+    xtable = next(df.value for df in at.dataframe if "peak PFE" in list(map(str, df.value.columns)))
+    assert set(xtable["rating"]) == {"B"}

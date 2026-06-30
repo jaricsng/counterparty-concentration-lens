@@ -70,6 +70,7 @@ def build_graph(spec: DatasetSpec) -> Graph:
         g.add((s, LENS.principalAmount, _dec(ln.principal)))
         g.add((s, LENS.currency, Literal(ln.currency)))
         g.add((s, LENS.status, Literal(ln.status)))
+        g.add((s, LENS.maturityYears, _dec(ln.maturity_years)))
         g.add((s, DCTERMS.source, Literal("loans.csv")))
 
     for gt in spec.guarantees:

@@ -32,6 +32,7 @@ for _mod in (
 
 from lens_m1 import datasets as lens_datasets  # noqa: E402
 from lens_m1 import scenarios as lens_scenarios  # noqa: E402
+from lens_m1 import xva as lens_xva  # noqa: E402
 from lens_m3.portfolios import DEFAULT_USER, DEMO_USERS  # noqa: E402
 from lens_m4 import agent, ollama  # noqa: E402
 from lens_m5 import data  # noqa: E402
@@ -359,6 +360,46 @@ def main() -> None:
             if gsel:
                 sdf = sdf[sdf["_grade"].isin(gsel)]
             st.dataframe(sdf.drop(columns=["_grade"]), width="stretch", hide_index=True)
+
+        # ----- Forward-looking exposure (PFE/EE) & CVA -----
+        st.subheader("Forward-looking exposure & CVA (analytical, illustrative)")
+        st.caption(
+            "Analytical EE/PFE profile (amortising base + √t add-on) and unilateral CVA "
+            "= LGD·Σ EE·PD·DF on the **"
+            f"{base_name}** base. Illustrative shapes — NOT Monte-Carlo paths or derivative MtM."
+        )
+        xva_rows = lens_xva.portfolio_xva(spec)
+        xdf = pd.DataFrame(
+            [
+                {
+                    "entity": r.entity,
+                    "rating": r.rating,
+                    "EAD": _m(r.ead),
+                    "tenor (y)": r.maturity,
+                    "peak PFE": _m(r.peak_pfe),
+                    "EPE": _m(r.epe),
+                    "CVA": f"SGD {float(r.cva):,.0f}",
+                    "_grade": r.rating,
+                }
+                for r in xva_rows
+            ]
+        )
+        if not xdf.empty:
+            xsel = st.multiselect(
+                "Filter rating (CVA)", sorted(xdf["_grade"].unique()), key="xva_rating"
+            )
+            shown = xdf[xdf["_grade"].isin(xsel)] if xsel else xdf
+            st.dataframe(shown.drop(columns=["_grade"]), width="stretch", hide_index=True)
+            by_id = {r.entity: r for r in xva_rows}
+            who = st.selectbox("EE/PFE profile for", list(by_id), key="xva_entity")
+            row = by_id[who]
+            prof = lens_xva.exposure_profile(float(row.ead), row.maturity)
+            st.line_chart(
+                pd.DataFrame(
+                    {"EE": [p.ee / 1e6 for p in prof], "PFE": [p.pfe / 1e6 for p in prof]},
+                    index=[p.t for p in prof],
+                )
+            )
 
     # ------------------------------------------------------------------- Explore
     with tabs[1]:

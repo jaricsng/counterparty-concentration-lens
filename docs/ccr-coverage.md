@@ -21,8 +21,9 @@ honest, not production-accurate) · ❌ consciously out of scope (see
 | Collateral / CRM (haircuts) | ✅ | `value × (1 − haircut)`; "dedicated collateral" rule avoids double-counting shared collateral. |
 | **Net (post-collateral) exposure** | ✅ | `net = max(0, gross − Σ eligible)` — M1 `metrics`, M2 `derived`, dashboard, NL, BYOD. **v0.1.0** |
 | EAD (exposure at default) | ⚠️ | EAD = net exposure; **no PFE add-on** (point-in-time). **v0.2.0** |
-| PFE / EE / expected exposure profile | ❌ | Needs Monte-Carlo simulation over time; synthetic data is a single snapshot. |
-| CVA / xVA | ❌ | Needs simulated exposure paths + credit spreads. |
+| **PFE / EE / expected exposure profile** | ⚠️ | **Analytical** profile (amortising base + √t add-on) — illustrative shape, not Monte-Carlo paths. **v0.4.0** |
+| **CVA** (unilateral) | ⚠️ | `LGD·Σ EE·marginalPD·DF`, hazard from the rating's 1y PD, on the analytical EE profile. **v0.4.0** |
+| Full xVA (FVA / MVA / KVA), bilateral CVA/DVA | ❌ | Needs funding/margin/capital simulation + own-credit. |
 | Wrong-way risk | ⚠️ | **Structural** WWR (collateral issued by the borrower's group); not correlation-based. |
 | PD (probability of default) | ⚠️ | Mapped from credit rating via an illustrative table. **v0.2.0** |
 | LGD / EAD/PD calibration (IRB) | ⚠️ | Flat 45% LGD; standardised-style risk weights. No IRB estimation. **v0.2.0** |
@@ -66,3 +67,4 @@ honest, not production-accurate) · ❌ consciously out of scope (see
 | `v0.1.0` | Core Lens (M0–M6 + Capstone) · netting & collateral · country & rating concentration |
 | `v0.2.0` | EAD · Expected Loss · capital |
 | `v0.3.0` | Stress / scenario engine |
+| `v0.4.0` | Forward-looking exposure (PFE / EE profile) · CVA |

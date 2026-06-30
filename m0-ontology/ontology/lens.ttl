@@ -135,6 +135,13 @@ lens:principalAmount a owl:DatatypeProperty ;
     rdfs:range  xsd:decimal ;
     rdfs:comment "Outstanding principal. Convenience denormalisation of a fibo-fnd-acc-cur:MonetaryAmount (single currency in this demo)." .
 
+lens:maturityYears a owl:DatatypeProperty ;
+    rdfs:label "maturity (years)" ;
+    rdfs:domain fibo-loan:Loan ;
+    rdfs:range  xsd:decimal ;
+    rdfs:comment """Remaining tenor in years. Drives the forward-looking exposure
+        profile (PFE/EE) and CVA. Optional; defaults to 3 if absent.""" .
+
 lens:guaranteedAmount a owl:DatatypeProperty ;
     rdfs:label "guaranteed amount" ;
     rdfs:domain fibo-gty:Guaranty ;

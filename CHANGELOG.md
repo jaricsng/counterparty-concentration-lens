@@ -6,6 +6,21 @@ the project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-30
+
+### Added
+- **Forward-looking exposure (PFE / EE) + CVA** (`lens_m1/xva.py`) — analytical and
+  deterministic; an honest what-if shape, **NOT** Monte-Carlo paths or derivative MtM:
+  - EE/PFE profile = amortising base exposure + a √t diffusion add-on (the classic PFE
+    hump); peak PFE and EPE per counterparty.
+  - Unilateral CVA = `LGD·Σ EE(t)·marginalPD(t)·DF(t)`, hazard from the rating's 1y PD.
+  - Loans gain an optional `maturity_years` tenor (ontology `lens:maturityYears`,
+    CSV/BYOD/template; default 3) driving the profile.
+  - Dashboard "Forward-looking exposure & CVA" section: per-counterparty PFE/EPE/CVA
+    table with a rating filter and an **EE/PFE profile line chart** per counterparty.
+  - NL `xva` intent ("total CVA?", "potential future exposure") on the stressed base.
+  - Sub-investment-grade long-tenor names dominate CVA (≈595k each; portfolio ≈2.5M).
+
 ## [0.3.0] - 2026-06-30
 
 ### Added
@@ -64,7 +79,8 @@ not production-hardened).
   integration job (live Fuseki + OPA + gator); the P1–P3 test suites.
 - **Reuse**: a "golden path" to seed new projects with these practices.
 
-[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/jaricsng/counterparty-concentration-lens/releases/tag/v0.1.0
