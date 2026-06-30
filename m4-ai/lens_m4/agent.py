@@ -101,6 +101,26 @@ def _xva_rows() -> list[dict[str, str | None]]:
     ]
 
 
+def _xva_full_rows() -> list[dict[str, str | None]]:
+    """Full xVA breakdown (CVA/DVA/FVA/MVA/KVA + total) on the stressed base."""
+    from lens_m1 import datasets, xva
+
+    spec = datasets.get_dataset("stressed")
+    return [
+        {
+            "entity": r.entity,
+            "rating": r.rating,
+            "cva": str(r.cva),
+            "dva": str(r.dva),
+            "fva": str(r.fva),
+            "mva": str(r.mva),
+            "kva": str(r.kva),
+            "total": str(r.total_xva),
+        }
+        for r in xva.portfolio_xva_breakdown(spec)
+    ]
+
+
 def _contagion_rows() -> list[dict[str, str | None]]:
     """Systemic default-cascade ranking on the stressed base (deterministic two-hop)."""
     from lens_m1 import contagion, datasets
@@ -270,6 +290,17 @@ def _summarise(intent: str, rows: list[dict[str, str | None]], params: dict[str,
             f"Total recognised ECL (stressed base): {_money(str(total))}. "
             f"Stage 2: {stage2} names, Stage 3: {stage3} (lifetime ECL)."
         )
+    if intent == "xva_full":
+        if not rows:
+            return "No exposures."
+        tot = sum((Decimal(r.get("total") or 0) for r in rows), Decimal(0))
+        cva = sum((Decimal(r.get("cva") or 0) for r in rows), Decimal(0))
+        fva = sum((Decimal(r.get("fva") or 0) for r in rows), Decimal(0))
+        kva = sum((Decimal(r.get("kva") or 0) for r in rows), Decimal(0))
+        return (
+            f"Portfolio total xVA (stressed base): {_money(str(tot))} "
+            f"(CVA {_money(str(cva))}, FVA {_money(str(fva))}, KVA {_money(str(kva))})."
+        )
     if intent == "contagion":
         if not rows:
             return "No exposures."
@@ -326,6 +357,8 @@ def answer(
         raw = _stress_rows(nlq.params.get("scenario", "broad_downgrade"))
     elif nlq.intent == "xva":
         raw = _xva_rows()
+    elif nlq.intent == "xva_full":
+        raw = _xva_full_rows()
     elif nlq.intent == "ifrs9":
         raw = _ifrs9_rows()
     elif nlq.intent == "contagion":

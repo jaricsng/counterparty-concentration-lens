@@ -33,3 +33,23 @@ def test_sub_investment_grade_long_tenor_dominates_cva() -> None:
 
 def test_total_cva_positive() -> None:
     assert float(xva.total_cva(datasets.get_dataset("stressed"))) > 0
+
+
+def test_full_xva_components_positive_and_identity() -> None:
+    s = datasets.get_dataset("stressed")
+    r = xva.counterparty_xva_breakdown(s, "LE-0022")  # B, 8M, 7y
+    assert r.fva > 0 and r.mva > 0 and r.kva > 0 and r.cva > 0
+    assert r.dva < r.cva  # one-directional loan book -> DVA tiny
+    assert r.total_xva == r.cva - r.dva + r.fva + r.mva + r.kva
+
+
+def test_kva_rises_with_risk_weight() -> None:
+    s = datasets.get_dataset("stressed")
+    # B (RW 1.5) vs A (RW 0.5) at similar EAD/tenor -> higher KVA for the worse grade
+    b_name = next(r for r in xva.portfolio_xva_breakdown(s) if r.rating == "B")
+    assert b_name.kva > 0
+
+
+def test_portfolio_breakdown_sorted_by_total() -> None:
+    rows = xva.portfolio_xva_breakdown(datasets.get_dataset("stressed"))
+    assert rows == sorted(rows, key=lambda r: r.total_xva, reverse=True)

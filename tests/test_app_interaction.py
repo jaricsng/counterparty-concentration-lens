@@ -238,3 +238,22 @@ def test_contagion_amplifying_filter(require_fuseki: None) -> None:
         df.value for df in at.dataframe if "amplification" in list(map(str, df.value.columns))
     )
     assert all(float(str(a).replace("×", "")) > 1 for a in ctable["amplification"])
+
+
+def test_dashboard_full_xva_breakdown(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    assert "Portfolio total xVA" in {str(m.label) for m in at.metric}
+    ftable = next(
+        df.value for df in at.dataframe if "total xVA" in list(map(str, df.value.columns))
+    )
+    assert {"CVA", "DVA", "FVA", "MVA", "KVA"} <= set(map(str, ftable.columns))
+
+
+def test_full_xva_rating_filter(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    ms = next(m for m in at.multiselect if (m.label or "").lower() == "filter rating (xva)")
+    ms.set_value(["B"]).run()
+    ftable = next(
+        df.value for df in at.dataframe if "total xVA" in list(map(str, df.value.columns))
+    )
+    assert set(ftable["rating"]) == {"B"}
