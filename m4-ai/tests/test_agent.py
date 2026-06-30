@@ -148,3 +148,9 @@ def test_expected_credit_loss_routes_to_ifrs9(runner: GraphRunner) -> None:
 
 def test_expected_loss_still_routes_to_el(runner: GraphRunner) -> None:
     assert _ans(runner, "what is our total expected loss?").intent == "expected_loss"
+
+
+def test_systemic_contagion(runner: GraphRunner) -> None:
+    a = _ans(runner, "which counterparty is most systemically important?")
+    assert a.intent == "contagion"
+    assert "LE-0030" in a.summary and "systemic" in a.summary.lower()

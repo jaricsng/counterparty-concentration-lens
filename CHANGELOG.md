@@ -6,6 +6,21 @@ the project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-30
+
+### Added
+- **Systemic contagion** (`lens_m1/contagion.py`) — a deterministic default-cascade
+  over the exposure graph; clearly labelled, **not** a calibrated network model or
+  Monte-Carlo simulation:
+  - A seed group defaults (control contagion); **direct loss** = LGD·EAD on its loans
+    less recovery from solvent guarantors; **contagion loss** = LGD·EAD on outside loans
+    that lose their guarantor (the seed group was the guarantor). Amplification = total ÷ direct.
+  - Dashboard "Systemic contagion (default cascade)" section: a systemic-importance
+    ranking with an "amplifying only" filter, headlining the most systemic name.
+  - NL `contagion` intent ("most systemically important?", "default cascade").
+  - Nimbus (the small-direct NBFI guarantor) is the most systemic: direct 2.2M but total
+    21.2M — a ×9.4 amplification via its guarantee web. The multi-hop thesis, quantified.
+
 ## [0.5.0] - 2026-06-30
 
 ### Added
@@ -93,7 +108,8 @@ not production-hardened).
   integration job (live Fuseki + OPA + gator); the P1–P3 test suites.
 - **Reuse**: a "golden path" to seed new projects with these practices.
 
-[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.2.0...v0.3.0

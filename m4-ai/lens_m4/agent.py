@@ -101,6 +101,23 @@ def _xva_rows() -> list[dict[str, str | None]]:
     ]
 
 
+def _contagion_rows() -> list[dict[str, str | None]]:
+    """Systemic default-cascade ranking on the stressed base (deterministic two-hop)."""
+    from lens_m1 import contagion, datasets
+
+    spec = datasets.get_dataset("stressed")
+    return [
+        {
+            "entity": c.seed,
+            "direct": str(c.direct_loss),
+            "contagion": str(c.contagion_loss),
+            "total": str(c.total_loss),
+            "amplification": f"{float(c.amplification):.1f}",
+        }
+        for c in contagion.systemic_ranking(spec)
+    ]
+
+
 def _ifrs9_rows() -> list[dict[str, str | None]]:
     """Per-counterparty IFRS-9 stage + recognised ECL on the stressed base (simplified)."""
     from lens_m1 import datasets, ifrs9
@@ -253,6 +270,15 @@ def _summarise(intent: str, rows: list[dict[str, str | None]], params: dict[str,
             f"Total recognised ECL (stressed base): {_money(str(total))}. "
             f"Stage 2: {stage2} names, Stage 3: {stage3} (lifetime ECL)."
         )
+    if intent == "contagion":
+        if not rows:
+            return "No exposures."
+        top = rows[0]  # ranking is sorted by total loss desc
+        return (
+            f"Most systemic (stressed base): {top.get('entity')} — direct "
+            f"{_money(top.get('direct'))}, total {_money(top.get('total'))} "
+            f"(×{top.get('amplification')} via guarantee contagion)."
+        )
     return f"{len(rows)} row(s)."
 
 
@@ -302,6 +328,8 @@ def answer(
         raw = _xva_rows()
     elif nlq.intent == "ifrs9":
         raw = _ifrs9_rows()
+    elif nlq.intent == "contagion":
+        raw = _contagion_rows()
     elif nlq.intent in ("expected_loss", "capital"):
         # Computed intents: PD / risk-weight are parametric (not pure SPARQL).
         raw = _credit_risk_rows(runner, nlq.sparql)

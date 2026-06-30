@@ -4,7 +4,7 @@
 
 [project]
 name = "counterparty-concentration-lens"
-version = "0.5.0"
+version = "0.6.0"
 description = "Learning prototype: standards-based (FIBO) counterparty concentration view. Synthetic data; production-shaped, not production-hardened."
 requires-python = ">=3.11"
 license = { text = "MIT" }

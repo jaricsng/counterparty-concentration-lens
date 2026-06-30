@@ -46,7 +46,7 @@ honest, not production-accurate) · ❌ consciously out of scope (see
 | NBFI cascade | ✅ | Small direct, large connected via guarantees (Archegos-shaped). |
 | **Stress / scenario engine** | ⚠️ | Deterministic named shocks re-derive **every** metric (incl. EL/capital); a what-if, **not** Monte-Carlo. **v0.3.0** |
 | Macro / multi-factor stress | ❌ | No macro model, no correlated factor shocks. |
-| Systemic / contagion metrics | ❌ | Network-contagion simulation out of scope. |
+| **Systemic contagion** | ⚠️ | Deterministic two-hop default cascade over the guarantee/ownership graph (direct + lost-guarantee contagion, amplification). Not a calibrated network model. **v0.6.0** |
 
 ## C. Engineering & delivery (cross-cutting, every feature)
 
@@ -69,3 +69,4 @@ honest, not production-accurate) · ❌ consciously out of scope (see
 | `v0.3.0` | Stress / scenario engine |
 | `v0.4.0` | Forward-looking exposure (PFE / EE profile) · CVA |
 | `v0.5.0` | IFRS-9 staging & lifetime ECL |
+| `v0.6.0` | Systemic contagion (default cascade) |

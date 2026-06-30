@@ -220,3 +220,21 @@ def test_ifrs9_stage_filter(require_fuseki: None) -> None:
         df.value for df in at.dataframe if "lifetime ECL" in list(map(str, df.value.columns))
     )
     assert set(etable["stage"]) == {2}
+
+
+def test_dashboard_systemic_contagion(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    ctable = next(
+        df.value for df in at.dataframe if "amplification" in list(map(str, df.value.columns))
+    )
+    assert ctable.iloc[0]["seed group"] == "LE-0030"  # Nimbus: small direct, top systemic
+
+
+def test_contagion_amplifying_filter(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    cb = next(c for c in at.checkbox if "amplifying" in (c.label or "").lower())
+    cb.set_value(True).run()
+    ctable = next(
+        df.value for df in at.dataframe if "amplification" in list(map(str, df.value.columns))
+    )
+    assert all(float(str(a).replace("×", "")) > 1 for a in ctable["amplification"])
