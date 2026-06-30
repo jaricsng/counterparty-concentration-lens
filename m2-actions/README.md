@@ -18,7 +18,8 @@ m2-actions/
 │   ├── validation.py           # pyshacl over the candidate graph
 │   ├── store.py                # InMemoryStore (tests) / FusekiStore (runtime)
 │   ├── graphbuild.py           # proposed triples (one source -> validate + INSERT)
-│   ├── derived.py              # status-aware connected-limit breach + WWR (computed)
+│   ├── derived.py              # status-aware computed checks over the live store:
+│   │                           #   connected-limit breach, WWR, net exposure, EL & capital
 │   ├── actions.py              # ActionService: validate -> write -> flag -> audit
 │   ├── audit.py                # append-only JSON-lines audit log
 │   ├── models.py               # pydantic request models (boundary validation)

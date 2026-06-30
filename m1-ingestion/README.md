@@ -18,6 +18,12 @@ m1-ingestion/
 │   ├── spec.py        # typed source-table records
 │   ├── datasets.py    # the engineered calm + stressed designs (one 30-entity roster)
 │   ├── metrics.py     # reference (oracle) concentration metrics — §3 / §9
+│   ├── credit_risk.py # EAD / PD / LGD / Expected Loss / capital (simplified) — v0.2.0
+│   ├── ifrs9.py       # IFRS-9 stage 1/2/3 + 12m vs lifetime ECL (simplified) — v0.5.0
+│   ├── xva.py         # analytical PFE/EE profile + CVA·DVA·FVA·MVA·KVA — v0.4/0.7
+│   ├── scenarios.py   # deterministic named stress shocks (re-derive metrics) — v0.3.0
+│   ├── macro.py       # macro multi-factor (correlated) stress — v0.8.0
+│   ├── contagion.py   # default cascade: two-hop + multi-round w/ fire-sale — v0.6/0.9
 │   ├── csv_tables.py  # write/read the five CSV source tables
 │   ├── rdfize.py      # rows -> FIBO instances (the M0 lens vocabulary)
 │   ├── loader.py      # CSV -> RDF -> Fuseki (idempotent replace)
@@ -26,6 +32,12 @@ m1-ingestion/
 ├── data/              # calm/ and stressed/ CSVs + data/README.md (provenance)
 └── tests/             # datasets, metrics oracle, CSV/RDF, Fuseki integration
 ```
+
+The `credit_risk` / `ifrs9` / `xva` / `scenarios` / `macro` / `contagion` modules are the
+**counterparty-credit-risk layer** built on top of the connected-exposure metrics — each a
+**deliberately simplified, clearly-labelled** model (every module's docstring states what it
+is *not*). They are also surfaced on the M5 dashboard and as M4 NL intents. The
+capability-by-capability boundary (✅ / ⚠️ / ❌) is [`../docs/ccr-coverage.md`](../docs/ccr-coverage.md).
 
 ## Prerequisites
 

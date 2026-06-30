@@ -31,7 +31,7 @@ flowchart TB
         direction LR
         SRC["Real source systems<br/>core banking · trade · KYC · collateral"]
         REAL["Real / regulated<br/>counterparty data"]
-        PFE["Time-series · PFE ·<br/>stress simulation · credit models"]
+        PFE["Deep simulation realism<br/>Monte-Carlo paths · calibrated PD/<br/>correlation curves · live market data"]
     end
 
     RM --> LENS
@@ -45,7 +45,7 @@ flowchart TB
 
     SRC -.->|"contained PoC in bank's own<br/>environment — NOT this prototype"| LENS
     REAL -.->|"never loaded here"| LENS
-    PFE -.->|"named gaps (Capstone)"| LENS
+    PFE -.->|"the realism boundary — CCR is built<br/>labelled-simplified (see ccr-coverage.md)"| LENS
 
     classDef actor fill:#eef4ff,stroke:#7aa2e3,color:#1c2b45;
     classDef sys fill:#fff4e6,stroke:#f0b67f,color:#5a3a14;
@@ -78,10 +78,11 @@ flowchart TB
     subgraph ONT["Semantic model (FIBO) + analytics"]
         O1["FIBO: BE · LOAN · FBC/Debt · FND · Guaranty · SEC"]
         O2["Fuseki triplestore + SPARQL"]
-        O5["Concentration analytics<br/>single-name · CR₁₀ · HHI · sector · WWR · UBO · watchlist"]
+        O5["Concentration analytics<br/>single-name · CR₁₀ · HHI · sector · country · rating · WWR · UBO · watchlist"]
+        O6["Credit risk & forward-looking (simplified)<br/>net exposure · EAD/EL/capital · PFE/EE · xVA · IFRS-9 · stress · macro · contagion"]
         O3["SHACL validation · guarded actions · audit"]
         O4["OPA dynamic security (authz as code)"]
-        O1 --- O2 --- O5 --- O3 --- O4
+        O1 --- O2 --- O5 --- O6 --- O3 --- O4
     end
     subgraph COMPUTE["Ingestion / compute"]
         C1["Synthetic datasets (calm / stressed)"]
@@ -105,7 +106,7 @@ flowchart TB
     classDef infra fill:#eef9fb,stroke:#7ec8d6,color:#13404a;
     class A1,A2 app;
     class I1 ai;
-    class O1,O2,O3,O4,O5 ont;
+    class O1,O2,O3,O4,O5,O6 ont;
     class C1,C2 compute;
     class R1,R2 infra;
     style APP fill:#f7faff,stroke:#7aa2e3,color:#1c2b45;
@@ -171,13 +172,23 @@ flowchart TB
         NBFI["NBFI cascade<br/>second-order exposure"]:::f
     end
 
+    subgraph CREDIT["Credit risk & forward-looking (deliberately simplified)"]
+        direction LR
+        EL2["EAD · Expected Loss · capital"]:::m
+        XVA2["PFE/EE · CVA · FVA/MVA/KVA"]:::m
+        ECL2["IFRS-9 staging · lifetime ECL"]:::m
+        STR2["Stress · macro · contagion cascade"]:::f
+    end
+
     EXP --> PERNAME
     EXP --> PORTFOLIO
     EXP --> HIDDEN
+    EXP --> CREDIT
 
     PERNAME --> OUT["Breach + watchlist surfaced live<br/>(direct looks fine · connected breaches)"]:::out
     PORTFOLIO --> OUT
     HIDDEN --> OUT
+    CREDIT --> OUT
 
     classDef core fill:#fff4e6,stroke:#f0b67f,color:#5a3a14;
     classDef m fill:#eef4ff,stroke:#7aa2e3,color:#1c2b45;
@@ -186,9 +197,10 @@ flowchart TB
     style PERNAME fill:#f7faff,stroke:#7aa2e3,color:#1c2b45;
     style PORTFOLIO fill:#f7faff,stroke:#7aa2e3,color:#1c2b45;
     style HIDDEN fill:#fdf4f8,stroke:#e89ab0,color:#5a1f33;
+    style CREDIT fill:#faf7fe,stroke:#b39ddb,color:#3a2a52;
 ```
 
-Thresholds (illustrative): single-name > 25% of capital / > 10% of revenue; CR₁₀ > 60–70%; HHI > 0.18; sector > 30%. See `concentration-metrics.md` for exact definitions. PFE / time-series, stress-shock simulation, and full credit-modelling are deliberately out of scope.
+Thresholds (illustrative): single-name > 25% of capital / > 10% of revenue; CR₁₀ > 60–70%; HHI > 0.18; sector > 30%. See `concentration-metrics.md` for exact definitions. The credit-risk and forward-looking layers — EAD/Expected Loss/capital, PFE/EE, full xVA (CVA·DVA·FVA·MVA·KVA), IFRS-9 staging, stress/macro scenarios, and the contagion cascade — are implemented as **deliberately simplified, clearly-labelled** versions (see [`ccr-coverage.md`](ccr-coverage.md)). The conscious boundary is now *simulation realism* — Monte-Carlo exposure paths, calibrated PD/correlation curves, and live market data — **not** the capabilities themselves.
 
 ## Component choices (all free / open-source)
 
