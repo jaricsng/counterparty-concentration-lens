@@ -33,3 +33,25 @@ def test_solvent_guarantor_recovers_direct_loss() -> None:
     borealis = contagion.cascade(s, "LE-0045")
     # its guaranteed loan is recovered by the solvent guarantor -> no direct loss on it
     assert borealis.direct_loss == 0
+
+
+def test_multiround_produces_second_order_defaults() -> None:
+    s = datasets.get_dataset("stressed")
+    # Borealis is guaranteed by Acme; single-round it recovers, multi-round it topples Acme
+    single = contagion.cascade(s, "LE-0045")
+    multi = contagion.cascade_multiround(s, "LE-0045")
+    assert single.total_loss == 0  # guaranteed by a solvent guarantor single-round
+    assert multi.second_order > 0 and multi.rounds >= 2
+    assert multi.total_loss > single.total_loss
+
+
+def test_firesale_haircut_in_range() -> None:
+    runs = contagion.systemic_ranking_multiround(datasets.get_dataset("stressed"))
+    for r in runs:
+        assert 0 <= float(r.firesale_haircut) <= contagion.FIRESALE_CAP
+
+
+def test_multiround_converges_and_is_sorted() -> None:
+    runs = contagion.systemic_ranking_multiround(datasets.get_dataset("stressed"))
+    assert all(r.rounds <= 12 for r in runs)  # fixed point reached within the cap
+    assert runs == sorted(runs, key=lambda c: c.total_loss, reverse=True)

@@ -186,6 +186,23 @@ def generate(question: str, label_index: dict[str, str] | None = None) -> NLQuer
     if any(w in q for w in ("country", "countries", "geograph", "jurisdiction")):
         return NLQuery(question, "country_concentration", "template", _q(_COUNTRY))
 
+    # Multi-round cascade with fire-sale — before the single-round contagion branch.
+    if any(
+        w in q
+        for w in (
+            "fire-sale",
+            "fire sale",
+            "firesale",
+            "multi-round",
+            "multi round",
+            "second-order",
+            "second order",
+            "spiral",
+            "cascade rounds",
+        )
+    ):
+        return NLQuery(question, "contagion_multiround", "template", _q(_CREDIT))
+
     # Systemic contagion (computed default cascade on the stressed base).
     if any(
         w in q

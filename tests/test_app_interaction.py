@@ -282,3 +282,21 @@ def test_macro_downgraded_only_filter(require_fuseki: None) -> None:
         and "Δ EL" in list(map(str, df.value.columns))
     )
     assert all(str(d) != "−0" for d in mtable["downgrade"])
+
+
+def test_dashboard_multiround_cascade(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    mtable = next(
+        df.value for df in at.dataframe if "2nd-order" in list(map(str, df.value.columns))
+    )
+    assert mtable.iloc[0]["2nd-order"] >= 1  # worst cascade has second-order defaults
+
+
+def test_multiround_second_order_filter(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    cb = next(c for c in at.checkbox if "second-order cascades only" in (c.label or "").lower())
+    cb.set_value(True).run()
+    mtable = next(
+        df.value for df in at.dataframe if "2nd-order" in list(map(str, df.value.columns))
+    )
+    assert all(int(v) > 0 for v in mtable["2nd-order"])

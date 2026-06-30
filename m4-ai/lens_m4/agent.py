@@ -160,6 +160,24 @@ def _contagion_rows() -> list[dict[str, str | None]]:
     ]
 
 
+def _contagion_multiround_rows() -> list[dict[str, str | None]]:
+    """Multi-round (fire-sale) cascade ranking on the stressed base."""
+    from lens_m1 import contagion, datasets
+
+    spec = datasets.get_dataset("stressed")
+    return [
+        {
+            "entity": r.seed,
+            "rounds": str(r.rounds),
+            "defaulted": str(r.defaulted),
+            "second_order": str(r.second_order),
+            "firesale": str(r.firesale_haircut),
+            "total": str(r.total_loss),
+        }
+        for r in contagion.systemic_ranking_multiround(spec)
+    ]
+
+
 def _ifrs9_rows() -> list[dict[str, str | None]]:
     """Per-counterparty IFRS-9 stage + recognised ECL on the stressed base (simplified)."""
     from lens_m1 import datasets, ifrs9
@@ -335,6 +353,16 @@ def _summarise(intent: str, rows: list[dict[str, str | None]], params: dict[str,
             f"Portfolio total xVA (stressed base): {_money(str(tot))} "
             f"(CVA {_money(str(cva))}, FVA {_money(str(fva))}, KVA {_money(str(kva))})."
         )
+    if intent == "contagion_multiround":
+        if not rows:
+            return "No exposures."
+        top = rows[0]  # ranking sorted by total loss desc
+        return (
+            f"Worst multi-round cascade (stressed base): {top.get('entity')} — "
+            f"{top.get('rounds')} rounds, {top.get('defaulted')} defaulted "
+            f"({top.get('second_order')} second-order), loss {_money(top.get('total'))} "
+            f"(fire-sale haircut {top.get('firesale')})."
+        )
     if intent == "contagion":
         if not rows:
             return "No exposures."
@@ -399,6 +427,8 @@ def answer(
         raw = _ifrs9_rows()
     elif nlq.intent == "contagion":
         raw = _contagion_rows()
+    elif nlq.intent == "contagion_multiround":
+        raw = _contagion_multiround_rows()
     elif nlq.intent in ("expected_loss", "capital"):
         # Computed intents: PD / risk-weight are parametric (not pure SPARQL).
         raw = _credit_risk_rows(runner, nlq.sparql)

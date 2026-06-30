@@ -6,6 +6,23 @@ the project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-06-30
+
+### Added
+- **Multi-round contagion with fire-sale spirals** (`lens_m1/contagion.py`) — an
+  iterative fixed-point default cascade; clearly labelled, **not** a calibrated
+  network or Monte-Carlo model:
+  - Each round, a defaulter's guarantee obligations land on solvent guarantors; one
+    whose obligations exceed its (fire-sale-shrunk) buffer defaults too; dumping
+    collateral lifts a market haircut that deepens losses. Iterate to convergence.
+  - Dashboard "Multi-round cascade (with fire-sale spirals)" sub-section: ranking with
+    rounds / defaulted / second-order / fire-sale haircut, and a "second-order only" filter.
+  - NL `contagion_multiround` intent ("fire-sale cascade", "multi-round contagion");
+    the single-round cascade stays the `contagion` intent.
+  - The capstone insight: Borealis shows **0 loss single-round** (its loan is guaranteed)
+    yet **15.3M over 2 rounds** — the guarantee that makes it look safe topples Acme
+    (4 second-order defaults). The hidden second-order risk, quantified.
+
 ## [0.8.0] - 2026-06-30
 
 ### Added
@@ -138,7 +155,8 @@ not production-hardened).
   integration job (live Fuseki + OPA + gator); the P1–P3 test suites.
 - **Reuse**: a "golden path" to seed new projects with these practices.
 
-[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.5.0...v0.6.0

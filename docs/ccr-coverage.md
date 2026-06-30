@@ -46,7 +46,8 @@ honest, not production-accurate) · ❌ consciously out of scope (see
 | NBFI cascade | ✅ | Small direct, large connected via guarantees (Archegos-shaped). |
 | **Stress / scenario engine** | ⚠️ | Deterministic named shocks re-derive **every** metric (incl. EL/capital); a what-if, **not** Monte-Carlo. **v0.3.0** |
 | **Macro / multi-factor stress** | ⚠️ | Deterministic factor model: a named scenario's factor vector × per-sector sensitivities → correlated downgrades. Not a simulated correlation matrix. **v0.8.0** |
-| **Systemic contagion** | ⚠️ | Deterministic two-hop default cascade over the guarantee/ownership graph (direct + lost-guarantee contagion, amplification). Not a calibrated network model. **v0.6.0** |
+| **Systemic contagion** | ⚠️ | Two-hop cascade (**v0.6.0**) + an iterative **multi-round cascade with fire-sale spirals** (**v0.9.0**) over the guarantee/ownership graph. Not a calibrated network model. |
+| Fire-sale / liquidity spirals | ⚠️ | Deterministic fire-sale haircut feedback inside the multi-round cascade — illustrative, not a calibrated price-impact model. **v0.9.0** |
 
 ## C. Engineering & delivery (cross-cutting, every feature)
 
@@ -72,3 +73,4 @@ honest, not production-accurate) · ❌ consciously out of scope (see
 | `v0.6.0` | Systemic contagion (default cascade) |
 | `v0.7.0` | Full xVA (FVA / MVA / KVA) · bilateral CVA/DVA |
 | `v0.8.0` | Macro / multi-factor (correlated) stress |
+| `v0.9.0` | Multi-round contagion with fire-sale spirals |
