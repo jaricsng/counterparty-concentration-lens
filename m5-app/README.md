@@ -35,7 +35,9 @@ m5-app/
 - **Ask (NL)** — a **multi-turn chat** (`st.chat_input` + history): ask in plain
   English about concentration *or* any CCR layer (net exposure, EL, capital, IFRS-9,
   PFE/CVA/xVA, stress, macro, contagion); each turn shows the generated, validated,
-  read-only SPARQL and result rows. Group-less follow-ups reuse the last-named group.
+  read-only SPARQL and result rows. A **starter-prompt palette** offers clickable
+  example questions per area, and **follow-ups** carry context — "exposure to Acme?"
+  then "what about Vortex?" (reuses the intent) or "show its guarantee chains".
 - **Scenario Sandbox** — add a loan / soft-delete an object **via M2** (validated
   + audited); flags (e.g. limit breach) surface; metrics recompute on rerun.
   Limits require the `group_risk` role.
