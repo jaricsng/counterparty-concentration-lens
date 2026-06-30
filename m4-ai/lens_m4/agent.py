@@ -60,6 +60,29 @@ def _credit_risk_rows(runner: Runner, gross_query: str) -> list[dict[str, str | 
     return sorted(rows, key=lambda x: Decimal(x["el"] or "0"), reverse=True)
 
 
+def _stress_rows(scenario_key: str) -> list[dict[str, str | None]]:
+    """Per-counterparty expected-loss base vs shocked for a named scenario.
+
+    A computed what-if on the bundled 'stressed' base (the agent has no session
+    dataset). Uses the lens_m1 scenario engine; clearly framed as a what-if.
+    """
+    from lens_m1 import datasets, scenarios
+
+    spec = datasets.get_dataset("stressed")
+    label = scenarios.SCENARIOS.get(scenario_key, scenarios.SCENARIOS["base"]).label
+    return [
+        {
+            "entity": d.entity,
+            "rating": f"{d.rating_base}->{d.rating_shocked}",
+            "el_base": str(d.el_base),
+            "el_shocked": str(d.el_shocked),
+            "delta": str(d.delta),
+            "scenario": label,
+        }
+        for d in scenarios.expected_loss_deltas(spec, scenario_key)
+    ]
+
+
 @dataclass(frozen=True)
 class AnswerResult:
     question: str
@@ -162,6 +185,18 @@ def _summarise(intent: str, rows: list[dict[str, str | None]], params: dict[str,
             return "No exposures."
         total = sum((Decimal(r.get("capital") or 0) for r in rows), Decimal(0))
         return f"Total capital (8% of RWA): {_money(str(total))} across {len(rows)} counterparties."
+    if intent == "stress":
+        if not rows:
+            return "No scenario impact."
+        base = sum((Decimal(r.get("el_base") or 0) for r in rows), Decimal(0))
+        shocked = sum((Decimal(r.get("el_shocked") or 0) for r in rows), Decimal(0))
+        top = max(rows, key=lambda r: Decimal(r.get("delta") or 0))
+        label = rows[0].get("scenario") or "Scenario"
+        return (
+            f"{label} (stressed base): expected loss "
+            f"{_money(str(base))} -> {_money(str(shocked))}. "
+            f"Biggest mover: {top.get('entity')} ({top.get('rating')})."
+        )
     return f"{len(rows)} row(s)."
 
 
@@ -205,7 +240,9 @@ def answer(
             safe=False,
         )
 
-    if nlq.intent in ("expected_loss", "capital"):
+    if nlq.intent == "stress":
+        raw = _stress_rows(nlq.params.get("scenario", "broad_downgrade"))
+    elif nlq.intent in ("expected_loss", "capital"):
         # Computed intents: PD / risk-weight are parametric (not pure SPARQL).
         raw = _credit_risk_rows(runner, nlq.sparql)
     else:

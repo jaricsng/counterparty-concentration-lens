@@ -30,6 +30,8 @@ for _mod in (
     if _path not in sys.path:
         sys.path.insert(0, _path)
 
+from lens_m1 import datasets as lens_datasets  # noqa: E402
+from lens_m1 import scenarios as lens_scenarios  # noqa: E402
 from lens_m3.portfolios import DEFAULT_USER, DEMO_USERS  # noqa: E402
 from lens_m4 import agent, ollama  # noqa: E402
 from lens_m5 import data  # noqa: E402
@@ -40,6 +42,10 @@ st.set_page_config(page_title="Counterparty Concentration Lens", layout="wide")
 
 def _m(value: Decimal | float | str) -> str:
     return f"SGD {float(Decimal(str(value))) / 1e6:,.1f}M"
+
+
+def _signed_m(delta: Decimal) -> str:
+    return f"{'+' if delta >= 0 else '−'}{_m(abs(delta))}"
 
 
 @st.cache_resource
@@ -293,6 +299,66 @@ def main() -> None:
             if ssel:
                 eldf = eldf[eldf["sector"].isin(ssel)]
         st.dataframe(eldf, width="stretch", hide_index=True)
+
+        # ----- Stress / scenario (what-if) -----
+        st.subheader("Stress / scenario (what-if)")
+        base_name = ds if ds in ("calm", "stressed") else "stressed"
+        st.caption(
+            f"Deterministic named shocks re-derive every metric on the **{base_name}** base. "
+            "A what-if overlay — NOT a Monte-Carlo simulation or macro model."
+        )
+        spec = lens_datasets.get_dataset(base_name)
+        scen_keys = [k for k in lens_scenarios.SCENARIOS if k != "base"]
+        pick = st.selectbox(
+            "Scenario", scen_keys, format_func=lambda k: lens_scenarios.SCENARIOS[k].label
+        )
+        st.caption(lens_scenarios.SCENARIOS[pick].description)
+        base_snap, shock_snap = lens_scenarios.compare(spec, pick)
+        s1, s2, s3, s4 = st.columns(4)
+        s1.metric(
+            "Expected loss",
+            _m(shock_snap.total_el),
+            _signed_m(shock_snap.total_el - base_snap.total_el),
+            delta_color="inverse",
+        )
+        s2.metric(
+            "Capital",
+            _m(shock_snap.total_capital),
+            _signed_m(shock_snap.total_capital - base_snap.total_capital),
+            delta_color="inverse",
+        )
+        s3.metric(
+            "Net EAD",
+            _m(shock_snap.total_ead),
+            _signed_m(shock_snap.total_ead - base_snap.total_ead),
+            delta_color="inverse",
+        )
+        s4.metric(
+            "Watchlist red/amber",
+            f"{shock_snap.watchlist_red}/{shock_snap.watchlist_amber}",
+            f"base {base_snap.watchlist_red}/{base_snap.watchlist_amber}",
+        )
+        sdf = pd.DataFrame(
+            [
+                {
+                    "entity": d.entity,
+                    "rating": f"{d.rating_base} → {d.rating_shocked}",
+                    "EL base": f"SGD {float(d.el_base):,.0f}",
+                    "EL shocked": f"SGD {float(d.el_shocked):,.0f}",
+                    "Δ EL": f"SGD {float(d.delta):,.0f}",
+                    "_grade": d.rating_shocked,
+                }
+                for d in lens_scenarios.expected_loss_deltas(spec, pick)
+                if d.delta > 0
+            ]
+        )
+        if not sdf.empty:
+            gsel = st.multiselect(
+                "Filter shocked rating", sorted(sdf["_grade"].unique()), key="stress_rating"
+            )
+            if gsel:
+                sdf = sdf[sdf["_grade"].isin(gsel)]
+            st.dataframe(sdf.drop(columns=["_grade"]), width="stretch", hide_index=True)
 
     # ------------------------------------------------------------------- Explore
     with tabs[1]:

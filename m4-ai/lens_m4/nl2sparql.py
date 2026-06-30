@@ -186,6 +186,21 @@ def generate(question: str, label_index: dict[str, str] | None = None) -> NLQuer
     if any(w in q for w in ("country", "countries", "geograph", "jurisdiction")):
         return NLQuery(question, "country_concentration", "template", _q(_COUNTRY))
 
+    # Stress / scenario (computed what-if on the stressed base). Checked before the
+    # capital/EL branch so "what happens to expected loss if NBFIs downgrade" stresses.
+    if any(
+        w in q for w in ("stress", "scenario", "what if", "what happens if", "shock", "downgrade")
+    ):
+        if "nbfi" in q or "non-bank" in q:
+            scenario = "nbfi_downgrade"
+        elif "haircut" in q:
+            scenario = "haircut_plus20"
+        elif "real estate" in q or "cre" in q or "property" in q:
+            scenario = "cre_downturn"
+        else:
+            scenario = "broad_downgrade"
+        return NLQuery(question, "stress", "template", _q(_CREDIT), {"scenario": scenario})
+
     # Capital keywords are specific phrases (bare "capital" collides with entity
     # names like "Nimbus Capital Partners").
     _capital_kw = (

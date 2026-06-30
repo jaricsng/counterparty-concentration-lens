@@ -115,7 +115,7 @@ This prototype is built on the same layered, open-source stack documented in the
 | Infra / delivery | k3d (Kubernetes) + Argo CD (GitOps) + OPA Gatekeeper (admission policy-as-code) |
 | Scale (capstone) | Apache Spark (PySpark) ingestion equivalent |
 
-See [`docs/`](docs/) for the full lab handbook, the architecture and diagrams, the open-source-stack mapping, the FIBO module notes, and the [engineering & DevSecOps practices](docs/engineering-practices.md) applied throughout.
+See [`docs/`](docs/) for the full lab handbook, the architecture and diagrams, the open-source-stack mapping, the FIBO module notes, and the [engineering & DevSecOps practices](docs/engineering-practices.md) applied throughout. For how the Lens maps onto a full counterparty-credit-risk stack — what's implemented, simplified, or consciously out of scope — see the [**CCR coverage comparison**](docs/ccr-coverage.md).
 
 This prototype is built to **production-shaped** standards — it demonstrates DevSecOps and secure-engineering practice at each stage (CI gates, tests, dependency/secret/SAST/container scanning, SBOM, authorization-as-code, validation-as-code) — but it is **not production-hardened**. See [`SECURITY.md`](SECURITY.md) for the honest boundary.
 
