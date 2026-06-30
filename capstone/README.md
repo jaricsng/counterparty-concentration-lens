@@ -40,25 +40,33 @@ identical (set-equal, zero differences) to the M1 loader's output**:
 pytest capstone -q                                                            # transform == M1 (calm + stressed)
 ```
 
-## 2. What this is NOT — deliberately out of scope
+## 2. What this is NOT — the boundary is *realism*, not capability
 
-The Lens demonstrates **connected, relationship-aware concentration** — the gap
-that fragmented systems miss. It **consciously excludes** time-series,
-simulation, and full credit-modelling. These are real counterparty-risk
-disciplines a production platform would add; naming them is deliberate scoping,
-not inability.
+The Lens started as a sharp demonstration of **connected, relationship-aware
+concentration** — the gap that fragmented systems miss. It has since been extended
+(v0.1.0 → v0.9.0) to cover the **full counterparty-credit-risk landscape** — netting/
+collateral, EAD/Expected-Loss/capital, PFE/EE and full xVA, IFRS-9 staging, stress &
+macro scenarios, and systemic contagion — **each built as a deliberately simplified,
+clearly-labelled model**. So the honest boundary moved: it is no longer *which
+capabilities exist*, but **how much simulation realism** sits behind them.
 
-| Excluded area | What it is | Why it's out |
+The always-current, capability-by-capability map (✅ implemented · ⚠️ simplified ·
+❌ out) is [`../docs/ccr-coverage.md`](../docs/ccr-coverage.md). Each module's docstring
+states exactly what it is **not**. In summary:
+
+| CCR area | How the Lens does it (⚠️ simplified) | The realism that stays out (❌) |
 |---|---|---|
-| **PFE / dynamic, time-series exposure** | potential future exposure from market simulation over time | needs pricing + time-series data; the Lens uses static, point-in-time exposure |
-| **Stress testing / scenario shocks** ("sector −30%") | revaluing the book under shocked risk factors | needs pricing/risk-factor models; the Scenario Sandbox offers honest manual "what-if" by editing data, not a shock engine |
-| **Credit migration & expected loss** (PD / LGD / EAD, IFRS 9 staging) | rating-transition and provisioning models | a distinct credit-modelling discipline needing ratings/default data; would dilute the concentration focus |
-| **Systemic-contagion metrics** (DebtRank-style) | network propagation of losses across the financial system | research-grade; the NBFI cascade view is a deliberately simpler taste |
-| **Market/liquidity-adjusted exposure, netting sets, CSA / collateral haircuts** | real counterparty-credit machinery | out of scope for a synthetic, structural demo |
-| **Correlation-based wrong-way risk** | exposure correlated with counterparty credit quality | the Lens flags only *structural* WWR (same-issuer collateral), and says so |
-| **Static limits vs dynamic PFE monitoring** | limits/exposures are static in the data | a real production gap, named here rather than hidden |
+| **PFE / EE exposure profile** (v0.4.0) | analytical amortising-base + √t add-on profile | Monte-Carlo exposure paths, derivative MtM |
+| **xVA — CVA·DVA·FVA·MVA·KVA** (v0.4/0.7) | deterministic integrals over the EE profile + flat params | simulated paths, calibrated funding/own-credit |
+| **Stress / scenario shocks** (v0.3.0) | named deterministic shocks re-derive every metric | a real pricing/risk-factor revaluation engine |
+| **Macro / multi-factor stress** (v0.8.0) | factor-vector × per-sector sensitivities (correlated) | an *estimated* factor-correlation matrix, simulated paths |
+| **EAD / PD / LGD / Expected Loss** (v0.2.0) | rating-driven PD table, flat LGD, SA risk-weights | IRB estimation, PD/LGD calibration from data |
+| **IFRS-9 staging & lifetime ECL** (v0.5.0) | Stage 1/2/3 by rating rule; constant-hazard lifetime ECL | quantitative SICR backstops, macro overlays |
+| **Systemic contagion** (v0.6/0.9) | two-hop + iterative multi-round cascade with fire-sale | a calibrated network / price-impact model |
+| **Netting / collateral / CSA haircuts** (v0.1.0) | net post-collateral exposure, dedicated-collateral rule | full CSA mechanics, variation/initial-margin modelling |
+| **Wrong-way risk** | *structural* WWR (same-issuer collateral) | correlation-based WWR (exposure ↔ credit quality) |
 
-**Out of scope for data ingestion** (see `docs/data-import.md` §5):
+**Still genuinely out of scope for data ingestion** (see `docs/data-import.md` §5):
 
 - **Live / API / database integration** to source systems (core banking, trade,
   collateral, KYC) — credentials, network access, schema discovery and security
@@ -69,7 +77,8 @@ not inability.
   config, not auto-discovered.
 - **Streaming / incremental / CDC ingestion** — batch only.
 
-> **Framing line:** *the Lens deliberately demonstrates connected,
-> relationship-aware concentration — the gap that fragmented systems miss — and
-> consciously excludes time-series, simulation, and full credit-modelling, which
-> are separate disciplines a production platform would add.*
+> **Framing line:** *the Lens demonstrates **connected, relationship-aware
+> concentration** end-to-end — into loss, capital, forward exposure, provisioning
+> and systemic contagion — with every counterparty-credit-risk area built as a
+> **clearly-labelled simplified** model. What it consciously omits is **simulation
+> realism** (Monte-Carlo paths, calibrated curves, live data), not the capabilities.*

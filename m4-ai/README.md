@@ -40,6 +40,16 @@ template output **and** any Ollama output must pass this gate before execution.
 > within 75% of their limit?" · "Show guarantee chains touching Nimbus" · "Any
 > wrong-way risk?" · "Top counterparties?"
 
+The intent set grew with the CCR layer (each feature has one). Beyond the
+concentration intents above: **net exposure after collateral** · **country / rating
+concentration** · **expected loss** · **regulatory capital** · **IFRS-9 ECL / lifetime
+ECL** · **total CVA / PFE** · **total xVA (FVA/KVA)** · **stress** ("what if NBFIs are
+downgraded?") · **macro** ("property crash?", "recession") · **systemic contagion** ·
+**fire-sale / multi-round cascade**. The credit-risk intents are *computed* (PD /
+risk-weight are parametric) — the agent runs a representative safe query and applies the
+`lens_m1` parameters, so answers stay consistent with the dashboard. See
+[`../docs/ccr-coverage.md`](../docs/ccr-coverage.md).
+
 ## Test
 
 ```bash

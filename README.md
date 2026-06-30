@@ -89,8 +89,9 @@ A key modelling point worth understanding: in FIBO, **"counterparty" is a role, 
 
 - A **single connected exposure view** across entities and products, from a FIBO-based model.
 - **Multi-hop concentration** that no single source system sees (shared collateral, guarantee chains, group structures, ultimate-beneficial-owner roll-up).
-- **Concentration metrics** computed direct-vs-connected — single-name limit utilisation, CR₁₀, HHI, sector concentration — plus a limit early-warning watchlist and a structural wrong-way-risk flag.
-- A **grounded query layer** — natural-language questions answered by generated queries over the governed model, not by a black-box guess.
+- **Concentration metrics** computed direct-vs-connected — single-name limit utilisation, CR₁₀, HHI, sector / **country / credit-rating** concentration — plus a limit early-warning watchlist and a structural wrong-way-risk flag.
+- A **full counterparty-credit-risk layer**, built as **clearly-labelled, deliberately-simplified** models on top of the connected view: net (post-collateral) exposure, **EAD / Expected Loss / capital**, **PFE/EE profiles and full xVA** (CVA·DVA·FVA·MVA·KVA), **IFRS-9 staging & lifetime ECL**, **stress / macro scenarios**, and a **systemic-contagion cascade**. The conscious boundary is *simulation realism*, not capability — see [`docs/ccr-coverage.md`](docs/ccr-coverage.md).
+- A **grounded query layer** — natural-language questions answered by generated queries over the governed model, not by a black-box guess (with an intent for every feature above).
 - An **interactive scenario sandbox** — filter, explore, and (on synthetic data) add/edit/deactivate through the validated action layer, watching the metrics move live.
 - **Bring your own test data** — load your own synthetic/sample CSVs (with optional column mapping), validated on the way in. *Test data only — see the boundary below.*
 - **Lineage and audit** on every figure — the traceability that BCBS 239 calls for.
@@ -165,6 +166,7 @@ Being precise here is part of the point:
 - **Not financial, legal, or compliance advice.** The Archegos and BCBS 239 references are public facts included to explain why the pattern matters — nothing here is advice to any institution.
 - **Not affiliated** with EDM Council, OMG, or any bank. FIBO is used under its open licence; FIBO is a trademark of EDM Council, Inc.
 - **Not a real risk system.** A better connected *view* surfaces a concentration or breach; acting on it is a matter of governance and people, which no prototype provides.
+- **Not simulation-grade risk modelling.** The credit-risk and forward-looking layers (PFE/EE, xVA, IFRS-9, stress/macro, contagion) are **deliberately simplified, analytical** models with the real *shape* but illustrative calibration — **not** Monte-Carlo paths, calibrated curves, or live market data. The capability-by-capability boundary is [`docs/ccr-coverage.md`](docs/ccr-coverage.md).
 
 ---
 

@@ -61,6 +61,11 @@ FIBO:
 | `lens:sector` | LegalEntity | sector tag (sector concentration) |
 | `lens:counterpartyType` | LegalEntity | enum: `bank` / `corporate` / `nbfi` / `government` |
 | `lens:collateralIssuer` | Collateral → LegalEntity | issuer of security collateral (structural WWR); aligned with `fibo-fnd-rel-rel:isIssuedBy` |
+| `lens:collateralValue` / `lens:haircut` | Collateral | market value + supervisory haircut → net (post-collateral) exposure (v0.1.0) |
+| `lens:country` | LegalEntity | country of risk (country concentration; FIBO LCC correspondence) (v0.1.0) |
+| `lens:rating` | LegalEntity | credit-rating grade → PD / risk-weight / IFRS-9 stage (v0.1.0) |
+| `lens:maturityYears` | Loan | remaining tenor → forward-looking exposure (PFE/EE) and CVA (v0.4.0) |
+| `lens:NettingSet` | class | implicit one-per-counterparty netting set (v0.1.0) |
 
 ### How the multi-hop concentration is modelled
 

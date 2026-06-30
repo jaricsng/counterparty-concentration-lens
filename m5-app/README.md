@@ -22,7 +22,13 @@ m5-app/
 ## Screens
 
 - **Dashboard** — HHI & CR₁₀ (connected vs direct), top sector, watchlist
-  (red/amber), scoped exposures table with a sector filter, wrong-way-risk list.
+  (red/amber), scoped exposures table with a sector filter, wrong-way-risk list,
+  and the **CCR layer** (each a clearly-labelled simplified model, with its own
+  filter): **country & rating concentration**, **net (post-collateral) exposure**,
+  **expected loss & capital**, **stress / scenario** and **macro multi-factor**
+  what-ifs, **forward-looking exposure (PFE/EE) & full xVA**, **IFRS-9 ECL & staging**,
+  and **systemic contagion** (single + multi-round fire-sale cascade). See
+  [`../docs/ccr-coverage.md`](../docs/ccr-coverage.md).
 - **Explore** — pick a counterparty group → direct (named entity) vs direct
   (group) vs connected, the limit-breach verdict, and the contributing paths;
   plus the NBFI cascade chain.

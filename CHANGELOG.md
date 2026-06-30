@@ -6,6 +6,26 @@ the project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-06-30
+
+Milestone: **feature-complete CCR coverage on synthetic data, with documentation and
+diagrams in sync.** Every counterparty-credit-risk capability is now implemented (✅) or
+a deliberately-simplified, clearly-labelled model (⚠️) — see `docs/ccr-coverage.md`. No
+capability is out of scope; the conscious boundary is *simulation realism* (Monte-Carlo
+paths, calibrated curves, live market data) and live/real-data integration.
+
+### Changed (documentation sync)
+- Reframed the "what this is NOT" / out-of-scope narrative across the project — the
+  boundary is now *realism*, not capability: README, capstone "what this is NOT"
+  (assessed statement), `docs/concentration-metrics.md` (§3.7 + §10), `CLAUDE.md`
+  capstone note, and the M0/M1/M2/M4/M5 module READMEs.
+- Updated `docs/architecture.md` diagrams: the system-context "out of scope" boundary now
+  reads "deep simulation realism"; the layered + analytics diagrams gain the credit-risk /
+  forward-looking layer (EAD/EL/capital, PFE/EE, xVA, IFRS-9, stress/macro, contagion).
+- `docs/ccr-coverage.md` is the canonical, always-current capability map (20 ✅, 16 ⚠️,
+  0 capability rows out of scope).
+
+
 ## [0.9.0] - 2026-06-30
 
 ### Added
@@ -155,7 +175,8 @@ not production-hardened).
   integration job (live Fuseki + OPA + gator); the P1–P3 test suites.
 - **Reuse**: a "golden path" to seed new projects with these practices.
 
-[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.9.0...v1.0.0
 [0.9.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.6.0...v0.7.0

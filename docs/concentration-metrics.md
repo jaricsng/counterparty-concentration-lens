@@ -16,7 +16,7 @@
 | Sector & government concentration | 1 — computed | M1 (tags), M0 (query), M5 |
 | Indirect interconnectedness (NBFI cascade) | 2 — graph-structural | M0 (traversal), M5 (chain view) |
 | Structural Wrong-Way Risk (same-issuer collateral) | 3 — structural flag | M0 (query), M2 (flag), M5 |
-| Dynamic limits / PFE | 3 — **named gap** | Capstone "what this is NOT" |
+| Net exposure · EAD/EL/capital · IFRS-9 · PFE/xVA · stress/macro · contagion | ⚠️ simplified (v0.1–v0.9) | M1/M2 (compute), M5, M4 — see [`ccr-coverage.md`](ccr-coverage.md) |
 
 The guiding principle (unchanged): every metric is computed on **connected exposure** (direct + guarantees + shared collateral + group ownership), not per-system direct exposure. The demo's punch is that a name can look fine on direct exposure and breach once the hidden hops are counted.
 
@@ -77,9 +77,9 @@ sectorShare(s) = sum(connectedExposure where sector = s) / totalConnectedExposur
 - Flag any loan/exposure where the **collateral issuer is the same legal entity or group as the counterparty** (collateral that evaporates exactly when the name fails).
 - This is a *structural* WWR proxy, not correlation-based WWR. **State this explicitly** in the app and docs.
 
-### 3.7 Dynamic limits / PFE — NAMED GAP (do not fake)
-- The prototype uses **static** limits/exposures set in the data. Potential Future Exposure (PFE) requires market simulation/time-series and is **out of scope**.
-- Document in the Capstone "what this is NOT": static-limit reliance vs dynamic PFE monitoring is a real production gap.
+### 3.7 Forward-looking exposure (PFE / EE) — IMPLEMENTED, simplified (v0.4.0+)
+- The prototype now derives an **analytical** EE/PFE profile (amortising base + √t add-on) and integrates **CVA** (and the full xVA stack — FVA/MVA/KVA/DVA, v0.7.0) over it. See `lens_m1/xva.py` and [`ccr-coverage.md`](ccr-coverage.md).
+- It remains **deliberately simplified**: an illustrative analytical *shape*, **not** Monte-Carlo exposure paths or derivative MtM. Limits/exposures are still static point-in-time. That realism gap — analytical profile vs simulated paths — is the honest boundary, recorded in the Capstone "what this is NOT".
 
 ---
 
@@ -126,10 +126,10 @@ Regenerate a richer dataset (replaces/extends M0's starter instances). Provide a
 - [ ] **Interconnectedness view:** the NBFI cascade chain, with direct vs cascade-connected numbers.
 - [ ] **WWR flags** listed with the same-issuer explanation.
 - [ ] **Calm/Stressed toggle** that re-runs the metrics and visibly moves them across thresholds.
-- [ ] Prominent "illustrative synthetic data" label; PFE/dynamic-limits noted as out-of-scope.
+- [ ] Prominent "illustrative synthetic data" label; the credit-risk / forward-looking layers labelled as **simplified** (see [`ccr-coverage.md`](ccr-coverage.md)).
 
 ### Capstone
-- [ ] Add static-limits-vs-PFE and correlation-based-WWR to the "what this is NOT" production-gap list.
+- [ ] "What this is NOT" frames the boundary as **simulation realism** (Monte-Carlo paths, calibrated curves, live data), not the capabilities — every CCR area is implemented as a labelled-simplified model. Correlation-based (vs structural) WWR remains a noted simplification.
 
 ---
 
@@ -242,14 +242,24 @@ Two small, high-value additions that reuse data you already have and reinforce t
 
 ---
 
-## 10. Deliberately out of scope (record in the Capstone "what this is NOT")
+## 10. Scope & the realism boundary (record in the Capstone "what this is NOT")
 
-These are real counterparty-risk areas intentionally **excluded** — not from inability, but to keep the prototype a sharp demonstration of *connected concentration* rather than a sprawling risk platform. Naming them demonstrates awareness of the full landscape and deliberate scoping (a senior signal). For each: what it is, and why it's out.
+> **Update (v0.4.0–v0.9.0):** the CCR areas once listed here as out-of-scope have since
+> been **built as deliberately-simplified, clearly-labelled** versions. The canonical,
+> always-current map of *what's implemented · simplified · still out* is
+> [`ccr-coverage.md`](ccr-coverage.md). The boundary moved from *capability* to *realism*.
 
-- **Potential Future Exposure (PFE) / dynamic, time-series exposure** — needs market simulation and time-series data; the prototype uses static, point-in-time exposure. (Already noted in §3.7.)
-- **Stress testing / scenario shocks** ("sector X drops 30%") — proper revaluation needs pricing/risk-factor models the prototype doesn't have. The **Scenario Sandbox** offers manual "what-if" by editing data, which is honest about being illustrative rather than a real shock engine.
-- **Credit-migration & expected loss (PD / LGD / EAD, IFRS 9 staging)** — a distinct credit-modelling discipline needing ratings and default-probability data; would dilute the concentration focus.
-- **Network/systemic contagion metrics (e.g. DebtRank-style)** — genuinely graph-native and interesting, but a research-grade effort beyond a prototype; the NBFI cascade view gives a deliberately simpler taste.
-- **Market/liquidity-adjusted exposure, netting sets, CSA/collateral haircuts** — real counterparty-credit machinery; out of scope for a synthetic, structural demo.
+**Now implemented (⚠️ simplified — real shape, illustrative calibration, never faked):**
+- **Forward-looking exposure (PFE / EE) + full xVA** (`xva.py`, v0.4.0/v0.7.0) — analytical EE/PFE profile + CVA·DVA·FVA·MVA·KVA, integrated deterministically (no Monte-Carlo paths).
+- **Stress / scenario shocks + macro multi-factor stress** (`scenarios.py`, `macro.py`, v0.3.0/v0.8.0) — named deterministic shocks and a correlated factor model that re-derive every metric (no simulated correlation matrix).
+- **Credit migration → EAD / PD / LGD / Expected Loss + IFRS-9 staging** (`credit_risk.py`, `ifrs9.py`, v0.2.0/v0.5.0) — rating-driven PD, EL, RWA/capital, and Stage 1/2/3 lifetime ECL (rating-rule staging, not a full SICR/IRB model).
+- **Network / systemic contagion** (`contagion.py`, v0.6.0/v0.9.0) — a two-hop cascade and an iterative multi-round cascade with fire-sale spirals over the guarantee/ownership graph (deterministic, not a calibrated network model).
+- **Netting sets, collateral / CSA haircuts** (v0.1.0) — net post-collateral exposure with the dedicated-collateral rule.
 
-Framing line for the capstone: *the Lens deliberately demonstrates **connected, relationship-aware concentration** — the gap that fragmented systems miss — and consciously excludes time-series, simulation, and full credit-modelling, which are separate disciplines a production platform would add.*
+**Still consciously out of scope — the *realism* boundary, not the capability:**
+- **Monte-Carlo exposure simulation** (true PFE/EE paths, derivative MtM) — the analytical profile shows the shape, not simulated paths.
+- **Calibrated curves & correlations** — real lifetime-PD term structures, an estimated macro factor-correlation matrix, calibrated price-impact for fire-sales.
+- **Full xVA realism / IRB / full IFRS-9** — FVA/MVA/KVA are illustrative integrals; no IRB PD/LGD estimation, no quantitative SICR backstops or forward-looking macro overlays.
+- **Live / real-data integration** — synthetic point-in-time data only (see `data-import.md` §5).
+
+Framing line for the capstone: *the Lens demonstrates **connected, relationship-aware concentration** end-to-end into loss, capital, forward exposure, provisioning and systemic contagion — every CCR area built as a **clearly-labelled simplified** model. What it consciously omits is **simulation realism** (Monte-Carlo paths, calibrated curves, live data), not the capabilities.*
