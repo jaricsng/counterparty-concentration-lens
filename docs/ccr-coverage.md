@@ -23,7 +23,7 @@ honest, not production-accurate) · ❌ consciously out of scope (see
 | EAD (exposure at default) | ⚠️ | EAD = net exposure; **no PFE add-on** (point-in-time). **v0.2.0** |
 | **PFE / EE / expected exposure profile** | ⚠️ | **Analytical** profile (amortising base + √t add-on) — illustrative shape, not Monte-Carlo paths. **v0.4.0** |
 | **CVA** (unilateral) | ⚠️ | `LGD·Σ EE·marginalPD·DF`, hazard from the rating's 1y PD, on the analytical EE profile. **v0.4.0** |
-| Full xVA (FVA / MVA / KVA), bilateral CVA/DVA | ❌ | Needs funding/margin/capital simulation + own-credit. |
+| **Full xVA (FVA / MVA / KVA), bilateral CVA/DVA** | ⚠️ | Each a deterministic integral over the analytical EE/PFE profile + a flat parameter. DVA ≈ 0 for the one-directional loan book. Not simulated. **v0.7.0** |
 | Wrong-way risk | ⚠️ | **Structural** WWR (collateral issued by the borrower's group); not correlation-based. |
 | PD (probability of default) | ⚠️ | Mapped from credit rating via an illustrative table. **v0.2.0** |
 | LGD / EAD/PD calibration (IRB) | ⚠️ | Flat 45% LGD; standardised-style risk weights. No IRB estimation. **v0.2.0** |
@@ -70,3 +70,4 @@ honest, not production-accurate) · ❌ consciously out of scope (see
 | `v0.4.0` | Forward-looking exposure (PFE / EE profile) · CVA |
 | `v0.5.0` | IFRS-9 staging & lifetime ECL |
 | `v0.6.0` | Systemic contagion (default cascade) |
+| `v0.7.0` | Full xVA (FVA / MVA / KVA) · bilateral CVA/DVA |

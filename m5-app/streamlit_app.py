@@ -403,6 +403,39 @@ def main() -> None:
                 )
             )
 
+        # ----- Full xVA breakdown (CVA · DVA · FVA · MVA · KVA) -----
+        st.markdown("**Full xVA breakdown** (CVA · DVA · FVA · MVA · KVA)")
+        st.caption(
+            "Each component is a deterministic integral over the same EE/PFE profile + a flat "
+            "parameter (funding spread, hurdle rate, own PD) — illustrative, not simulated. "
+            "DVA ≈ 0 for a one-directional loan book. Total = CVA − DVA + FVA + MVA + KVA."
+        )
+        xva_full = lens_xva.portfolio_xva_breakdown(spec)
+        fdf = pd.DataFrame(
+            [
+                {
+                    "entity": r.entity,
+                    "rating": r.rating,
+                    "CVA": f"SGD {float(r.cva):,.0f}",
+                    "DVA": f"SGD {float(r.dva):,.0f}",
+                    "FVA": f"SGD {float(r.fva):,.0f}",
+                    "MVA": f"SGD {float(r.mva):,.0f}",
+                    "KVA": f"SGD {float(r.kva):,.0f}",
+                    "total xVA": f"SGD {float(r.total_xva):,.0f}",
+                    "_grade": r.rating,
+                }
+                for r in xva_full
+            ]
+        )
+        if not fdf.empty:
+            total_xva = sum((r.total_xva for r in xva_full), Decimal(0))
+            st.metric("Portfolio total xVA", _m(total_xva))
+            fsel = st.multiselect(
+                "Filter rating (xVA)", sorted(fdf["_grade"].unique()), key="fullxva_rating"
+            )
+            shown = fdf[fdf["_grade"].isin(fsel)] if fsel else fdf
+            st.dataframe(shown.drop(columns=["_grade"]), width="stretch", hide_index=True)
+
         # ----- IFRS-9 ECL & staging -----
         st.subheader("IFRS-9 ECL & staging (simplified)")
         st.caption(

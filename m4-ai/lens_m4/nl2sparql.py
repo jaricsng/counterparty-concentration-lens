@@ -220,6 +220,23 @@ def generate(question: str, label_index: dict[str, str] | None = None) -> NLQuer
     ):
         return NLQuery(question, "ifrs9", "template", _q(_CREDIT))
 
+    # Full xVA breakdown (FVA/MVA/KVA/DVA). Before the CVA branch so "total xva" routes here.
+    if any(
+        w in q
+        for w in (
+            "fva",
+            "mva",
+            "kva",
+            "dva",
+            "funding valuation",
+            "valuation adjustment",
+            "total xva",
+            "full xva",
+            "xva breakdown",
+        )
+    ):
+        return NLQuery(question, "xva_full", "template", _q(_CREDIT))
+
     # Forward-looking exposure & CVA (computed, analytical on the stressed base).
     if any(
         w in q

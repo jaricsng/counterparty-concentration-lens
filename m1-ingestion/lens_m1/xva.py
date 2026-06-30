@@ -121,3 +121,94 @@ def portfolio_xva(spec: DatasetSpec) -> list[CounterpartyXVA]:
 
 def total_cva(spec: DatasetSpec) -> Decimal:
     return sum((r.cva for r in portfolio_xva(spec)), Decimal(0))
+
+
+# --------------------------------------------------------------------------- #
+#  Full xVA breakdown (CVA · DVA · FVA · MVA · KVA) — analytical, illustrative.
+#  Each is a deterministic integral over the same EE/PFE profile + a flat
+#  parameter; NOT simulated. DVA ≈ 0 for a pure loan book (one-directional
+#  exposure) — we model a symmetric band purely to show the bilateral framework.
+# --------------------------------------------------------------------------- #
+
+FUNDING_SPREAD = 0.01  # funding cost over the risk-free curve (100 bps)
+COST_OF_CAPITAL = 0.10  # hurdle rate for KVA
+OWN_RATING = "AAA"  # the lending bank's own rating (for DVA)
+
+
+def _df(t: float, rate: float = DISCOUNT_RATE) -> float:
+    return math.exp(-rate * t)
+
+
+def fva(ead: float, maturity_years: int, vol: float = SUPERVISORY_VOL) -> float:
+    """Funding VA — funding the uncollateralised expected exposure at a funding spread."""
+    return sum(p.ee * FUNDING_SPREAD * _df(p.t) for p in exposure_profile(ead, maturity_years, vol))
+
+
+def mva(ead: float, maturity_years: int, vol: float = SUPERVISORY_VOL) -> float:
+    """Margin VA — funding initial margin (proxied by the PFE add-on) at a funding spread."""
+    prof = exposure_profile(ead, maturity_years, vol)
+    return sum(2.0 * (p.pfe - p.ee) * FUNDING_SPREAD * _df(p.t) for p in prof)
+
+
+def kva(ead: float, maturity_years: int, rating: str | None, vol: float = SUPERVISORY_VOL) -> float:
+    """Capital VA — cost of holding capital (8%·RW·EE) over the life at the hurdle rate."""
+    rw = float(credit_risk.rw_for(rating))
+    prof = exposure_profile(ead, maturity_years, vol)
+    return sum(0.08 * rw * p.ee * COST_OF_CAPITAL * _df(p.t) for p in prof)
+
+
+def dva(ead: float, maturity_years: int, vol: float = SUPERVISORY_VOL) -> float:
+    """Debt VA — the mirror of CVA from our OWN default (≈0 for a loan book)."""
+    own_pd = float(credit_risk.pd_for(OWN_RATING))
+    if ead <= 0 or own_pd <= 0:
+        return 0.0
+    hazard = -math.log(1.0 - own_pd)
+    prof = exposure_profile(ead, maturity_years, vol)
+    total = 0.0
+    prev_survival = 1.0
+    for p in prof:
+        if p.t == 0.0:
+            continue
+        survival = math.exp(-hazard * p.t)
+        neg_ee = 0.5 * 2.0 * (p.pfe - p.ee)  # the negative side of the diffusion band
+        total += LGD * neg_ee * (prev_survival - survival) * _df(p.t)
+        prev_survival = survival
+    return total
+
+
+@dataclass(frozen=True)
+class XvaBreakdown:
+    entity: str
+    rating: str
+    cva: Decimal
+    dva: Decimal
+    fva: Decimal
+    mva: Decimal
+    kva: Decimal
+
+    @property
+    def total_xva(self) -> Decimal:
+        """Total valuation adjustment: CVA − DVA + FVA + MVA + KVA."""
+        return self.cva - self.dva + self.fva + self.mva + self.kva
+
+
+def counterparty_xva_breakdown(spec: DatasetSpec, entity_id: str) -> XvaBreakdown:
+    ead = float(metrics.net_exposure(spec, entity_id))
+    tenor = _representative_tenor(spec, entity_id)
+    rating = spec.entity(entity_id).rating
+    return XvaBreakdown(
+        entity=entity_id,
+        rating=rating or "unrated",
+        cva=Decimal(str(round(cva(ead, tenor, float(credit_risk.pd_for(rating))), 2))),
+        dva=Decimal(str(round(dva(ead, tenor), 2))),
+        fva=Decimal(str(round(fva(ead, tenor), 2))),
+        mva=Decimal(str(round(mva(ead, tenor), 2))),
+        kva=Decimal(str(round(kva(ead, tenor, rating), 2))),
+    )
+
+
+def portfolio_xva_breakdown(spec: DatasetSpec) -> list[XvaBreakdown]:
+    """Full xVA breakdown per active borrower, sorted by total xVA desc."""
+    borrowers = sorted({ln.borrower_id for ln in metrics._active_loans(spec)})
+    rows = [counterparty_xva_breakdown(spec, b) for b in borrowers]
+    return sorted(rows, key=lambda r: r.total_xva, reverse=True)

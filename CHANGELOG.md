@@ -6,6 +6,19 @@ the project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-06-30
+
+### Added
+- **Full xVA breakdown** (`lens_m1/xva.py`) — CVA · DVA · FVA · MVA · KVA, each a
+  deterministic integral over the analytical EE/PFE profile + a flat parameter
+  (funding spread, hurdle rate, own PD); clearly labelled, **not** simulated:
+  - FVA = funding the uncollateralised EE; MVA = funding initial margin (PFE add-on);
+    KVA = cost of holding 8%·RW·EE over the life; DVA = own-default mirror (≈0 for the
+    one-directional loan book). Total xVA = CVA − DVA + FVA + MVA + KVA.
+  - Dashboard "Full xVA breakdown" table (+ portfolio total) with a rating filter.
+  - NL `xva_full` intent ("total xVA?", "FVA and KVA"); CVA/PFE stay the `xva` intent.
+  - Portfolio total xVA ≈ 13.7M (CVA 2.5M + FVA 5.1M + KVA 4.3M + MVA − DVA).
+
 ## [0.6.0] - 2026-06-30
 
 ### Added
@@ -108,7 +121,8 @@ not production-hardened).
   integration job (live Fuseki + OPA + gator); the P1–P3 test suites.
 - **Reuse**: a "golden path" to seed new projects with these practices.
 
-[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.3.0...v0.4.0
