@@ -33,6 +33,7 @@ for _mod in (
 from lens_m1 import contagion as lens_contagion  # noqa: E402
 from lens_m1 import datasets as lens_datasets  # noqa: E402
 from lens_m1 import ifrs9 as lens_ifrs9  # noqa: E402
+from lens_m1 import macro as lens_macro  # noqa: E402
 from lens_m1 import scenarios as lens_scenarios  # noqa: E402
 from lens_m1 import xva as lens_xva  # noqa: E402
 from lens_m3.portfolios import DEFAULT_USER, DEMO_USERS  # noqa: E402
@@ -362,6 +363,53 @@ def main() -> None:
             if gsel:
                 sdf = sdf[sdf["_grade"].isin(gsel)]
             st.dataframe(sdf.drop(columns=["_grade"]), width="stretch", hide_index=True)
+
+        # ----- Macro / multi-factor (correlated) stress -----
+        st.subheader("Macro / multi-factor stress (correlated)")
+        st.caption(
+            "A named macro scenario moves several factors together (GDP, rates, property, "
+            "spreads); each sector's sensitivity turns that into a rating downgrade. "
+            "Deterministic factor model — NOT a simulated correlation matrix."
+        )
+        mkeys = list(lens_macro.MACRO_SCENARIOS)
+        mpick = st.selectbox(
+            "Macro scenario", mkeys, format_func=lambda k: lens_macro.MACRO_SCENARIOS[k].label
+        )
+        st.caption(lens_macro.MACRO_SCENARIOS[mpick].description)
+        mbase, mshock = lens_macro.compare(spec, mpick)
+        m1c, m2c, m3c = st.columns(3)
+        m1c.metric(
+            "Expected loss",
+            _m(mshock.total_el),
+            _signed_m(mshock.total_el - mbase.total_el),
+            delta_color="inverse",
+        )
+        m2c.metric(
+            "Capital",
+            _m(mshock.total_capital),
+            _signed_m(mshock.total_capital - mbase.total_capital),
+            delta_color="inverse",
+        )
+        m3c.metric(
+            "Names downgraded", f"{mshock.names_downgraded}", f"{mshock.total_notches} notches"
+        )
+        mdf = pd.DataFrame(
+            [
+                {
+                    "sector": si.sector,
+                    "downgrade": f"−{si.notches}",
+                    "EL base": f"SGD {float(si.el_base):,.0f}",
+                    "EL shocked": f"SGD {float(si.el_shocked):,.0f}",
+                    "Δ EL": f"SGD {float(si.delta):,.0f}",
+                    "_notches": si.notches,
+                }
+                for si in lens_macro.sector_impacts(spec, mpick)
+            ]
+        )
+        if not mdf.empty:
+            hit_only = st.checkbox("Downgraded sectors only", key="macro_hit")
+            shown = mdf[mdf["_notches"] > 0] if hit_only else mdf
+            st.dataframe(shown.drop(columns=["_notches"]), width="stretch", hide_index=True)
 
         # ----- Forward-looking exposure (PFE/EE) & CVA -----
         st.subheader("Forward-looking exposure & CVA (analytical, illustrative)")

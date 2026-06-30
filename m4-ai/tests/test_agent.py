@@ -154,3 +154,17 @@ def test_systemic_contagion(runner: GraphRunner) -> None:
     a = _ans(runner, "which counterparty is most systemically important?")
     assert a.intent == "contagion"
     assert "LE-0030" in a.summary and "systemic" in a.summary.lower()
+
+
+def test_macro_property_crash(runner: GraphRunner) -> None:
+    a = _ans(runner, "what happens in a property crash?")
+    assert a.intent == "macro"
+    assert "commercial real estate" in a.summary.lower()
+
+
+def test_macro_recession_routes(runner: GraphRunner) -> None:
+    assert _ans(runner, "show the recession macro scenario").intent == "macro"
+
+
+def test_single_factor_stress_still_routes(runner: GraphRunner) -> None:
+    assert _ans(runner, "what if NBFIs are downgraded?").intent == "stress"

@@ -6,6 +6,23 @@ the project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-06-30
+
+### Added
+- **Macro / multi-factor (correlated) stress** (`lens_m1/macro.py`) — a deterministic
+  factor model; clearly labelled, **not** a Monte-Carlo simulation or an estimated
+  correlation matrix:
+  - A named macro scenario is a vector of adverse factor intensities (GDP, rates,
+    property, credit spread); each sector has a sensitivity (notches at full intensity).
+    They combine into a per-entity downgrade, so factors move together (correlation baked
+    into the scenario) and hit sectors differently. Then re-derive every metric.
+  - Scenarios: property crash, rates + spread shock, broad recession, stagflation.
+  - Dashboard "Macro / multi-factor stress" section: scenario picker, base-vs-shocked
+    EL/capital deltas, per-sector impact table with a "downgraded only" filter.
+  - NL `macro` intent ("property crash?", "recession", "rates shock"); single-factor
+    stress stays the `stress` intent.
+  - Property crash: EL 0.8M → 5.5M, CRE downgraded 4 notches; recession → 7.0M.
+
 ## [0.7.0] - 2026-06-30
 
 ### Added
@@ -121,7 +138,8 @@ not production-hardened).
   integration job (live Fuseki + OPA + gator); the P1–P3 test suites.
 - **Reuse**: a "golden path" to seed new projects with these practices.
 
-[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.4.0...v0.5.0
