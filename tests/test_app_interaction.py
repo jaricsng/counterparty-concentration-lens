@@ -109,14 +109,37 @@ def test_dashboard_shows_net_exposure_post_collateral(require_fuseki: None) -> N
     assert helios.iloc[0]["net (post-CRM)"] == "SGD 5.0M"
 
 
-def test_nl_net_exposure_question_via_app(require_fuseki: None) -> None:
-    # type a net-exposure question into the app's NL box -> agent -> live Fuseki
+def test_nl_chat_net_exposure_question_via_app(require_fuseki: None) -> None:
+    # type a net-exposure question into the chat box -> agent -> live Fuseki
     at = _run_app("stressed")
-    box = next(t for t in at.text_input if "question" in (t.label or "").lower())
-    box.set_value("what is the net exposure after collateral?").run()
+    at.chat_input[0].set_value("what is the net exposure after collateral?").run()
     assert len(at.exception) == 0
     answer = " ".join(str(m.value) for m in at.info).lower()
     assert "net" in answer and ("collateral" in answer or "helios" in answer)
+
+
+def test_nl_chat_is_multiturn_with_history(require_fuseki: None) -> None:
+    # two turns persist in the conversation, each answered + grounded
+    at = _run_app("stressed")
+    at.chat_input[0].set_value("what is our total expected loss?").run()
+    at.chat_input[0].set_value("which counterparty is most systemically important?").run()
+    assert len(at.exception) == 0
+    text = " ".join(str(m.value) for m in at.info).lower()
+    assert "expected loss" in text  # first turn still rendered (history)
+    assert "systemic" in text  # second turn rendered
+    # both turns kept their generated SPARQL / computed query in expanders
+    assert sum(1 for e in at.expander if "generated sparql" in (e.label or "").lower()) >= 2
+
+
+def test_nl_chat_followup_reuses_last_group(require_fuseki: None) -> None:
+    # "exposure to Acme?" then a group-less follow-up reuses Acme as context
+    at = _run_app("stressed")
+    at.chat_input[0].set_value("what is our exposure to the Acme group?").run()
+    at.chat_input[0].set_value("show guarantee chains").run()
+    assert len(at.exception) == 0
+    # the follow-up resolved to a guarantee-chains answer about the remembered group
+    answers = [str(m.value).lower() for m in at.info]
+    assert any("guarantee" in a for a in answers)
 
 
 def test_net_exposure_sector_filter(require_fuseki: None) -> None:

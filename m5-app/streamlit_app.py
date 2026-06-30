@@ -628,25 +628,63 @@ def main() -> None:
 
     # ------------------------------------------------------------------- Ask NL
     with tabs[2]:
-        st.write(
-            "Ask about exposure to a group, top counterparties, names near their limit, "
-            "guarantee chains, sector concentration, or wrong-way risk."
+        st.caption(
+            "Chat in plain English. **Exposure & concentration:** group · top names · "
+            "near-limit · guarantee chains · sector / country / rating · wrong-way risk. "
+            "**CCR layer:** net exposure · expected loss · capital · IFRS-9 ECL · PFE / CVA / "
+            "xVA · stress · macro · systemic contagion. Read-only, role-scoped, safety-validated; "
+            "the generated SPARQL is shown. Follow-ups reuse the last-named group."
         )
-        q = st.text_input("Question", "What is our total exposure to the Acme group?")
-        if q:
+        ss.setdefault("nl_history", [])
+        ss.setdefault("nl_last_group", None)
+        if ss["nl_history"] and st.button("Clear chat", key="nl_clear"):
+            ss["nl_history"] = []
+            ss["nl_last_group"] = None
+
+        def _render_turn(turn: dict) -> None:
+            with st.chat_message("user"):
+                st.write(turn["q"])
+            with st.chat_message("assistant"):
+                st.info(turn["summary"])
+                if turn.get("sparql"):
+                    with st.expander(
+                        f"Generated SPARQL (engine: {turn['engine']}; read-only, validated)"
+                    ):
+                        st.code(turn["sparql"], language="sparql")
+                if turn.get("rows"):
+                    st.dataframe(pd.DataFrame(turn["rows"]), width="stretch", hide_index=True)
+
+        for past in ss["nl_history"]:
+            _render_turn(past)
+
+        prompt = st.chat_input("Ask about exposure, EL, capital, CVA, IFRS-9, stress, contagion…")
+        if prompt:
+            idx = data.label_index(ctx.runner)
+            mentioned = [n for n in idx if n and n in prompt.lower()]
+            # light follow-up context: reuse the last-named group when this question names none
+            effective = (
+                prompt
+                if mentioned
+                else f"{prompt} {ss['nl_last_group']}" if ss["nl_last_group"] else prompt
+            )
             res = agent.answer(
-                q,
+                effective,
                 ctx.runner,
-                label_index=data.label_index(ctx.runner),
+                label_index=idx,
                 visible_groups=visible,
                 member_to_head=m2h,
             )
-            st.info(res.summary)
-            if res.sparql:
-                with st.expander(f"Generated SPARQL (engine: {res.engine}; read-only, validated)"):
-                    st.code(res.sparql, language="sparql")
-            if res.rows:
-                st.dataframe(pd.DataFrame(res.rows), width="stretch", hide_index=True)
+            if mentioned:
+                ss["nl_last_group"] = mentioned[0]
+            turn = {
+                "q": prompt,
+                "summary": res.summary,
+                "sparql": res.sparql,
+                "engine": res.engine,
+                "rows": res.rows,
+            }
+            ss["nl_history"].append(turn)
+            _render_turn(turn)
 
     # --------------------------------------------------------------- Sandbox
     with tabs[3]:
