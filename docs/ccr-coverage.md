@@ -29,7 +29,7 @@ honest, not production-accurate) · ❌ consciously out of scope (see
 | LGD / EAD/PD calibration (IRB) | ⚠️ | Flat 45% LGD; standardised-style risk weights. No IRB estimation. **v0.2.0** |
 | **Expected Loss (≈ 12-mo ECL)** | ⚠️ | `EL = PD × LGD × EAD`; not full IFRS-9 staging/lifetime/macro. **v0.2.0** |
 | RWA / regulatory capital | ⚠️ | Standardised risk-weight × EAD; capital = 8% × RWA. Not SA-CCR/IMM. **v0.2.0** |
-| IFRS-9 staging / lifetime ECL | ❌ | No stage 1/2/3, no lifetime PD term structure. |
+| **IFRS-9 staging / lifetime ECL** | ⚠️ | Stage 1/2/3 by a **rating rule**; lifetime ECL via a constant-hazard PD term structure. No SICR backstops or macro scenarios. **v0.5.0** |
 
 ## B. Aggregate · connect · concentrate · control  (the Lens's core)
 
@@ -68,3 +68,4 @@ honest, not production-accurate) · ❌ consciously out of scope (see
 | `v0.2.0` | EAD · Expected Loss · capital |
 | `v0.3.0` | Stress / scenario engine |
 | `v0.4.0` | Forward-looking exposure (PFE / EE profile) · CVA |
+| `v0.5.0` | IFRS-9 staging & lifetime ECL |

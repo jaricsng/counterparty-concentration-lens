@@ -134,3 +134,17 @@ def test_xva_cva(runner: GraphRunner) -> None:
 
 def test_pfe_intent_routes_to_xva(runner: GraphRunner) -> None:
     assert _ans(runner, "show potential future exposure").intent == "xva"
+
+
+def test_ifrs9_ecl(runner: GraphRunner) -> None:
+    a = _ans(runner, "what is our IFRS-9 ECL?")
+    assert a.intent == "ifrs9"
+    assert "ecl" in a.summary.lower() and "stage 2" in a.summary.lower()
+
+
+def test_expected_credit_loss_routes_to_ifrs9(runner: GraphRunner) -> None:
+    assert _ans(runner, "show lifetime expected credit loss").intent == "ifrs9"
+
+
+def test_expected_loss_still_routes_to_el(runner: GraphRunner) -> None:
+    assert _ans(runner, "what is our total expected loss?").intent == "expected_loss"

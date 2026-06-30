@@ -186,6 +186,24 @@ def generate(question: str, label_index: dict[str, str] | None = None) -> NLQuer
     if any(w in q for w in ("country", "countries", "geograph", "jurisdiction")):
         return NLQuery(question, "country_concentration", "template", _q(_COUNTRY))
 
+    # IFRS-9 ECL / staging (computed, on the stressed base). Before the EL branch so
+    # "expected credit loss" / "ecl" route here, not to Basel expected loss.
+    if any(
+        w in q
+        for w in (
+            "ifrs",
+            "staging",
+            "stage 2",
+            "stage 3",
+            "lifetime ecl",
+            "impairment",
+            "expected credit loss",
+            "ecl",
+            "provision",
+        )
+    ):
+        return NLQuery(question, "ifrs9", "template", _q(_CREDIT))
+
     # Forward-looking exposure & CVA (computed, analytical on the stressed base).
     if any(
         w in q
@@ -228,7 +246,7 @@ def generate(question: str, label_index: dict[str, str] | None = None) -> NLQuer
         "capital charge",
         "how much capital",
     )
-    _el_kw = ("expected loss", "ecl", "provision")
+    _el_kw = ("expected loss",)  # "ecl"/"provision" route to the IFRS-9 intent above
     if any(w in q for w in _capital_kw + _el_kw):
         intent = "capital" if any(w in q for w in _capital_kw) else "expected_loss"
         return NLQuery(question, intent, "template", _q(_CREDIT))
