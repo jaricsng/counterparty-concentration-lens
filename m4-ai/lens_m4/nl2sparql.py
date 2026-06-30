@@ -186,6 +186,20 @@ def generate(question: str, label_index: dict[str, str] | None = None) -> NLQuer
     if any(w in q for w in ("country", "countries", "geograph", "jurisdiction")):
         return NLQuery(question, "country_concentration", "template", _q(_COUNTRY))
 
+    # Forward-looking exposure & CVA (computed, analytical on the stressed base).
+    if any(
+        w in q
+        for w in (
+            "pfe",
+            "potential future exposure",
+            "expected exposure",
+            "cva",
+            "credit valuation",
+            "xva",
+        )
+    ):
+        return NLQuery(question, "xva", "template", _q(_CREDIT))
+
     # Stress / scenario (computed what-if on the stressed base). Checked before the
     # capital/EL branch so "what happens to expected loss if NBFIs downgrade" stresses.
     if any(

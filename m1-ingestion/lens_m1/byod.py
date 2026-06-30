@@ -37,6 +37,7 @@ COLUMNS: dict[str, list[str]] = {
         "exposure_amount",
         "currency",
         "status",
+        "maturity_years",
     ],
     "guarantees": [
         "guarantee_id",

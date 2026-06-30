@@ -299,8 +299,11 @@ _SOURCES = {
 _M = 1_000_000
 
 
-def _loan(loan_id: str, borrower: str, principal_m: int) -> Loan:
-    return Loan(loan_id, BANK, borrower, principal_m * _M)
+def _loan(loan_id: str, borrower: str, principal_m: int, maturity: int | None = None) -> Loan:
+    # Deterministic tenor (larger facilities -> longer tenor) unless overridden, so
+    # the forward-looking exposure / CVA profiles vary across the book.
+    years = maturity if maturity is not None else min(7, max(1, principal_m))
+    return Loan(loan_id, BANK, borrower, principal_m * _M, maturity_years=years)
 
 
 # --------------------------------------------------------------------------- #

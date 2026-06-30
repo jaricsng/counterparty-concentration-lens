@@ -124,3 +124,13 @@ def test_stress_nbfi_downgrade(runner: GraphRunner) -> None:
 def test_stress_keyword_routing(runner: GraphRunner) -> None:
     assert _ans(runner, "stress the book with a haircut shock").intent == "stress"
     assert _ans(runner, "what if there is a broad downgrade?").intent == "stress"
+
+
+def test_xva_cva(runner: GraphRunner) -> None:
+    a = _ans(runner, "what is our total CVA?")
+    assert a.intent == "xva"
+    assert "cva" in a.summary.lower() and "pfe" in a.summary.lower()
+
+
+def test_pfe_intent_routes_to_xva(runner: GraphRunner) -> None:
+    assert _ans(runner, "show potential future exposure").intent == "xva"

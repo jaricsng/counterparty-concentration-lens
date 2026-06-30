@@ -66,11 +66,20 @@ def write_dataset(spec: DatasetSpec, out_dir: Path) -> dict[str, int]:
                 "exposure_amount",
                 "currency",
                 "status",
+                "maturity_years",
             ]
         )
         for ln in spec.loans:
             wr.writerow(
-                [ln.loan_id, ln.lender_id, ln.borrower_id, ln.principal, ln.currency, ln.status]
+                [
+                    ln.loan_id,
+                    ln.lender_id,
+                    ln.borrower_id,
+                    ln.principal,
+                    ln.currency,
+                    ln.status,
+                    ln.maturity_years,
+                ]
             )
         counts["loans"] = len(spec.loans)
 
@@ -156,6 +165,7 @@ def read_dataset(in_dir: Path, name: str) -> DatasetSpec:
                 principal=int(r["exposure_amount"]),
                 currency=r["currency"],
                 status=r["status"],
+                maturity_years=int(r["maturity_years"]) if r.get("maturity_years") else 3,
             )
             for r in csv.DictReader(fh)
         ]

@@ -1,2 +1,2 @@
-loan_id,lender_entity_id,borrower_entity_id,exposure_amount,currency,status
-LN-EXAMPLE-1,LE-EXAMPLE-BANK,LE-EXAMPLE-2,5000000,SGD,active
+loan_id,lender_entity_id,borrower_entity_id,exposure_amount,currency,status,maturity_years
+LN-EXAMPLE-1,LE-EXAMPLE-BANK,LE-EXAMPLE-2,5000000,SGD,active,5

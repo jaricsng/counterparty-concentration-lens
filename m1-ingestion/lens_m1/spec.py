@@ -49,6 +49,9 @@ class Loan:
     principal: int
     currency: str = CURRENCY
     status: str = "active"
+    # Remaining tenor in years, for forward-looking exposure (PFE/EE) and CVA.
+    # Optional (default 3y) so pre-existing / BYOD data without it still loads.
+    maturity_years: int = 3
 
 
 @dataclass(frozen=True)

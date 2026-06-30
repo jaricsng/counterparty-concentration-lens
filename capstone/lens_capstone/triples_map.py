@@ -75,6 +75,7 @@ def loan_to_triples(row: dict[str, str]) -> list[str]:
     g.add((s, LENS.principalAmount, _dec(row["exposure_amount"])))
     g.add((s, LENS.currency, Literal(row["currency"])))
     g.add((s, LENS.status, Literal(row["status"])))
+    g.add((s, LENS.maturityYears, _dec(row.get("maturity_years") or "3")))
     g.add((s, DCTERMS.source, Literal("loans.csv")))
     return _nt(g)
 

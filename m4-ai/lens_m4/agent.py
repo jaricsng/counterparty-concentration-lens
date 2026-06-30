@@ -83,6 +83,24 @@ def _stress_rows(scenario_key: str) -> list[dict[str, str | None]]:
     ]
 
 
+def _xva_rows() -> list[dict[str, str | None]]:
+    """Per-counterparty PFE / EPE / CVA on the stressed base (analytical, illustrative)."""
+    from lens_m1 import datasets, xva
+
+    spec = datasets.get_dataset("stressed")
+    return [
+        {
+            "entity": r.entity,
+            "rating": r.rating,
+            "ead": str(r.ead),
+            "peak_pfe": str(r.peak_pfe),
+            "epe": str(r.epe),
+            "cva": str(r.cva),
+        }
+        for r in xva.portfolio_xva(spec)
+    ]
+
+
 @dataclass(frozen=True)
 class AnswerResult:
     question: str
@@ -197,6 +215,16 @@ def _summarise(intent: str, rows: list[dict[str, str | None]], params: dict[str,
             f"{_money(str(base))} -> {_money(str(shocked))}. "
             f"Biggest mover: {top.get('entity')} ({top.get('rating')})."
         )
+    if intent == "xva":
+        if not rows:
+            return "No exposures."
+        total = sum((Decimal(r.get("cva") or 0) for r in rows), Decimal(0))
+        top = max(rows, key=lambda r: Decimal(r.get("cva") or 0))
+        return (
+            f"Total CVA (stressed base): {_money(str(total))}. Largest: "
+            f"{top.get('entity')} ({top.get('rating')}) {_money(top.get('cva'))}, "
+            f"peak PFE {_money(top.get('peak_pfe'))}."
+        )
     return f"{len(rows)} row(s)."
 
 
@@ -242,6 +270,8 @@ def answer(
 
     if nlq.intent == "stress":
         raw = _stress_rows(nlq.params.get("scenario", "broad_downgrade"))
+    elif nlq.intent == "xva":
+        raw = _xva_rows()
     elif nlq.intent in ("expected_loss", "capital"):
         # Computed intents: PD / risk-weight are parametric (not pure SPARQL).
         raw = _credit_risk_rows(runner, nlq.sparql)
