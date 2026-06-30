@@ -113,3 +113,14 @@ def test_capital_keyword_does_not_hijack_entity_name(runner: GraphRunner) -> Non
     # "Nimbus Capital Partners" contains "capital" but this is an exposure question
     a = _ans(runner, "what is our exposure to Nimbus Capital Partners?")
     assert a.intent == "exposure_to_group"
+
+
+def test_stress_nbfi_downgrade(runner: GraphRunner) -> None:
+    a = _ans(runner, "what happens to expected loss if NBFIs are downgraded?")
+    assert a.intent == "stress"
+    assert "expected loss" in a.summary.lower() and "->" in a.summary
+
+
+def test_stress_keyword_routing(runner: GraphRunner) -> None:
+    assert _ans(runner, "stress the book with a haircut shock").intent == "stress"
+    assert _ans(runner, "what if there is a broad downgrade?").intent == "stress"

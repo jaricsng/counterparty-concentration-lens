@@ -15,6 +15,7 @@ the deterministic write here is the soft-delete, whose widgets are plain.)
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
@@ -39,6 +40,9 @@ def _load(dataset: str) -> None:
 
 def _run_app(dataset: str) -> AppTest:
     _load(dataset)
+    # Make the app's session dataset match what we loaded into Fuseki (in normal
+    # use the "Reset to <set>" button does both); the stress base follows it.
+    os.environ["LENS_DATASET"] = dataset
     at = AppTest.from_file(str(APP), default_timeout=120)
     at.run()
     assert not at.exception
@@ -162,3 +166,23 @@ def test_expected_loss_rating_filter(require_fuseki: None) -> None:
         df.value for df in at.dataframe if "expected loss" in list(map(str, df.value.columns))
     )
     assert set(eltable["rating"]) == {"B"}
+
+
+def test_dashboard_stress_scenario(require_fuseki: None) -> None:
+    # default scenario (nbfi_downgrade): a B->CCC name is the biggest EL mover
+    at = _run_app("stressed")
+    stable = next(
+        df.value for df in at.dataframe if any("Δ EL" in str(c) for c in df.value.columns)
+    )
+    assert "CCC" in str(stable.iloc[0]["rating"])
+    assert stable.iloc[0]["entity"] in {"LE-0022", "LE-0023", "LE-0047"}
+
+
+def test_stress_rating_filter(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    ms = next(m for m in at.multiselect if (m.label or "").lower() == "filter shocked rating")
+    ms.set_value(["CCC"]).run()
+    stable = next(
+        df.value for df in at.dataframe if any("Δ EL" in str(c) for c in df.value.columns)
+    )
+    assert all("CCC" in str(r) for r in stable["rating"])

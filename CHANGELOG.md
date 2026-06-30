@@ -6,6 +6,22 @@ the project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-30
+
+### Added
+- **Stress / scenario engine** (`lens_m1/scenarios.py`) — deterministic named shocks
+  that re-derive **every** metric (concentration, net exposure, expected loss, capital)
+  and compare base vs shocked. Pure dataset transforms; an honest what-if overlay,
+  **not** a Monte-Carlo simulation or macro model.
+  - Scenarios: NBFI downgrade (−2 notches), broad downgrade (−1), collateral haircuts
+    +20pp, CRE downturn (−1 notch + 25% draw). All shocks raise expected loss vs base.
+  - Dashboard "Stress / scenario (what-if)" section: scenario picker, base-vs-shocked
+    metric deltas, and a per-counterparty EL-delta table with a shocked-rating filter.
+  - NL `stress` intent (computed): "what happens to expected loss if NBFIs downgrade?"
+    → EL 0.8M → 2.7M on the stressed base, biggest mover surfaced.
+- **CCR coverage comparison** (`docs/ccr-coverage.md`) — full CCR stack vs the Lens
+  (implemented / simplified / out of scope); maintained as the last step of each loop.
+
 ## [0.2.0] - 2026-06-25
 
 ### Added
@@ -48,6 +64,7 @@ not production-hardened).
   integration job (live Fuseki + OPA + gator); the P1–P3 test suites.
 - **Reuse**: a "golden path" to seed new projects with these practices.
 
-[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/jaricsng/counterparty-concentration-lens/releases/tag/v0.1.0
