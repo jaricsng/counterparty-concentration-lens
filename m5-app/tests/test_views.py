@@ -49,3 +49,40 @@ def test_label_index_for_nl(runner: GraphRunner) -> None:
     idx = data.label_index(runner)
     assert idx.get("acme") == "LE-0001"
     assert idx.get("nimbus") == "LE-0030"
+
+
+# --- conversational follow-up resolution (pure, no runner) ------------------ #
+
+_IDX = {"acme": "LE-0001", "vortex": "LE-0020", "helios": "LE-0010"}
+
+
+def test_resolve_followup_keeps_explicit_group() -> None:
+    eff, grp = data.resolve_followup("exposure to Acme?", None, _IDX)
+    assert eff == "exposure to Acme?" and grp == "acme"
+
+
+def test_resolve_followup_carries_last_group_when_none_named() -> None:
+    eff, grp = data.resolve_followup("show guarantee chains", "acme", _IDX)
+    assert eff == "show guarantee chains acme" and grp is None
+
+
+def test_resolve_followup_no_group_no_history() -> None:
+    eff, grp = data.resolve_followup("total expected loss?", None, _IDX)
+    assert eff == "total expected loss?" and grp is None
+
+
+def test_rephrase_for_intent_reuses_group_intent() -> None:
+    # "what about Vortex?" -> reuse the prior exposure intent for the new group
+    assert data.rephrase_for_intent("exposure_to_group", "vortex") == "exposure to vortex"
+    assert data.rephrase_for_intent("guarantee_chains", "acme") == "guarantee chains touching acme"
+
+
+def test_rephrase_for_intent_none_when_not_group_intent() -> None:
+    assert data.rephrase_for_intent("expected_loss", "acme") is None
+    assert data.rephrase_for_intent("exposure_to_group", None) is None
+
+
+def test_palette_covers_ccr_areas() -> None:
+    areas = {a for a, _ in data.NL_PALETTE}
+    assert {"Loss & capital", "Forward-looking", "Stress & contagion"} <= areas
+    assert all(qs for _, qs in data.NL_PALETTE)

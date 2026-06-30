@@ -323,3 +323,24 @@ def test_multiround_second_order_filter(require_fuseki: None) -> None:
         df.value for df in at.dataframe if "2nd-order" in list(map(str, df.value.columns))
     )
     assert all(int(v) > 0 for v in mtable["2nd-order"])
+
+
+def test_nl_chat_palette_button_asks(require_fuseki: None) -> None:
+    # clicking a starter-prompt button submits it as a chat turn
+    at = _run_app("stressed")
+    btn = next(b for b in at.button if b.label == "What is our total expected loss?")
+    btn.click().run()
+    assert len(at.exception) == 0
+    answer = " ".join(str(m.value) for m in at.info).lower()
+    assert "expected loss" in answer
+
+
+def test_nl_chat_followup_what_about_reuses_intent(require_fuseki: None) -> None:
+    # "exposure to Acme?" then a bare "what about Vortex?" reuses the exposure intent
+    at = _run_app("stressed")
+    at.chat_input[0].set_value("what is our exposure to the Acme group?").run()
+    at.chat_input[0].set_value("what about Vortex?").run()
+    assert len(at.exception) == 0
+    # the follow-up produced a connected-exposure answer (not the unsupported help text)
+    answers = [str(m.value).lower() for m in at.info]
+    assert any("connected exposure" in a for a in answers[-2:])

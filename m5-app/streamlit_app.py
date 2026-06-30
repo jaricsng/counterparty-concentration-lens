@@ -633,13 +633,12 @@ def main() -> None:
             "near-limit · guarantee chains · sector / country / rating · wrong-way risk. "
             "**CCR layer:** net exposure · expected loss · capital · IFRS-9 ECL · PFE / CVA / "
             "xVA · stress · macro · systemic contagion. Read-only, role-scoped, safety-validated; "
-            "the generated SPARQL is shown. Follow-ups reuse the last-named group."
+            "the generated SPARQL is shown. Follow-ups reuse the last-named group — e.g. "
+            "“exposure to Acme?” then “what about Vortex?” or “show its guarantee chains”."
         )
         ss.setdefault("nl_history", [])
         ss.setdefault("nl_last_group", None)
-        if ss["nl_history"] and st.button("Clear chat", key="nl_clear"):
-            ss["nl_history"] = []
-            ss["nl_last_group"] = None
+        ss.setdefault("nl_last_intent", None)
 
         def _render_turn(turn: dict) -> None:
             with st.chat_message("user"):
@@ -654,30 +653,29 @@ def main() -> None:
                 if turn.get("rows"):
                     st.dataframe(pd.DataFrame(turn["rows"]), width="stretch", hide_index=True)
 
-        for past in ss["nl_history"]:
-            _render_turn(past)
-
-        prompt = st.chat_input("Ask about exposure, EL, capital, CVA, IFRS-9, stress, contagion…")
-        if prompt:
+        def _ask(question: str) -> None:
             idx = data.label_index(ctx.runner)
-            mentioned = [n for n in idx if n and n in prompt.lower()]
-            # light follow-up context: reuse the last-named group when this question names none
-            effective = (
-                prompt
-                if mentioned
-                else f"{prompt} {ss['nl_last_group']}" if ss["nl_last_group"] else prompt
-            )
+            effective, group = data.resolve_followup(question, ss["nl_last_group"], idx)
             res = agent.answer(
-                effective,
-                ctx.runner,
-                label_index=idx,
-                visible_groups=visible,
-                member_to_head=m2h,
+                effective, ctx.runner, label_index=idx, visible_groups=visible, member_to_head=m2h
             )
-            if mentioned:
-                ss["nl_last_group"] = mentioned[0]
+            if not res.answered:
+                # intent carry: a bare "what about Vortex?" reuses the last group-intent
+                retry = data.rephrase_for_intent(ss["nl_last_intent"], group or ss["nl_last_group"])
+                if retry:
+                    res = agent.answer(
+                        retry,
+                        ctx.runner,
+                        label_index=idx,
+                        visible_groups=visible,
+                        member_to_head=m2h,
+                    )
+            if group:
+                ss["nl_last_group"] = group
+            if res.answered and res.intent not in ("none", "unsupported"):
+                ss["nl_last_intent"] = res.intent
             turn = {
-                "q": prompt,
+                "q": question,
                 "summary": res.summary,
                 "sparql": res.sparql,
                 "engine": res.engine,
@@ -685,6 +683,25 @@ def main() -> None:
             }
             ss["nl_history"].append(turn)
             _render_turn(turn)
+
+        for past in ss["nl_history"]:
+            _render_turn(past)
+
+        with st.expander("💡 Example questions (click to ask)", expanded=not ss["nl_history"]):
+            for area, examples in data.NL_PALETTE:
+                st.caption(area)
+                cols = st.columns(len(examples))
+                for col, example in zip(cols, examples, strict=True):
+                    if col.button(example, key=f"ex::{example}"):
+                        _ask(example)
+        if ss["nl_history"] and st.button("Clear chat", key="nl_clear"):
+            ss["nl_history"] = []
+            ss["nl_last_group"] = None
+            ss["nl_last_intent"] = None
+
+        prompt = st.chat_input("Ask about exposure, EL, capital, CVA, IFRS-9, stress, contagion…")
+        if prompt:
+            _ask(prompt)
 
     # --------------------------------------------------------------- Sandbox
     with tabs[3]:

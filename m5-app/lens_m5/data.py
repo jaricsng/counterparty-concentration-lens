@@ -55,6 +55,82 @@ def label_index(runner: QueryRunner) -> dict[str, str]:
     return index
 
 
+# --- Conversational follow-up resolution (used by the M5 NL chat) ----------- #
+
+# A group-bearing intent + how to re-ask it for a different group, so a bare
+# "what about Vortex?" reuses the previous intent with the new entity.
+_INTENT_REPHRASE: dict[str, str] = {
+    "exposure_to_group": "exposure to {g}",
+    "guarantee_chains": "guarantee chains touching {g}",
+}
+
+
+def resolve_followup(
+    question: str, last_group: str | None, label_index: dict[str, str]
+) -> tuple[str, str | None]:
+    """Resolve a chat follow-up against the last-named group.
+
+    Returns ``(effective_question, group_keyword_or_None)``. If the question names a
+    known group it is used as-is; otherwise the last group is appended so a group-less
+    follow-up (e.g. "show guarantee chains", "its exposure") stays on the same name.
+    """
+    ql = question.lower()
+    mentioned = next((k for k in sorted(label_index, key=len, reverse=True) if k and k in ql), None)
+    if mentioned:
+        return question, mentioned
+    if last_group:
+        return f"{question} {last_group}", None
+    return question, None
+
+
+def rephrase_for_intent(intent: str | None, group_keyword: str | None) -> str | None:
+    """Re-ask a group-bearing intent for a (possibly new) group; None if not applicable."""
+    template = _INTENT_REPHRASE.get(intent or "")
+    return template.format(g=group_keyword) if template and group_keyword else None
+
+
+# Starter-prompt palette for the chat — example questions grouped by CCR area.
+NL_PALETTE: list[tuple[str, list[str]]] = [
+    (
+        "Concentration",
+        [
+            "What is our total exposure to the Acme group?",
+            "Top counterparties?",
+            "Which names are within 75% of their limit?",
+        ],
+    ),
+    (
+        "Country / rating",
+        ["Which country are we most exposed to?", "What is our rating concentration?"],
+    ),
+    (
+        "Loss & capital",
+        [
+            "What is our total expected loss?",
+            "How much regulatory capital do we need?",
+            "What is our IFRS-9 ECL?",
+        ],
+    ),
+    (
+        "Forward-looking",
+        [
+            "What is our total CVA?",
+            "Show the total xVA breakdown",
+            "Show potential future exposure",
+        ],
+    ),
+    (
+        "Stress & contagion",
+        [
+            "What happens in a property crash?",
+            "What if NBFIs are downgraded?",
+            "Which counterparty is most systemically important?",
+            "Show the multi-round fire-sale cascade",
+        ],
+    ),
+]
+
+
 @dataclass(frozen=True)
 class Exposure:
     head: str
