@@ -186,6 +186,22 @@ def generate(question: str, label_index: dict[str, str] | None = None) -> NLQuer
     if any(w in q for w in ("country", "countries", "geograph", "jurisdiction")):
         return NLQuery(question, "country_concentration", "template", _q(_COUNTRY))
 
+    # Systemic contagion (computed default cascade on the stressed base).
+    if any(
+        w in q
+        for w in (
+            "contagion",
+            "cascade",
+            "systemic",
+            "systemically important",
+            "default propagation",
+            "ripple",
+            "who fails",
+            "knock-on",
+        )
+    ):
+        return NLQuery(question, "contagion", "template", _q(_CREDIT))
+
     # IFRS-9 ECL / staging (computed, on the stressed base). Before the EL branch so
     # "expected credit loss" / "ecl" route here, not to Basel expected loss.
     if any(

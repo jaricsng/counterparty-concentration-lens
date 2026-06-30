@@ -30,6 +30,7 @@ for _mod in (
     if _path not in sys.path:
         sys.path.insert(0, _path)
 
+from lens_m1 import contagion as lens_contagion  # noqa: E402
 from lens_m1 import datasets as lens_datasets  # noqa: E402
 from lens_m1 import ifrs9 as lens_ifrs9  # noqa: E402
 from lens_m1 import scenarios as lens_scenarios  # noqa: E402
@@ -437,6 +438,41 @@ def main() -> None:
             if stsel:
                 edf = edf[edf["stage"].isin(stsel)]
             st.dataframe(edf, width="stretch", hide_index=True)
+
+        # ----- Systemic contagion (default cascade) -----
+        st.subheader("Systemic contagion (default cascade)")
+        st.caption(
+            "If a group defaults: direct loss (LGD·EAD) + contagion on outside loans that "
+            "lose their guarantor. Deterministic two-hop propagation over the exposure graph "
+            "— NOT a calibrated network model. Amplification = total ÷ direct."
+        )
+        casc = lens_contagion.systemic_ranking(spec)
+        cas_names = dict(data.group_heads(ctx.runner))
+        cdf2 = pd.DataFrame(
+            [
+                {
+                    "seed group": c.seed,
+                    "name": cas_names.get(c.seed, c.seed),
+                    "group size": c.group_size,
+                    "direct loss": _m(c.direct_loss),
+                    "contagion loss": _m(c.contagion_loss),
+                    "total loss": _m(c.total_loss),
+                    "amplification": f"×{float(c.amplification):.1f}",
+                    "_contagion": float(c.contagion_loss),
+                }
+                for c in casc
+            ]
+        )
+        if not cdf2.empty:
+            top = casc[0]
+            st.caption(
+                f"Most systemic: **{cas_names.get(top.seed, top.seed)}** — "
+                f"direct {_m(top.direct_loss)} but total {_m(top.total_loss)} "
+                f"(×{float(top.amplification):.1f} via guarantee contagion)."
+            )
+            amplifying = st.checkbox("Amplifying only (contagion > 0)", key="contagion_amp")
+            shown = cdf2[cdf2["_contagion"] > 0] if amplifying else cdf2
+            st.dataframe(shown.drop(columns=["_contagion"]), width="stretch", hide_index=True)
 
     # ------------------------------------------------------------------- Explore
     with tabs[1]:
