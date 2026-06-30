@@ -31,6 +31,7 @@ for _mod in (
         sys.path.insert(0, _path)
 
 from lens_m1 import datasets as lens_datasets  # noqa: E402
+from lens_m1 import ifrs9 as lens_ifrs9  # noqa: E402
 from lens_m1 import scenarios as lens_scenarios  # noqa: E402
 from lens_m1 import xva as lens_xva  # noqa: E402
 from lens_m3.portfolios import DEFAULT_USER, DEMO_USERS  # noqa: E402
@@ -400,6 +401,42 @@ def main() -> None:
                     index=[p.t for p in prof],
                 )
             )
+
+        # ----- IFRS-9 ECL & staging -----
+        st.subheader("IFRS-9 ECL & staging (simplified)")
+        st.caption(
+            "Stage by rating (1 = performing → 12-month ECL; 2 = sub-investment-grade → "
+            "lifetime ECL; 3 = CCC → LGD·EAD). Simplified staging — no SICR backstops or "
+            "macro scenarios. Note the Stage-1→2 cliff (lifetime ECL ≫ 12-month)."
+        )
+        staging = lens_ifrs9.staging_summary(spec)
+        g1, g2, g3, g4 = st.columns(4)
+        for col, smry in zip((g1, g2, g3), staging, strict=True):
+            col.metric(
+                f"Stage {smry.stage} ECL", _m(smry.ecl), f"{smry.count} names · EAD {_m(smry.ead)}"
+            )
+        g4.metric("Total recognised ECL", _m(lens_ifrs9.total_ecl(spec)))
+        ecl_rows = lens_ifrs9.portfolio_ecl(spec)
+        edf = pd.DataFrame(
+            [
+                {
+                    "entity": r.entity,
+                    "rating": r.rating,
+                    "stage": r.stage,
+                    "EAD": _m(r.ead),
+                    "12-month ECL": f"SGD {float(r.ecl_12m):,.0f}",
+                    "lifetime ECL": f"SGD {float(r.ecl_lifetime):,.0f}",
+                    "recognised ECL": f"SGD {float(r.ecl_recognised):,.0f}",
+                    "coverage": f"{float(r.coverage) * 100:.1f}%",
+                }
+                for r in ecl_rows
+            ]
+        )
+        if not edf.empty:
+            stsel = st.multiselect("Filter stage", sorted(edf["stage"].unique()), key="ifrs9_stage")
+            if stsel:
+                edf = edf[edf["stage"].isin(stsel)]
+            st.dataframe(edf, width="stretch", hide_index=True)
 
     # ------------------------------------------------------------------- Explore
     with tabs[1]:

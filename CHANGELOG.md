@@ -6,6 +6,20 @@ the project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-30
+
+### Added
+- **IFRS-9 ECL staging** (`lens_m1/ifrs9.py`) — simplified, deterministic, clearly
+  labelled; **not** a full IFRS-9 model:
+  - Stage 1 (performing) -> 12-month ECL; Stage 2 (sub-investment-grade, SICR proxy)
+    -> lifetime ECL; Stage 3 (CCC, impaired) -> LGD·EAD. Lifetime ECL uses a
+    constant-hazard PD term structure over the loan tenor.
+  - Dashboard "IFRS-9 ECL & staging" section: per-stage metrics + a per-counterparty
+    table (12m / lifetime / recognised ECL, coverage) with a stage filter.
+  - NL `ifrs9` intent ("IFRS-9 ECL?", "lifetime expected credit loss", "stage 2");
+    "ecl"/"provision" now route here, while "expected loss" stays the Basel EL intent.
+  - The Stage-1->2 cliff is the story: recognised ECL ~3.9M vs the 12-month 0.8M.
+
 ## [0.4.0] - 2026-06-30
 
 ### Added
@@ -79,7 +93,8 @@ not production-hardened).
   integration job (live Fuseki + OPA + gator); the P1–P3 test suites.
 - **Reuse**: a "golden path" to seed new projects with these practices.
 
-[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.1.0...v0.2.0

@@ -101,6 +101,24 @@ def _xva_rows() -> list[dict[str, str | None]]:
     ]
 
 
+def _ifrs9_rows() -> list[dict[str, str | None]]:
+    """Per-counterparty IFRS-9 stage + recognised ECL on the stressed base (simplified)."""
+    from lens_m1 import datasets, ifrs9
+
+    spec = datasets.get_dataset("stressed")
+    return [
+        {
+            "entity": r.entity,
+            "rating": r.rating,
+            "stage": str(r.stage),
+            "ecl_12m": str(r.ecl_12m),
+            "ecl_lifetime": str(r.ecl_lifetime),
+            "ecl": str(r.ecl_recognised),
+        }
+        for r in ifrs9.portfolio_ecl(spec)
+    ]
+
+
 @dataclass(frozen=True)
 class AnswerResult:
     question: str
@@ -225,6 +243,16 @@ def _summarise(intent: str, rows: list[dict[str, str | None]], params: dict[str,
             f"{top.get('entity')} ({top.get('rating')}) {_money(top.get('cva'))}, "
             f"peak PFE {_money(top.get('peak_pfe'))}."
         )
+    if intent == "ifrs9":
+        if not rows:
+            return "No exposures."
+        total = sum((Decimal(r.get("ecl") or 0) for r in rows), Decimal(0))
+        stage2 = sum(1 for r in rows if r.get("stage") == "2")
+        stage3 = sum(1 for r in rows if r.get("stage") == "3")
+        return (
+            f"Total recognised ECL (stressed base): {_money(str(total))}. "
+            f"Stage 2: {stage2} names, Stage 3: {stage3} (lifetime ECL)."
+        )
     return f"{len(rows)} row(s)."
 
 
@@ -272,6 +300,8 @@ def answer(
         raw = _stress_rows(nlq.params.get("scenario", "broad_downgrade"))
     elif nlq.intent == "xva":
         raw = _xva_rows()
+    elif nlq.intent == "ifrs9":
+        raw = _ifrs9_rows()
     elif nlq.intent in ("expected_loss", "capital"):
         # Computed intents: PD / risk-weight are parametric (not pure SPARQL).
         raw = _credit_risk_rows(runner, nlq.sparql)

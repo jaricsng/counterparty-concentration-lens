@@ -200,3 +200,23 @@ def test_xva_rating_filter(require_fuseki: None) -> None:
     ms.set_value(["B"]).run()
     xtable = next(df.value for df in at.dataframe if "peak PFE" in list(map(str, df.value.columns)))
     assert set(xtable["rating"]) == {"B"}
+
+
+def test_dashboard_ifrs9_staging(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    labels = {str(m.label) for m in at.metric}
+    assert "Total recognised ECL" in labels and "Stage 2 ECL" in labels
+    etable = next(
+        df.value for df in at.dataframe if "lifetime ECL" in list(map(str, df.value.columns))
+    )
+    assert 2 in set(etable["stage"])  # sub-IG cluster in stage 2
+
+
+def test_ifrs9_stage_filter(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    ms = next(m for m in at.multiselect if (m.label or "").lower() == "filter stage")
+    ms.set_value([2]).run()
+    etable = next(
+        df.value for df in at.dataframe if "lifetime ECL" in list(map(str, df.value.columns))
+    )
+    assert set(etable["stage"]) == {2}
