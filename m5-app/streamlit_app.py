@@ -555,6 +555,41 @@ def main() -> None:
             shown = cdf2[cdf2["_contagion"] > 0] if amplifying else cdf2
             st.dataframe(shown.drop(columns=["_contagion"]), width="stretch", hide_index=True)
 
+        # ----- Multi-round cascade with fire-sale spirals -----
+        st.markdown("**Multi-round cascade (with fire-sale spirals)**")
+        st.caption(
+            "Iterates to a fixed point: a defaulter's guarantee obligations topple solvent "
+            "guarantors, and dumping collateral lifts a market haircut that deepens losses. "
+            "Deterministic iteration — not a calibrated network model. A name can look safe "
+            "single-round (its loan is guaranteed) yet topple its guarantor multi-round."
+        )
+        runs = lens_contagion.systemic_ranking_multiround(spec)
+        mrdf = pd.DataFrame(
+            [
+                {
+                    "seed group": r.seed,
+                    "name": cas_names.get(r.seed, r.seed),
+                    "rounds": r.rounds,
+                    "defaulted": r.defaulted,
+                    "2nd-order": r.second_order,
+                    "fire-sale": f"{float(r.firesale_haircut) * 100:.0f}%",
+                    "total loss": _m(r.total_loss),
+                    "_second": r.second_order,
+                }
+                for r in runs
+            ]
+        )
+        if not mrdf.empty:
+            worst = runs[0]
+            st.caption(
+                f"Worst multi-round cascade: **{cas_names.get(worst.seed, worst.seed)}** — "
+                f"{worst.rounds} rounds, {worst.defaulted} defaulted "
+                f"({worst.second_order} second-order), loss {_m(worst.total_loss)}."
+            )
+            second_only = st.checkbox("Second-order cascades only", key="mr_second")
+            mshown = mrdf[mrdf["_second"] > 0] if second_only else mrdf
+            st.dataframe(mshown.drop(columns=["_second"]), width="stretch", hide_index=True)
+
     # ------------------------------------------------------------------- Explore
     with tabs[1]:
         visible_heads = [(h, name_of.get(h, h)) for h in candidates if h in visible]
