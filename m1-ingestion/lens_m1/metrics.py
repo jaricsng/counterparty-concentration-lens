@@ -358,3 +358,43 @@ def wrong_way_risk_flags(spec: DatasetSpec) -> list[dict[str, str]]:
                     }
                 )
     return flags
+
+
+def general_wwr_flags(spec: DatasetSpec) -> list[dict[str, str]]:
+    """General (correlation-proxy) wrong-way risk.
+
+    Collateral issued by a **different-group** entity that shares the borrower's
+    **sector** (or, failing that, **country**) — so the collateral's value tends to
+    deteriorate together with the borrower's credit quality, impairing recovery just
+    when it is needed. A deliberately structural *proxy* for exposure↔credit-quality
+    correlation — not a statistical/time-series correlation (see docs/ccr-coverage.md).
+    """
+    flags: list[dict[str, str]] = []
+    active_ids = {ln.loan_id for ln in _active_loans(spec)}
+    for col in spec.collateral:
+        if col.issuer_id is None:
+            continue
+        issuer = spec.entity(col.issuer_id)
+        for lid in col.secures_loan_ids:
+            if lid not in active_ids:
+                continue
+            borrower_id = _borrower_of(spec, lid)
+            if _ubo(spec, borrower_id) == _ubo(spec, col.issuer_id):
+                continue  # same group -> specific/structural WWR, not general
+            borrower = spec.entity(borrower_id)
+            driver = (
+                "sector"
+                if borrower.sector == issuer.sector
+                else "country" if borrower.country and borrower.country == issuer.country else None
+            )
+            if driver:
+                flags.append(
+                    {
+                        "loan": lid,
+                        "borrower": borrower_id,
+                        "collateral": col.collateral_id,
+                        "issuer": col.issuer_id,
+                        "driver": driver,
+                    }
+                )
+    return flags

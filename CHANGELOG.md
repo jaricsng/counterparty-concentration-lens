@@ -6,6 +6,17 @@ the project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-07-01
+
+### Added
+- **General (correlation-proxy) wrong-way risk** (`metrics.general_wwr_flags`) — flags
+  collateral issued by a **different-group** entity that shares the borrower's **sector**
+  (or country), so the collateral's value tends to deteriorate together with the borrower's
+  credit quality. A deliberately structural *proxy* for exposure↔credit-quality correlation
+  — **not** a statistical/time-series correlation. Dashboard "General wrong-way risk" table +
+  NL `general_wwr` intent. One correlation case added to the data (Orion CRE loan collateralised
+  by an Acme CRE bond). Closes the **last** of the four feasible ❌ CCR gaps.
+
 ## [1.6.0] - 2026-07-01
 
 ### Added
@@ -259,7 +270,8 @@ not production-hardened).
   integration job (live Fuseki + OPA + gator); the P1–P3 test suites.
 - **Reuse**: a "golden path" to seed new projects with these practices.
 
-[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.3.1...v1.4.0

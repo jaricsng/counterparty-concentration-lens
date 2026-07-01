@@ -177,6 +177,10 @@ def generate(question: str, label_index: dict[str, str] | None = None) -> NLQuer
     label_index = label_index or {}
     q = question.lower()
 
+    # General (correlation-proxy) WWR — before the structural WWR branch.
+    if ("general" in q and ("wrong" in q or "wwr" in q)) or "correlated wrong" in q:
+        return NLQuery(question, "general_wwr", "template", _q(_CREDIT))
+
     if any(w in q for w in ("wrong-way", "wrong way", "same issuer", "same-issuer")):
         return NLQuery(question, "wrong_way_risk", "template", _q(_WWR))
 

@@ -406,3 +406,11 @@ def test_predeal_check_renders_verdict(require_fuseki: None) -> None:
     assert len(at.exception) == 0
     caps = " ".join(str(c.value) for c in at.caption).lower()
     assert "effective limit" in caps and "headroom" in caps  # verdict caption rendered
+
+
+def test_dashboard_general_wwr(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    gtable = next(
+        df.value for df in at.dataframe if "correlated via" in list(map(str, df.value.columns))
+    )
+    assert "sector" in set(gtable["correlated via"])  # Orion/Acme same-sector correlation
