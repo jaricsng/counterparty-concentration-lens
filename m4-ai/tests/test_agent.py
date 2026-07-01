@@ -179,3 +179,12 @@ def test_reverse_stress_double_el(runner: GraphRunner) -> None:
 def test_reverse_stress_routes_before_forward_stress(runner: GraphRunner) -> None:
     assert _ans(runner, "reverse stress our capital").intent == "reverse_stress"
     assert _ans(runner, "what happens in a property crash?").intent == "macro"
+
+
+def test_general_wwr(runner: GraphRunner) -> None:
+    a = _ans(runner, "show general wrong-way risk")
+    assert a.intent == "general_wwr" and "wrong-way" in a.summary.lower()
+
+
+def test_structural_wwr_still_routes(runner: GraphRunner) -> None:
+    assert _ans(runner, "any wrong-way risk?").intent == "wrong_way_risk"

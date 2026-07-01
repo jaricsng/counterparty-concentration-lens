@@ -402,11 +402,12 @@ def build_stressed() -> DatasetSpec:
             collateral_value=2 * _M,
             haircut_pct=5,
         ),
-        Collateral(  # commercial real estate
-            "COL-3005",
+        Collateral(  # commercial real estate — issuer LE-0001 (Acme, CRE) is a different
+            "COL-3005",  # group but the SAME sector -> general (correlation-proxy) WWR
             "Office tower",
             "LE-0040",
             ("LN-1040",),
+            issuer_id="LE-0001",
             collateral_value=2 * _M,
             haircut_pct=25,
         ),
@@ -518,11 +519,12 @@ def build_calm() -> DatasetSpec:
             collateral_value=3 * _M,
             haircut_pct=5,
         ),
-        Collateral(  # commercial real estate
+        Collateral(  # commercial real estate — same-sector different-group issuer (general WWR)
             "COL-3005",
             "Office tower",
             "LE-0040",
             ("LN-1040",),
+            issuer_id="LE-0001",
             collateral_value=2 * _M,
             haircut_pct=25,
         ),

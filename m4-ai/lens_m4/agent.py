@@ -101,6 +101,17 @@ def _xva_rows() -> list[dict[str, str | None]]:
     ]
 
 
+def _general_wwr_rows() -> list[dict[str, str | None]]:
+    """General (correlation-proxy) wrong-way risk on the stressed base."""
+    from lens_m1 import datasets, metrics
+
+    spec = datasets.get_dataset("stressed")
+    return [
+        {"loan": f["loan"], "borrower": f["borrower"], "issuer": f["issuer"], "driver": f["driver"]}
+        for f in metrics.general_wwr_flags(spec)
+    ]
+
+
 def _reverse_stress_rows(preset: str) -> list[dict[str, str | None]]:
     """Mildest shock reaching a target outcome, on the stressed base (deterministic search)."""
     from decimal import Decimal
@@ -355,6 +366,15 @@ def _summarise(intent: str, rows: list[dict[str, str | None]], params: dict[str,
             f"Total recognised ECL (stressed base): {_money(str(total))}. "
             f"Stage 2: {stage2} names, Stage 3: {stage3} (lifetime ECL)."
         )
+    if intent == "general_wwr":
+        if not rows:
+            return "No general (correlation-proxy) wrong-way risk found."
+        top = rows[0]
+        return (
+            f"{len(rows)} general wrong-way-risk flag(s) — e.g. loan {top.get('loan')}: "
+            f"collateral issuer {top.get('issuer')} shares the borrower's "
+            f"{top.get('driver')} (different group)."
+        )
     if intent == "reverse_stress":
         if not rows:
             return "No exposures."
@@ -449,7 +469,9 @@ def answer(
             safe=False,
         )
 
-    if nlq.intent == "reverse_stress":
+    if nlq.intent == "general_wwr":
+        raw = _general_wwr_rows()
+    elif nlq.intent == "reverse_stress":
         raw = _reverse_stress_rows(nlq.params.get("preset", "double_el"))
     elif nlq.intent == "macro":
         raw = _macro_rows(nlq.params.get("scenario", "recession"))

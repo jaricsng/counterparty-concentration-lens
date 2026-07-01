@@ -80,3 +80,4 @@ honest, not production-accurate) · ❌ consciously out of scope (see
 | `v1.4.0` | Reverse stress testing |
 | `v1.5.0` | Maker-checker (four-eyes) approval workflow |
 | `v1.6.0` | Dynamic / pre-deal / tenor / settlement limits |
+| `v1.7.0` | General (correlation-proxy) wrong-way risk |

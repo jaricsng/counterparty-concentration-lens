@@ -117,3 +117,15 @@ def test_closed_loans_excluded(stressed: DatasetSpec) -> None:
         sum(M.direct_vector(mutated).values(), Decimal(0))
         == sum(M.direct_vector(stressed).values(), Decimal(0)) - delta
     )
+
+
+def test_general_wwr_flags_correlation_proxy() -> None:
+    from lens_m1 import datasets, metrics
+
+    s = datasets.get_dataset("stressed")
+    gen = metrics.general_wwr_flags(s)
+    # Orion (LE-0040, CRE) collateral issued by Acme (LE-0001, CRE) — different groups
+    hit = [f for f in gen if f["borrower"] == "LE-0040" and f["issuer"] == "LE-0001"]
+    assert hit and hit[0]["driver"] == "sector"
+    # not double-counted as structural (same-group) WWR
+    assert not any(f["borrower"] == "LE-0040" for f in metrics.wrong_way_risk_flags(s))

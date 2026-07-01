@@ -34,6 +34,7 @@ from lens_m1 import contagion as lens_contagion  # noqa: E402
 from lens_m1 import datasets as lens_datasets  # noqa: E402
 from lens_m1 import ifrs9 as lens_ifrs9  # noqa: E402
 from lens_m1 import macro as lens_macro  # noqa: E402
+from lens_m1 import metrics as lens_metrics  # noqa: E402
 from lens_m1 import reverse_stress as lens_reverse  # noqa: E402
 from lens_m1 import scenarios as lens_scenarios  # noqa: E402
 from lens_m1 import xva as lens_xva  # noqa: E402
@@ -232,6 +233,33 @@ def main() -> None:
                             "issuer": f.issuer_name or f.issuer,
                         }
                         for f in dash.wwr
+                    ]
+                ),
+                width="stretch",
+                hide_index=True,
+            )
+
+        # General (correlation-proxy) WWR: collateral issuer in a different group but the
+        # same sector/country as the borrower — quality deteriorates together.
+        _wwr_spec = lens_datasets.get_dataset(ds if ds in ("calm", "stressed") else "stressed")
+        gen_wwr = lens_metrics.general_wwr_flags(_wwr_spec)
+        if gen_wwr:
+            st.subheader("General wrong-way risk (correlation proxy)")
+            st.caption(
+                "Collateral issued by a **different-group** entity sharing the borrower's "
+                "sector/country — a structural proxy for exposure↔credit-quality correlation, "
+                "not a statistical one."
+            )
+            st.dataframe(
+                pd.DataFrame(
+                    [
+                        {
+                            "loan": f["loan"],
+                            "borrower": name_of.get(f["borrower"], f["borrower"]),
+                            "issuer": name_of.get(f["issuer"], f["issuer"]),
+                            "correlated via": f["driver"],
+                        }
+                        for f in gen_wwr
                     ]
                 ),
                 width="stretch",
