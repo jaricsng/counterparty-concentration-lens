@@ -212,11 +212,11 @@ def main() -> None:
         d.rounded_rectangle(
             (cx0, cyrow, cx0 + cw, cyrow + row_h),
             radius=row_h // 2,
-            fill=(255, 255, 255, 16),
-            outline=(255, 255, 255, 36),
+            fill=(30, 44, 74),
+            outline=(78, 104, 152),
             width=1 * S,
         )
-        d.text((cx0 + 12 * S, cyrow + 8 * S), c, font=fchip, fill=CHIP_TX)
+        d.text((cx0 + 12 * S, cyrow + 8 * S), c, font=fchip, fill=(225, 233, 246))
         cx0 += cw + gap
 
     # footer
