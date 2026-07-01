@@ -10,7 +10,9 @@ the project uses [Conventional Commits](https://www.conventionalcommits.org/).
 - **CCR Demo & User Guide** (`docs/ccr-demo-guide.md`) — a capability-by-capability
   walkthrough of every CCR feature (where in the app · what to click · what to ask the NL
   chat · what to expect, with real stressed-dataset numbers), a 5-minute demo through-line,
-  and the full NL question cheat-sheet. Linked from the README and `running-the-lens.md`.
+  and the full NL question cheat-sheet, with **screenshots and a scroll-tour GIF** captured
+  from the running app (reproducible via `docs/img/capture.py`). Linked from the README and
+  `running-the-lens.md`.
 
 
 ## [1.7.0] - 2026-07-01
