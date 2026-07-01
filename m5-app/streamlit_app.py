@@ -654,8 +654,9 @@ def main() -> None:
                 if turn.get("rows"):
                     st.dataframe(pd.DataFrame(turn["rows"]), width="stretch", hide_index=True)
 
-        def _run(question: str) -> dict:
-            """Answer a question (with follow-up context) and record the turn; no rendering."""
+        def _run(question: str, *, record: bool = True) -> dict:
+            """Answer a question (with follow-up context); ``record`` adds it to the chat
+            thread. Palette clicks use ``record=False`` — inline-only, not logged."""
             idx = data.label_index(ctx.runner)
             effective, group = data.resolve_followup(question, ss["nl_last_group"], idx)
             res = agent.answer(
@@ -683,7 +684,8 @@ def main() -> None:
                 "engine": res.engine,
                 "rows": res.rows,
             }
-            ss["nl_history"].append(turn)
+            if record:
+                ss["nl_history"].append(turn)
             return turn
 
         for past in ss["nl_history"]:
@@ -697,7 +699,8 @@ def main() -> None:
                 cols = st.columns(len(examples))
                 for col, example in zip(cols, examples, strict=True):
                     if col.button(example, key=f"ex::{example}"):
-                        ss["nl_area_results"][area] = _run(example)
+                        # inline-only: shown under the area, not added to the chat thread
+                        ss["nl_area_results"][area] = _run(example, record=False)
                 shown = ss["nl_area_results"].get(area)
                 if shown:
                     st.info(f"**{shown['q']}** — {shown['summary']}")
