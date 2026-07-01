@@ -72,7 +72,7 @@ def main() -> None:
             frames.append(Image.open(io.BytesIO(raw)).convert("RGB").resize((960, 600)))
         # hold the first/last frames a little
         seq = [frames[0]] * 3 + frames + [frames[-1]] * 4
-        pal = [f.quantize(colors=128, method=Image.MEDIANCUT) for f in seq]
+        pal = [f.quantize(colors=128, method=Image.Quantize.MEDIANCUT) for f in seq]
         pal[0].save(
             OUT / "demo-tour.gif",
             save_all=True,
