@@ -101,6 +101,31 @@ def _xva_rows() -> list[dict[str, str | None]]:
     ]
 
 
+def _reverse_stress_rows(preset: str) -> list[dict[str, str | None]]:
+    """Mildest shock reaching a target outcome, on the stressed base (deterministic search)."""
+    from decimal import Decimal
+
+    from lens_m1 import datasets
+    from lens_m1 import reverse_stress as rs
+
+    spec = datasets.get_dataset("stressed")
+    if preset == "capital":
+        r = rs.min_shock(spec, "capital_pct_eligible", Decimal("0.15"))
+    elif preset == "breaches":
+        r = rs.min_shock(spec, "limit_breaches", Decimal(6))
+    else:
+        r = rs.multiplier_target(spec, "expected_loss", 2.0)
+    return [
+        {
+            "metric": rs.METRIC_LABELS[r.metric],
+            "shock": r.shock_label,
+            "base": str(r.base_value),
+            "achieved": str(r.achieved),
+            "feasible": str(r.feasible),
+        }
+    ]
+
+
 def _macro_rows(scenario_key: str) -> list[dict[str, str | None]]:
     """Per-sector macro-stress EL impact on the stressed base (correlated factor model)."""
     from lens_m1 import datasets, macro
@@ -330,6 +355,11 @@ def _summarise(intent: str, rows: list[dict[str, str | None]], params: dict[str,
             f"Total recognised ECL (stressed base): {_money(str(total))}. "
             f"Stage 2: {stage2} names, Stage 3: {stage3} (lifetime ECL)."
         )
+    if intent == "reverse_stress":
+        if not rows:
+            return "No exposures."
+        r = rows[0]
+        return f"Mildest shock to reach that {r.get('metric')} target: {r.get('shock')}."
     if intent == "macro":
         if not rows:
             return "No exposures."
@@ -419,7 +449,9 @@ def answer(
             safe=False,
         )
 
-    if nlq.intent == "macro":
+    if nlq.intent == "reverse_stress":
+        raw = _reverse_stress_rows(nlq.params.get("preset", "double_el"))
+    elif nlq.intent == "macro":
         raw = _macro_rows(nlq.params.get("scenario", "recession"))
     elif nlq.intent == "stress":
         raw = _stress_rows(nlq.params.get("scenario", "broad_downgrade"))

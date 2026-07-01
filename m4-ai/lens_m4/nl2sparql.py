@@ -268,6 +268,27 @@ def generate(question: str, label_index: dict[str, str] | None = None) -> NLQuer
     ):
         return NLQuery(question, "xva", "template", _q(_CREDIT))
 
+    # Reverse stress (mildest shock to a target) — before the stress branches ("reverse
+    # stress" contains "stress").
+    if any(
+        w in q
+        for w in (
+            "reverse stress",
+            "reverse-stress",
+            "mildest shock",
+            "smallest shock",
+            "minimal shock",
+            "what shock",
+        )
+    ):
+        if "capital" in q:
+            preset = "capital"
+        elif "breach" in q or "limit" in q:
+            preset = "breaches"
+        else:
+            preset = "double_el"
+        return NLQuery(question, "reverse_stress", "template", _q(_CREDIT), {"preset": preset})
+
     # Macro / multi-factor (correlated) stress — before the single-factor stress branch.
     if any(
         w in q
