@@ -6,6 +6,15 @@ the project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-07-01
+
+### Added
+- **Maker-checker (four-eyes) approval workflow** (`lens_m2/maker_checker.py` + `ActionService`)
+  — a **maker** submits a deactivation (it does *not* take effect); a **different** `group_risk`
+  **checker** approves it, at which point it runs through the normal guarded write path. Segregation
+  of duties enforced (checker ≠ maker; role-gated); every step (submit / approve / reject) is written
+  to the tamper-evident audit trail. Sandbox panel + pending queue in the app. Closes a ❌ CCR gap.
+
 ## [1.4.0] - 2026-07-01
 
 ### Added
@@ -237,7 +246,8 @@ not production-hardened).
   integration job (live Fuseki + OPA + gator); the P1–P3 test suites.
 - **Reuse**: a "golden path" to seed new projects with these practices.
 
-[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.2.0...v1.3.0

@@ -58,6 +58,7 @@ honest, not production-accurate) · ❌ consciously out of scope (see
 | Bring-your-own test data (M2 guarded import) | ✅ every feature's columns |
 | Composable dashboard filters (M5) | ✅ sector / band / country / rating / EL / stress |
 | Dynamic authorization (OPA/Rego, M3) | ✅ role-scoped views |
+| Maker-checker / four-eyes approval (M2) | ✅ SoD-enforced, audited — **v1.5.0** |
 | Validation-as-code (SHACL, M2) | ✅ guarded writes |
 | Behavioral UI→backend tests | ✅ AppTest per feature |
 | CI/CD, SAST, SBOM, policy-as-code | ✅ see `engineering-practices.md` |
@@ -76,3 +77,4 @@ honest, not production-accurate) · ❌ consciously out of scope (see
 | `v0.8.0` | Macro / multi-factor (correlated) stress |
 | `v0.9.0` | Multi-round contagion with fire-sale spirals |
 | `v1.4.0` | Reverse stress testing |
+| `v1.5.0` | Maker-checker (four-eyes) approval workflow |

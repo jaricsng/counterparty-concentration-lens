@@ -387,3 +387,14 @@ def test_dashboard_reverse_stress(require_fuseki: None) -> None:
     assert "Mildest shock" in labels
     shock = next(m.value for m in at.metric if str(m.label) == "Mildest shock")
     assert "downgrade" in str(shock).lower()
+
+
+def test_maker_checker_submit_and_four_eyes(require_fuseki: None) -> None:
+    # a maker submits a deactivation; the same person cannot approve it (four-eyes)
+    at = _run_app("stressed")
+    next(b for b in at.button if b.label == "Submit for approval").click().run()
+    assert len(at.exception) == 0
+    assert any("submitted" in str(s.value).lower() for s in at.success)
+    # every pending here was made by the default user, so self-approval is blocked
+    next(b for b in at.button if b.label == "Approve").click().run()
+    assert any("four-eyes" in str(e.value).lower() for e in at.error)

@@ -20,7 +20,9 @@ m2-actions/
 │   ├── graphbuild.py           # proposed triples (one source -> validate + INSERT)
 │   ├── derived.py              # status-aware computed checks over the live store:
 │   │                           #   connected-limit breach, WWR, net exposure, EL & capital
-│   ├── actions.py              # ActionService: validate -> write -> flag -> audit
+│   ├── actions.py              # ActionService: validate -> write -> flag -> audit;
+│   │                           #   + maker-checker (four-eyes) approval workflow
+│   ├── maker_checker.py        # PendingChange + segregation-of-duties (checker != maker)
 │   ├── audit.py                # append-only JSON-lines audit log
 │   ├── models.py               # pydantic request models (boundary validation)
 │   └── app.py                  # FastAPI surface (create_app factory)
