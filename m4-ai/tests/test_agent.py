@@ -168,3 +168,14 @@ def test_macro_recession_routes(runner: GraphRunner) -> None:
 
 def test_single_factor_stress_still_routes(runner: GraphRunner) -> None:
     assert _ans(runner, "what if NBFIs are downgraded?").intent == "stress"
+
+
+def test_reverse_stress_double_el(runner: GraphRunner) -> None:
+    a = _ans(runner, "what is the mildest shock to double expected loss?")
+    assert a.intent == "reverse_stress"
+    assert "downgrade" in a.summary.lower()
+
+
+def test_reverse_stress_routes_before_forward_stress(runner: GraphRunner) -> None:
+    assert _ans(runner, "reverse stress our capital").intent == "reverse_stress"
+    assert _ans(runner, "what happens in a property crash?").intent == "macro"

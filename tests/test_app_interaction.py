@@ -378,3 +378,12 @@ def test_nl_palette_click_is_inline_only_not_in_thread(require_fuseki: None) -> 
     # a typed question, by contrast, IS logged to the thread
     at.chat_input[0].set_value("what is our total expected loss?").run()
     assert len(at.session_state["nl_history"]) == 1
+
+
+def test_dashboard_reverse_stress(require_fuseki: None) -> None:
+    # default preset (double expected loss): mildest shock is a broad downgrade
+    at = _run_app("stressed")
+    labels = {str(m.label) for m in at.metric}
+    assert "Mildest shock" in labels
+    shock = next(m.value for m in at.metric if str(m.label) == "Mildest shock")
+    assert "downgrade" in str(shock).lower()

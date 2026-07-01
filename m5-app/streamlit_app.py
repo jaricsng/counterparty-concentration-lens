@@ -34,6 +34,7 @@ from lens_m1 import contagion as lens_contagion  # noqa: E402
 from lens_m1 import datasets as lens_datasets  # noqa: E402
 from lens_m1 import ifrs9 as lens_ifrs9  # noqa: E402
 from lens_m1 import macro as lens_macro  # noqa: E402
+from lens_m1 import reverse_stress as lens_reverse  # noqa: E402
 from lens_m1 import scenarios as lens_scenarios  # noqa: E402
 from lens_m1 import xva as lens_xva  # noqa: E402
 from lens_m3.portfolios import DEFAULT_USER, DEMO_USERS  # noqa: E402
@@ -410,6 +411,42 @@ def main() -> None:
             hit_only = st.checkbox("Downgraded sectors only", key="macro_hit")
             shown = mdf[mdf["_notches"] > 0] if hit_only else mdf
             st.dataframe(shown.drop(columns=["_notches"]), width="stretch", hide_index=True)
+
+        # ----- Reverse stress (mildest shock to a target) -----
+        st.subheader("Reverse stress (mildest shock to a target)")
+        st.caption(
+            "Inverts stress testing: the **smallest** shock that reaches an adverse outcome. "
+            "Downgrades drive EL/capital; exposure uplift drives limit breaches. "
+            "Deterministic search over shock severity — not a calibrated optimiser."
+        )
+        # target value: a float means "× base" (multiplier), a Decimal means an absolute level
+        _rev_presets: dict[str, tuple[str, float | Decimal]] = {
+            "Double expected loss": ("expected_loss", 2.0),
+            "Push capital to 15% of eligible": ("capital_pct_eligible", Decimal("0.15")),
+            "Force ≥ 6 connected-limit breaches": ("limit_breaches", Decimal(6)),
+        }
+        rpick = st.selectbox("Target", list(_rev_presets), key="rev_target")
+        _metric, _tv = _rev_presets[rpick]
+        if isinstance(_tv, float):
+            rev = lens_reverse.multiplier_target(spec, _metric, _tv)
+        else:
+            rev = lens_reverse.min_shock(spec, _metric, _tv)
+
+        def _fmt_rev(v: Decimal) -> str:
+            if _metric == "capital_pct_eligible":
+                return f"{float(v) * 100:.1f}%"
+            if _metric == "limit_breaches":
+                return f"{int(v)}"
+            return _m(v)
+
+        r1, r2 = st.columns(2)
+        r1.metric("Mildest shock", rev.shock_label)
+        r2.metric(
+            lens_reverse.METRIC_LABELS[_metric].title(),
+            _fmt_rev(rev.achieved),
+            f"base {_fmt_rev(rev.base_value)}",
+            delta_color="off",
+        )
 
         # ----- Forward-looking exposure (PFE/EE) & CVA -----
         st.subheader("Forward-looking exposure & CVA (analytical, illustrative)")

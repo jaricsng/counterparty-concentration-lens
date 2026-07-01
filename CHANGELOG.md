@@ -6,6 +6,16 @@ the project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-07-01
+
+### Added
+- **Reverse stress testing** (`lens_m1/reverse_stress.py`) — inverts the stress engine to
+  find the **mildest shock** that reaches an adverse target (double expected loss, push
+  capital past a threshold, force N connected-limit breaches). Two monotone shock families
+  (rating downgrade → EL/capital; exposure uplift → limit breaches); a deterministic
+  severity search, **not** a calibrated optimiser. Dashboard "Reverse stress" section
+  (preset targets) + NL `reverse_stress` intent. Closes one of the ❌ CCR gaps.
+
 ## [1.3.1] - 2026-07-01
 
 ### Fixed
@@ -227,7 +237,8 @@ not production-hardened).
   integration job (live Fuseki + OPA + gator); the P1–P3 test suites.
 - **Reuse**: a "golden path" to seed new projects with these practices.
 
-[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.3.1...HEAD
+[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.1.0...v1.2.0
