@@ -6,6 +6,19 @@ the project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-07-01
+
+### Added
+- **Pre-deal limit checks** (`lens_m2/predeal.py` + `ActionService.pre_deal_check`) — a
+  read-only what-if that evaluates a *proposed* loan **before** it is booked, closing the
+  dynamic/pre-deal/tenor/settlement ❌ gap:
+  - **dynamic** — the effective connected single-name limit = base × a rating factor
+    (a downgraded name gets a tighter limit);
+  - **tenor** — the deal's tenor must not exceed a maximum-tenor policy;
+  - **settlement** — the deal size must not exceed a settlement sub-limit (a % of the limit).
+  Sandbox "Pre-deal limit check" panel (borrower / amount / tenor → verdict + headroom).
+  Illustrative factors/caps, consistent with the rest of the prototype.
+
 ## [1.5.0] - 2026-07-01
 
 ### Added
@@ -246,7 +259,8 @@ not production-hardened).
   integration job (live Fuseki + OPA + gator); the P1–P3 test suites.
 - **Reuse**: a "golden path" to seed new projects with these practices.
 
-[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.3.0...v1.3.1

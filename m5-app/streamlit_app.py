@@ -784,6 +784,38 @@ def main() -> None:
                 if r.flags:
                     st.warning("Flags: " + ", ".join(r.flags))
 
+        st.subheader("Pre-deal limit check (what-if — no write)")
+        st.caption(
+            "Would a **proposed** loan breach the limits? Checks the **dynamic** "
+            "(rating-adjusted) connected single-name limit, a **tenor** cap, and a "
+            "**settlement** sub-limit — read-only, before you book anything."
+        )
+        pd1, pd2, pd3 = st.columns(3)
+        pd_borrower = pd1.selectbox(
+            "Borrower ",
+            candidates + [h for h in m2h if h not in candidates],
+            format_func=lambda x: name_of.get(x, x),
+            key="pd_borrower",
+        )
+        pd_amount = pd2.number_input(
+            "Amount (SGD)", min_value=1, value=5_000_000, step=1_000_000, key="pd_amount"
+        )
+        pd_tenor = pd3.number_input("Tenor (years)", min_value=1, value=3, step=1, key="pd_tenor")
+        if st.button("Run pre-deal check", key="pd_run"):
+            v = ctx.service.pre_deal_check(
+                borrower_id=pd_borrower, amount=int(pd_amount), tenor=int(pd_tenor)
+            )
+            if v.ok:
+                st.success("Deal OK — within limits.")
+            else:
+                st.error("Deal would breach: " + "; ".join(v.reasons))
+            st.caption(
+                f"UBO {v.ubo} ({v.rating}) · connected {_m(v.connected_now)} → post "
+                f"{_m(v.connected_post)} vs effective limit {_m(v.effective_limit)} "
+                f"(base {_m(v.base_limit)}, dynamic) · headroom {_m(v.headroom)} · "
+                f"tenor {v.tenor}y/cap {v.tenor_cap}y"
+            )
+
         with st.form("deactivate"):
             st.subheader("Soft-delete (deactivate)")
             sid = st.text_input("Subject id", "GTY-2002")

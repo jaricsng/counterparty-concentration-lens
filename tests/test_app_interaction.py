@@ -398,3 +398,11 @@ def test_maker_checker_submit_and_four_eyes(require_fuseki: None) -> None:
     # every pending here was made by the default user, so self-approval is blocked
     next(b for b in at.button if b.label == "Approve").click().run()
     assert any("four-eyes" in str(e.value).lower() for e in at.error)
+
+
+def test_predeal_check_renders_verdict(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    next(b for b in at.button if b.label == "Run pre-deal check").click().run()
+    assert len(at.exception) == 0
+    caps = " ".join(str(c.value) for c in at.caption).lower()
+    assert "effective limit" in caps and "headroom" in caps  # verdict caption rendered
