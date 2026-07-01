@@ -195,6 +195,8 @@ Imported data is **validated on the way in** (through the same SHACL guard as ev
 Everything is free and open-source; no cloud account or API key is required. A fresh clone loads the **calm** dataset by default.
 
 > **📖 [Running the Lens — Operations & User Guide](docs/running-the-lens.md)** — copy-pasteable bring-up, the component/port map, dataset switching & reset, troubleshooting, a screen-by-screen walkthrough, and a 5-minute demo script. Start here to *run and use* the app.
+>
+> **🎯 [CCR Demo & User Guide](docs/ccr-demo-guide.md)** — how to use and demo **every CCR capability** (concentration, netting, EAD/EL/capital, PFE/CVA/xVA, IFRS-9, stress/macro/reverse-stress, contagion, WWR, limits, governance): for each, *where in the app · what to click · what to ask the chat · what to expect* — with the real stressed-dataset numbers.
 
 Quickstart (high level — see [`docs/running-the-lens.md`](docs/running-the-lens.md) for the full sequence, [`docs/lab-handbook.md`](docs/lab-handbook.md) to build it yourself, and each module's README for detail):
 

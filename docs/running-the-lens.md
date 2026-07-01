@@ -3,6 +3,10 @@
 How to **stand up** the Counterparty Concentration Lens on a laptop, **operate**
 it day to day, and **use** the running app to drive the demo.
 
+> Once it's running, see the **[CCR Demo & User Guide](ccr-demo-guide.md)** for a
+> capability-by-capability walkthrough (where in the app · what to click · what to ask
+> the NL chat · what to expect) covering the full CCR feature set.
+
 > Learning prototype on **synthetic data**. Production-shaped, not
 > production-hardened (see [`../SECURITY.md`](../SECURITY.md)). Nothing here loads
 > or is suitable for real, production, or customer data.
