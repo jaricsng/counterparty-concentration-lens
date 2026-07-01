@@ -13,7 +13,7 @@ object. Referential-integrity is guarded on deactivate.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -33,6 +33,7 @@ from .derived import (
     net_exposures,
     wrong_way_risk,
 )
+from .maker_checker import CHECKER_ROLES, PendingChange, new_pending_id
 from .store import InMemoryStore, Store
 from .validation import validate
 
@@ -73,6 +74,7 @@ class ActionService:
         self._store = store
         self._audit = audit
         self._shapes = shapes_path
+        self._pending: dict[str, PendingChange] = {}
 
     # --- internal helpers --------------------------------------------------- #
 
@@ -226,6 +228,107 @@ class ActionService:
             AuditRecord("deactivate", subject_id, actor, role, "accepted", reason, {"kind": kind})
         )
         return ActionResult(True, "deactivate", subject_id, reason)
+
+    # --- Maker-checker (four-eyes) approval workflow ------------------------- #
+
+    def submit_deactivation(
+        self, *, subject_id: str, kind: str, maker: str, maker_role: str
+    ) -> PendingChange:
+        """A maker submits a deactivation for approval — it does NOT take effect yet."""
+        pending = PendingChange(new_pending_id(), kind, subject_id, maker, maker_role)
+        self._pending[pending.id] = pending
+        self._audit.record(
+            AuditRecord(
+                "maker-submit",
+                subject_id,
+                maker,
+                maker_role,
+                "pending",
+                f"deactivate {kind} submitted for approval",
+                {"pending_id": pending.id, "kind": kind},
+            )
+        )
+        return pending
+
+    def pending_changes(self) -> list[PendingChange]:
+        return [p for p in self._pending.values() if p.status == "pending"]
+
+    def _decide_denial(
+        self, pending: PendingChange | None, checker: str, checker_role: str
+    ) -> str | None:
+        """Segregation-of-duties checks; returns a denial reason or None if allowed."""
+        if pending is None or pending.status != "pending":
+            return "no such pending change"
+        if checker == pending.maker:
+            return "four-eyes: the checker must differ from the maker"
+        if checker_role not in CHECKER_ROLES:
+            return f"role '{checker_role}' may not approve changes"
+        return None
+
+    def approve(self, pending_id: str, *, checker: str, checker_role: str) -> ActionResult:
+        """A checker approves a pending change → it runs through the guarded write path."""
+        pending = self._pending.get(pending_id)
+        denial = self._decide_denial(pending, checker, checker_role)
+        if pending is None or denial is not None:
+            subject = pending.subject_id if pending else pending_id
+            self._audit.record(
+                AuditRecord(
+                    "maker-approve",
+                    subject,
+                    checker,
+                    checker_role,
+                    "rejected",
+                    denial or "no such pending change",
+                    {"pending_id": pending_id},
+                )
+            )
+            return ActionResult(False, "approve", subject, denial or "no such pending change")
+        result = self.deactivate(
+            subject_id=pending.subject_id, kind=pending.kind, actor=checker, role=checker_role
+        )
+        self._pending[pending_id] = replace(
+            pending,
+            status="approved" if result.accepted else "pending",
+            decided_by=checker,
+            reason=result.reason,
+        )
+        self._audit.record(
+            AuditRecord(
+                "maker-approve",
+                pending.subject_id,
+                checker,
+                checker_role,
+                "accepted" if result.accepted else "rejected",
+                result.reason,
+                {"pending_id": pending_id, "maker": pending.maker},
+            )
+        )
+        return result
+
+    def reject(
+        self, pending_id: str, *, checker: str, checker_role: str, reason: str = ""
+    ) -> ActionResult:
+        """A checker rejects a pending change — nothing is written."""
+        pending = self._pending.get(pending_id)
+        denial = self._decide_denial(pending, checker, checker_role)
+        if pending is None or denial is not None:
+            subject = pending.subject_id if pending else pending_id
+            return ActionResult(False, "reject", subject, denial or "no such pending change")
+        self._pending[pending_id] = replace(
+            pending, status="rejected", decided_by=checker, reason=reason or "rejected by checker"
+        )
+        self._audit.record(
+            AuditRecord(
+                "maker-reject",
+                pending.subject_id,
+                checker,
+                checker_role,
+                "rejected",
+                reason or "rejected by checker",
+                {"pending_id": pending_id, "maker": pending.maker},
+            )
+        )
+        return ActionResult(True, "reject", pending.subject_id, "rejected by checker")
 
     def _referential_guard(self, subject: str, kind: str) -> str | None:
         """Block deactivating an entity that still backs active exposure.

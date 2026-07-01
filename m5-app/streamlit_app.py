@@ -794,6 +794,43 @@ def main() -> None:
                 )
                 (st.success if r.accepted else st.error)(r.reason)
 
+        st.subheader("Maker-checker approvals (four-eyes)")
+        st.caption(
+            "A **maker** submits a deactivation; it takes effect only when a **different** "
+            "`group_risk` **checker** approves it. Segregation of duties enforced; every "
+            "step (submit / approve / reject) is written to the tamper-evident audit trail."
+        )
+        mk1, mk2 = st.columns(2)
+        mc_sid = mk1.text_input("Subject id to deactivate", "GTY-2002", key="mc_subject")
+        mc_kind = mk2.selectbox(
+            "Kind ", ["guaranty", "loan", "collateral", "limit", "entity"], key="mc_kind"
+        )
+        if st.button("Submit for approval", key="mc_submit"):
+            pc = ctx.service.submit_deactivation(
+                subject_id=mc_sid, kind=mc_kind, maker=principal.name, maker_role=role
+            )
+            st.success(f"Submitted {pc.id} — pending approval by a different group_risk checker.")
+        pend = ctx.service.pending_changes()
+        if pend:
+            st.caption(f"Pending ({len(pend)}) — approval needs `group_risk` and checker ≠ maker:")
+            for p in pend:
+                a, b, c = st.columns([4, 1, 1])
+                a.write(
+                    f"**{p.id}** · deactivate {p.kind} `{p.subject_id}` · "
+                    f"maker **{p.maker}** ({p.maker_role})"
+                )
+                if b.button("Approve", key=f"mc_ok_{p.id}"):
+                    res = ctx.service.approve(p.id, checker=principal.name, checker_role=role)
+                    (st.success if res.accepted else st.error)(res.reason)
+                    st.rerun()
+                if c.button("Reject", key=f"mc_no_{p.id}"):
+                    ctx.service.reject(
+                        p.id, checker=principal.name, checker_role=role, reason="rejected in UI"
+                    )
+                    st.rerun()
+        else:
+            st.caption("No pending changes.")
+
     # --------------------------------------------------------- Bring Your Own
     with tabs[4]:
         from lens_m1 import byod
