@@ -41,7 +41,7 @@ def font(path: str, size: int) -> ImageFont.FreeTypeFont:
 
 def w_of(draw: ImageDraw.ImageDraw, text: str, f: ImageFont.FreeTypeFont) -> int:
     b = draw.textbbox((0, 0), text, font=f)
-    return b[2] - b[0]
+    return int(b[2] - b[0])
 
 
 def tracked(draw, xy, text, f, fill, spacing):
@@ -53,16 +53,19 @@ def tracked(draw, xy, text, f, fill, spacing):
 
 
 def gradient() -> Image.Image:
-    img = Image.new("RGB", (W, H), BG_TOP)
-    px = img.load()
+    # build a 1-px-wide vertical gradient column, then stretch to full width
+    col = Image.new("RGB", (1, H))
     for y in range(H):
         t = y / (H - 1)
-        r = int(BG_TOP[0] + (BG_BOT[0] - BG_TOP[0]) * t)
-        g = int(BG_TOP[1] + (BG_BOT[1] - BG_TOP[1]) * t)
-        b = int(BG_TOP[2] + (BG_BOT[2] - BG_TOP[2]) * t)
-        for x in range(W):
-            px[x, y] = (r, g, b)
-    return img
+        col.putpixel(
+            (0, y),
+            (
+                int(BG_TOP[0] + (BG_BOT[0] - BG_TOP[0]) * t),
+                int(BG_TOP[1] + (BG_BOT[1] - BG_TOP[1]) * t),
+                int(BG_TOP[2] + (BG_BOT[2] - BG_TOP[2]) * t),
+            ),
+        )
+    return col.resize((W, H))
 
 
 def main() -> None:
@@ -229,7 +232,7 @@ def main() -> None:
         fill=(120, 133, 156),
     )
 
-    final = img.convert("RGB").resize((1280, 640), Image.LANCZOS)
+    final = img.convert("RGB").resize((1280, 640), Image.Resampling.LANCZOS)
     final.save(OUT, optimize=True)
     print("wrote", OUT, final.size)
 
