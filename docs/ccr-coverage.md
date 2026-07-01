@@ -39,6 +39,7 @@ honest, not production-accurate) · ❌ consciously out of scope (see
 | Group / UBO aggregation | ✅ | Ownership chain to the ultimate parent; loop-guarded. |
 | **Connected exposure** (multi-hop) | ✅ | Direct + guarantees + shared collateral — the "money shot". |
 | Limits & utilisation / watchlist | ✅ | Green/amber/red bands on connected exposure. |
+| Dynamic / pre-deal / tenor / settlement limits | ⚠️ | Read-only **pre-deal** what-if: dynamic (rating-adjusted) connected limit + tenor cap + settlement sub-limit (`predeal.py`). Illustrative factors/caps. **v1.6.0** |
 | HHI / CR₁₀ (direct vs connected) | ✅ | Book-level concentration indices. |
 | Sector concentration | ✅ | Risk-owner attribution (NBFI guarantees count to financials). |
 | **Country / geographic concentration** | ✅ | Risk-owner country of risk; dashboard, NL, BYOD, filter. **v0.1.0** |
