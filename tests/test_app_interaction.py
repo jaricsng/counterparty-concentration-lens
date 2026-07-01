@@ -55,9 +55,10 @@ def _one(widgets, needle: str):
 
 def test_byod_import_button_does_not_crash(require_fuseki: None) -> None:
     at = _run_app("calm")
-    buttons = [b for b in at.button if "import" in b.label.lower()]
-    assert buttons, "BYOD 'Validate & import' button not found"
-    buttons[0].click().run()
+    # match the exact BYOD button — a substring match would also hit the palette
+    # example "Which counterparty is most systemically IMPORTant?".
+    button = next(b for b in at.button if b.label == "Validate & import via M2")
+    button.click().run()
     assert len(at.exception) == 0
     assert any("IMPORTED" in str(m.value) for m in at.warning)
 
@@ -366,3 +367,14 @@ def test_nl_palette_areas_hold_independent_results(require_fuseki: None) -> None
     assert len(at.exception) == 0
     infos = " ".join(str(m.value) for m in at.info).lower()
     assert "cva" in infos and "country" in infos  # both areas' inline answers persist
+
+
+def test_nl_palette_click_is_inline_only_not_in_thread(require_fuseki: None) -> None:
+    at = _run_app("stressed")
+    next(b for b in at.button if b.label == "What is our total CVA?").click().run()
+    # the answer shows inline (info) but the chat thread stays empty
+    assert any("cva" in str(m.value).lower() for m in at.info)
+    assert at.session_state["nl_history"] == []
+    # a typed question, by contrast, IS logged to the thread
+    at.chat_input[0].set_value("what is our total expected loss?").run()
+    assert len(at.session_state["nl_history"]) == 1

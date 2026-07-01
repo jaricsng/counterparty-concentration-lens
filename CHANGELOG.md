@@ -6,6 +6,22 @@ the project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-07-01
+
+### Fixed
+- **BYOD import AppTest** selected the import button by the substring `"import"`, which —
+  after the v1.2.0 palette landed — also matches the example "Which counterparty is most
+  systemically IMPORTant?". Whether it bit depended on widget ordering (it surfaced
+  locally, stayed green in CI), so it first looked like an environment flake; the root
+  cause is the ambiguous matcher. Now matches the exact "Validate & import via M2"
+  label — deterministic everywhere.
+
+### Changed
+- **Palette clicks are now inline-only** — a starter-prompt click renders its answer under
+  its CCR area but is no longer also logged to the chat thread (the thread is for typed
+  questions). Follow-up context is still updated, so a typed follow-up after a palette
+  click still works. (`_run` gained a `record` flag.)
+
 ## [1.3.0] - 2026-07-01
 
 ### Added
@@ -211,7 +227,8 @@ not production-hardened).
   integration job (live Fuseki + OPA + gator); the P1–P3 test suites.
 - **Reuse**: a "golden path" to seed new projects with these practices.
 
-[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.0.0...v1.1.0
