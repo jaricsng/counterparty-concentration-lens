@@ -137,7 +137,7 @@ jobs:
         run: bandit -r . -c pyproject.toml || true
 
       - name: Secret scan (gitleaks)
-        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           # gitleaks-action v2 requires a token to scan pull_request events
           # (not needed on push). The auto-provisioned token is sufficient.
