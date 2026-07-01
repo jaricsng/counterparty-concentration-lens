@@ -39,6 +39,7 @@ from .validation import validate
 
 if TYPE_CHECKING:
     from .importer import ImportReport
+    from .predeal import DealVerdict
 
 _PREFIX = "PREFIX lens: <https://lens.example/ontology/>\n"
 
@@ -252,6 +253,18 @@ class ActionService:
 
     def pending_changes(self) -> list[PendingChange]:
         return [p for p in self._pending.values() if p.status == "pending"]
+
+    # --- Pre-deal limit check (read-only what-if) --------------------------- #
+
+    def pre_deal_check(
+        self, *, borrower_id: str, amount: int, tenor: int, tenor_cap: int = 7
+    ) -> DealVerdict:
+        """Would a proposed loan breach the dynamic / tenor / settlement limits? No write."""
+        from .predeal import pre_deal_check as _check
+
+        return _check(
+            self._store, borrower_id=borrower_id, amount=amount, tenor=tenor, tenor_cap=tenor_cap
+        )
 
     def _decide_denial(
         self, pending: PendingChange | None, checker: str, checker_role: str
