@@ -47,7 +47,11 @@ def _shot_section(page, needle: str, path: Path) -> None:
 def main() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        page = browser.new_page(viewport=VIEW, device_scale_factor=1)
+        # dict literal (not the VIEW alias) so mypy matches Playwright's ViewportSize
+        page = browser.new_page(
+            viewport={"width": VIEW["width"], "height": VIEW["height"]},
+            device_scale_factor=1,
+        )
         page.goto(URL, wait_until="networkidle", timeout=60_000)
         page.get_by_text("HHI (connected)", exact=False).first.wait_for(timeout=45_000)
         page.wait_for_timeout(1500)
