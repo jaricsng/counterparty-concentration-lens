@@ -639,6 +639,7 @@ def main() -> None:
         ss.setdefault("nl_history", [])
         ss.setdefault("nl_last_group", None)
         ss.setdefault("nl_last_intent", None)
+        ss.setdefault("nl_area_results", {})
 
         def _render_turn(turn: dict) -> None:
             with st.chat_message("user"):
@@ -653,7 +654,8 @@ def main() -> None:
                 if turn.get("rows"):
                     st.dataframe(pd.DataFrame(turn["rows"]), width="stretch", hide_index=True)
 
-        def _ask(question: str) -> None:
+        def _run(question: str) -> dict:
+            """Answer a question (with follow-up context) and record the turn; no rendering."""
             idx = data.label_index(ctx.runner)
             effective, group = data.resolve_followup(question, ss["nl_last_group"], idx)
             res = agent.answer(
@@ -682,26 +684,34 @@ def main() -> None:
                 "rows": res.rows,
             }
             ss["nl_history"].append(turn)
-            _render_turn(turn)
+            return turn
 
         for past in ss["nl_history"]:
             _render_turn(past)
 
-        with st.expander("💡 Example questions (click to ask)", expanded=not ss["nl_history"]):
+        # Starter-prompt palette — each area shows its clicked example's answer INLINE
+        # (summary + result table), so you can explore CCR area by area without scrolling.
+        with st.expander("💡 Example questions (click for an inline answer)", expanded=True):
             for area, examples in data.NL_PALETTE:
                 st.caption(area)
                 cols = st.columns(len(examples))
                 for col, example in zip(cols, examples, strict=True):
                     if col.button(example, key=f"ex::{example}"):
-                        _ask(example)
+                        ss["nl_area_results"][area] = _run(example)
+                shown = ss["nl_area_results"].get(area)
+                if shown:
+                    st.info(f"**{shown['q']}** — {shown['summary']}")
+                    if shown.get("rows"):
+                        st.dataframe(pd.DataFrame(shown["rows"]), width="stretch", hide_index=True)
         if ss["nl_history"] and st.button("Clear chat", key="nl_clear"):
             ss["nl_history"] = []
             ss["nl_last_group"] = None
             ss["nl_last_intent"] = None
+            ss["nl_area_results"] = {}
 
         prompt = st.chat_input("Ask about exposure, EL, capital, CVA, IFRS-9, stress, contagion…")
         if prompt:
-            _ask(prompt)
+            _render_turn(_run(prompt))
 
     # --------------------------------------------------------------- Sandbox
     with tabs[3]:

@@ -344,3 +344,25 @@ def test_nl_chat_followup_what_about_reuses_intent(require_fuseki: None) -> None
     # the follow-up produced a connected-exposure answer (not the unsupported help text)
     answers = [str(m.value).lower() for m in at.info]
     assert any("connected exposure" in a for a in answers[-2:])
+
+
+def test_nl_palette_shows_inline_result_table(require_fuseki: None) -> None:
+    # clicking a palette example renders its answer + result table INLINE under the area
+    at = _run_app("stressed")
+    btn = next(b for b in at.button if b.label == "What is our total expected loss?")
+    btn.click().run()
+    assert len(at.exception) == 0
+    infos = " ".join(str(m.value) for m in at.info).lower()
+    assert "total expected loss" in infos  # inline summary, prefixed with the question
+    # the expected-loss result table (raw agent columns) rendered inline
+    assert any({"el", "capital"} <= set(map(str, df.value.columns)) for df in at.dataframe)
+
+
+def test_nl_palette_areas_hold_independent_results(require_fuseki: None) -> None:
+    # two areas each keep their own inline result after successive clicks
+    at = _run_app("stressed")
+    next(b for b in at.button if b.label == "What is our total CVA?").click().run()
+    next(b for b in at.button if b.label == "Which country are we most exposed to?").click().run()
+    assert len(at.exception) == 0
+    infos = " ".join(str(m.value) for m in at.info).lower()
+    assert "cva" in infos and "country" in infos  # both areas' inline answers persist

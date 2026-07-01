@@ -6,6 +6,15 @@ the project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-07-01
+
+### Added
+- **Inline per-area results in the NL chat palette** — clicking a starter-prompt example
+  now renders that answer's summary **and result table inline under its CCR area**, so you
+  can explore area by area (loss & capital, forward-looking, stress & contagion, …) without
+  scrolling the chat thread. Each area keeps its own last result; clicks still update the
+  conversation context and history (the `_ask` handler was split into a no-render `_run`).
+
 ## [1.2.0] - 2026-06-30
 
 ### Added
@@ -202,7 +211,8 @@ not production-hardened).
   integration job (live Fuseki + OPA + gator); the P1–P3 test suites.
 - **Reuse**: a "golden path" to seed new projects with these practices.
 
-[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/jaricsng/counterparty-concentration-lens/compare/v0.9.0...v1.0.0
