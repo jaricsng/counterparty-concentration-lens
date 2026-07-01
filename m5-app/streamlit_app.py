@@ -60,8 +60,15 @@ def _ctx():
 
 
 def main() -> None:
-    ctx = _ctx()
     ss = st.session_state
+    # First hit is the slow one (connect to the triplestore + warm the OPA policy);
+    # show a clear busy indicator so a cold start doesn't look like a hung app.
+    if ss.get("_booted"):
+        ctx = _ctx()
+    else:
+        with st.spinner("Starting the Lens — connecting to the triplestore and loading policy…"):
+            ctx = _ctx()
+        ss["_booted"] = True
     ss.setdefault("dataset", os.environ.get("LENS_DATASET", "calm"))
 
     # --- sidebar: identity, dataset, reset ---------------------------------- #
@@ -80,11 +87,13 @@ def main() -> None:
         col_a, col_b = st.columns(2)
         if col_a.button("Reset to calm"):
             ss["dataset"] = "calm"
-            reload_dataset("calm")
+            with st.spinner("Reloading the calm dataset…"):
+                reload_dataset("calm")
             st.rerun()
         if col_b.button("Reset to stressed"):
             ss["dataset"] = "stressed"
-            reload_dataset("stressed")
+            with st.spinner("Reloading the stressed dataset…"):
+                reload_dataset("stressed")
             st.rerun()
         st.caption(
             f"OPA policy: {'on' if ctx.opa_available else 'unavailable'} · "
@@ -127,7 +136,8 @@ def main() -> None:
 
     # ---------------------------------------------------------------- Dashboard
     with tabs[0]:
-        dash = data.dashboard(ctx.runner, ctx.queries_dir, visible, m2h)
+        with st.spinner("Computing connected-exposure concentration…"):
+            dash = data.dashboard(ctx.runner, ctx.queries_dir, visible, m2h)
         c1, c2, c3, c4 = st.columns(4)
         c1.metric(
             "HHI (connected)",
