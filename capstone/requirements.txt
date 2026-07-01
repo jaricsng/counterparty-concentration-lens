@@ -6,6 +6,6 @@
 #   capstone/.venv-spark/bin/pip install -r capstone/requirements.txt
 # The pure transform (lens_capstone.triples_map) and its equivalence test use
 # only rdflib and run in the main 3.14 venv.
-pyspark==3.5.3
-rdflib==7.2.1
+pyspark==4.1.2
+rdflib==7.6.0
 requests==2.34.2
