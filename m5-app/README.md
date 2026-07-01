@@ -36,8 +36,10 @@ m5-app/
   English about concentration *or* any CCR layer (net exposure, EL, capital, IFRS-9,
   PFE/CVA/xVA, stress, macro, contagion); each turn shows the generated, validated,
   read-only SPARQL and result rows. A **starter-prompt palette** offers clickable
-  example questions per area, and **follow-ups** carry context — "exposure to Acme?"
-  then "what about Vortex?" (reuses the intent) or "show its guarantee chains".
+  example questions grouped by CCR area, and renders each area's clicked answer +
+  **result table inline** under that area (explore area by area without scrolling).
+  **Follow-ups** carry context — "exposure to Acme?" then "what about Vortex?"
+  (reuses the intent) or "show its guarantee chains".
 - **Scenario Sandbox** — add a loan / soft-delete an object **via M2** (validated
   + audited); flags (e.g. limit breach) surface; metrics recompute on rerun.
   Limits require the `group_risk` role.
