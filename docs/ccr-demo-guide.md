@@ -11,6 +11,11 @@ dataset — obviously-fake names, engineered to make the risks visible.
 > or live market data. The full capability map (✅ / ⚠️ / ❌) is
 > [`ccr-coverage.md`](ccr-coverage.md).
 
+![The Lens dashboard — a scroll-through of the stressed-dataset demo screen](img/demo-tour.gif)
+
+*A scroll through the demo screen (stressed dataset). Screenshots below are captured from
+the running app — reproduce them with `python docs/img/capture.py` (see that file).*
+
 ---
 
 ## 0. Bring-up (2 minutes)
@@ -73,11 +78,16 @@ stress → systemic contagion* — is the demo. The rest of this guide is the re
 | **Rating concentration** | same section (+ *Filter rating*) | Ask *"what is our rating concentration?"* | **BB 56%** — majority **sub-investment-grade**. |
 | NBFI cascade / systemic importance | **Dashboard → Systemic contagion** | Ask *"which counterparty is most systemically important?"* | **Nimbus ×9.4** (2.2M direct → 21.2M total). |
 
+![Dashboard — connected exposures by risk-owner (stressed)](img/01-dashboard-top.png)
+![Country & rating concentration](img/02-country-rating.png)
+
 ### B. Netting, collateral & CRM
 
 | Capability | Where | Do / Ask | Expect |
 |---|---|---|---|
 | **Net (post-collateral) exposure** | **Dashboard → Net exposure** (+ *Filter sector*) | Ask *"what is the net exposure after collateral?"* | **Helios 7.0M gross → 5.0M net** (4M bond @ 50% haircut). Filter to *financial services* → Vortex + Nimbus. |
+
+![Net (post-collateral) exposure](img/03-net-exposure.png)
 
 ### C. Credit quality, loss & capital
 
@@ -87,6 +97,9 @@ stress → systemic contagion* — is the demo. The rest of this guide is the re
 | **RWA / regulatory capital** | same section (metrics row) | Ask *"how much regulatory capital do we need?"* | **≈ 10.7M** (10.7% of eligible capital). |
 | **IFRS-9 staging & lifetime ECL** | **Dashboard → IFRS-9 ECL & staging** (+ *Filter stage*) | Ask *"what is our IFRS-9 ECL?"* / *"lifetime expected credit loss"* | Stage 1/2/3 metrics; **recognised ECL ≈ 3.9M** vs the 12-month 0.8M (the cliff). |
 
+![Expected loss & capital](img/04-expected-loss-capital.png)
+![IFRS-9 ECL & staging](img/05-ifrs9.png)
+
 ### D. Forward-looking exposure & xVA
 
 | Capability | Where | Do / Ask | Expect |
@@ -94,6 +107,8 @@ stress → systemic contagion* — is the demo. The rest of this guide is the re
 | **PFE / EE profile** | **Dashboard → Forward-looking exposure & CVA** → *EE/PFE profile* chart | pick a counterparty → the profile chart | The classic **PFE hump** (rises above current, then amortises). |
 | **CVA** | same section table | Ask *"what is our total CVA?"* / *"potential future exposure"* | Long-tenor sub-IG names top; **CVA ≈ 2.5M**. |
 | **Full xVA (CVA·DVA·FVA·MVA·KVA)** | same section → *Full xVA breakdown* (+ *rating filter*) | Ask *"show the total xVA breakdown"* / *"FVA and KVA"* | **Portfolio total xVA ≈ 13.7M** (DVA ≈ 0 for a loan book). |
+
+![Forward-looking exposure (PFE/EE) & CVA, with the EE/PFE profile chart](img/08-xva.png)
 
 ### E. Stress & scenario
 
@@ -103,12 +118,17 @@ stress → systemic contagion* — is the demo. The rest of this guide is the re
 | **Macro / multi-factor (correlated)** | **Dashboard → Macro / multi-factor stress** | Ask *"what happens in a property crash?"* / *"recession"* | **Property crash EL 0.8M → 5.5M**, CRE −4; **recession → 7.0M**; government resilient. |
 | **Reverse stress** | **Dashboard → Reverse stress** (target preset) | Ask *"what is the mildest shock to double expected loss?"* | *Double EL* = **−1 notch**; *capital ≥ 15%* = **−3 notches**; *≥6 breaches* = **+30% exposure**. |
 
+![Stress / scenario what-if (NBFI downgrade → EL 2.7M)](img/06-stress-scenario.png)
+![Reverse stress — the mildest shock to a target](img/07-reverse-stress.png)
+
 ### F. Default management & systemic contagion
 
 | Capability | Where | Do / Ask | Expect |
 |---|---|---|---|
 | **Contagion cascade (jump-to-default)** | **Dashboard → Systemic contagion** (+ *amplifying-only*) | Ask *"show the default contagion cascade"* | Per-group direct + guarantee-contagion + amplification; **Nimbus ×9.4**. |
 | **Multi-round + fire-sale spirals** | same section → *Multi-round cascade* (+ *second-order only*) | Ask *"show the multi-round fire-sale cascade"* | **Borealis 0 single-round → 15.3M over 2 rounds** (topples Acme; 4 second-order). |
+
+![Systemic contagion — default cascade ranking](img/09-contagion.png)
 
 ### G. Wrong-way risk
 
@@ -142,6 +162,8 @@ Open **Ask (NL)**. Click a **💡 palette** example for an inline answer per are
 freely. Follow-ups carry context: *"exposure to Acme?"* → *"what about Vortex?"* /
 *"show its guarantee chains"*. Every answer shows the generated, read-only, validated
 SPARQL (or a "computed" note) and is role-scoped.
+
+![The NL chat — starter-prompt palette + a grounded answer](img/10-nl-chat.png)
 
 - **Concentration** — "total exposure to the Acme group?" · "top counterparties?" ·
   "which names are within 75% of their limit?" · "show guarantee chains touching Nimbus" ·
